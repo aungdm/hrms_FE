@@ -4,8 +4,15 @@ import axios from "axios"; // CUSTOM LOADING COMPONENT
 import { LoadingProgress } from "@/components/loader";
 
 import { globalConstants } from "@/utils/constants";
-const API_URL = "http://localhost:5000/api/v1";
+
+// Get API URL from environment variables with fallback to localhost for development
+// Support both VITE_API_URL and VITE_BASE_URL for backward compatibility
+const API_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_BASE_URL || "http://localhost:5000/api/v1";
 axios.defaults.baseURL = API_URL;
+
+console.log("API URL:", API_URL); // Log the API URL being used (helpful for debugging)
+
+axios.defaults.headers.common["Accept"] = "application/json";
 
 // ==============================================================
 const initialState = {
@@ -13,7 +20,6 @@ const initialState = {
   isInitialized: false,
   isAuthenticated: false,
 };
-axios.defaults.headers.common["Accept"] = "application/json";
 
 const setSession = (accessToken) => {
   if (accessToken) {
