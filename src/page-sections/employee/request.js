@@ -5,17 +5,17 @@ export const getEmployees = async (
   perPage,
   page,
   sortOrder = "Desc",
-  sortField = "created_at"
+  sortField = "createdAt"
 ) => {
   console.log({ search }, "getEmployees search ");
   try {
     const response = await axios.get("employee/get", {
       params: {
         search,
-        // sortOrder,
-        // page: page + 1,
-        // perPage: perPage,
-        // sortField,
+        sortOrder,
+        page: page + 1,
+        perPage: perPage,
+        sortField,
       },
     });
     console.log({ response });
@@ -39,11 +39,11 @@ export const create = async (data) => {
   try {
     const response = await axios.post("employee/create", data);
     console.log({ response });
-    // if (response.data.success) {
-    //   return { data: response.data.data, success: true };
-    // } else {
-    //   return { success: false };
-    // }
+    if (response.data.success) {
+      return { data: response.data.data, success: true };
+    } else {
+      return { success: false };
+    }
   } catch (error) {
     console.error("Error creating Employee", error.message);
     throw error;
@@ -70,12 +70,12 @@ export const update = async (id, data) => {
     const response = await axios.put(`/employee/update/${id}`, data);
     console.log({ response });
     if (response.data.success) {
-      return { data: response?.data?.data?.data, success: true };
+      return { data: response.data.data, success: true };
     } else {
       return { success: false };
     }
   } catch (error) {
-    console.error("Error updating services:", error.message);
+    console.error("Error updating employee", error.message);
     throw error;
   }
 };

@@ -16,7 +16,13 @@ import FlexBox from "@/components/flexbox/FlexBox.jsx";
 import Autocomplete from "@mui/material/Autocomplete";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { create, update, searchEmployees, get } from "../request.js";
+import {
+  create,
+  update,
+  searchEmployees,
+  get,
+  updateSalary,
+} from "../request.js";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import useDebounce from "@/hooks/debounceHook.js";
 import { format } from "date-fns";
@@ -43,6 +49,7 @@ export default function CreateView() {
     effectiveDate: "",
     previousSalary: "",
     salary: "",
+    name: "",
     percentage: "", // Added percentage field
     employment: null,
     description: "",
@@ -56,6 +63,7 @@ export default function CreateView() {
       .required("Employee selection is required"),
     salary: Yup.number().required("Salary is Required!"),
     previousSalary: Yup.number().required("Previous Salary is Required!"),
+    name: Yup.string().required("Name is Required!"),
     description: Yup.string(),
   });
 
@@ -79,6 +87,10 @@ export default function CreateView() {
         let responseData;
         // if (!mode) {
         responseData = await create(object);
+        const salaryData = await updateSalary(values.employment?._id, {
+          after_probation_gross_salary: values.salary,
+        });
+        console.log({ salaryData });
         if (responseData.success) {
           toast.success("Salary Revision created successfully ");
           resetForm();
@@ -112,7 +124,7 @@ export default function CreateView() {
   // Handles percentage input and updates salary dynamically
   const handlePercentageChange = (e) => {
     const percent = parseFloat(e.target.value);
-    const baseSalary = Number(employee?.probation_salary) || 0;
+    const baseSalary = Number(employee?.after_probation_gross_salary) || 0;
 
     if (!isNaN(percent)) {
       const incrementedSalary = baseSalary + (baseSalary * percent) / 100;
@@ -130,8 +142,14 @@ export default function CreateView() {
     try {
       const response = await get(id);
       console.log(response?.data);
-      const { effectiveDate, previousSalary, salary, description, employment } =
-        response.data;
+      const {
+        effectiveDate,
+        previousSalary,
+        salary,
+        description,
+        employment,
+        name,
+      } = response.data;
       if (response.success) {
         setValues({
           effectiveDate: effectiveDate
@@ -141,6 +159,7 @@ export default function CreateView() {
           previousSalary: previousSalary || "",
           salary: salary || "",
           description: description || "",
+          name: name || "",
         });
         setEmployeeData({ ...employeeData, employee: employment });
       }
@@ -202,8 +221,9 @@ export default function CreateView() {
                   setEmployeeData({ ...employeeData, employee: newValue });
                   setFieldValue(
                     "previousSalary",
-                    newValue?.probation_salary || ""
+                    newValue?.after_probation_gross_salary || ""
                   );
+                  setFieldValue("name", newValue?.name || "");
                 }}
                 renderInput={(params) => (
                   <TextField
@@ -243,7 +263,7 @@ export default function CreateView() {
                 fullWidth
                 name="previousSalary"
                 label="Previous Salary"
-                value={employee?.probation_salary || ""}
+                value={employee?.after_probation_gross_salary || ""}
                 onChange={handleChange}
                 helperText={touched.previousSalary && errors.previousSalary}
                 error={Boolean(touched.previousSalary && errors.previousSalary)}

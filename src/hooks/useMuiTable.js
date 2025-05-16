@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) return -1;
@@ -7,7 +7,9 @@ function descendingComparator(a, b, orderBy) {
 }
 
 export function getComparator(order, orderBy) {
-  return order === 'desc' ? (a, b) => descendingComparator(a, b, orderBy) : (a, b) => -descendingComparator(a, b, orderBy);
+  return order === "desc"
+    ? (a, b) => descendingComparator(a, b, orderBy)
+    : (a, b) => -descendingComparator(a, b, orderBy);
 } // Since 2020 all major browsers ensure sort stability with Array.prototype.sort().
 // stableSort() brings sort stability to non-modern browsers (notably IE11). If you
 // only support modern browsers you can replace stableSort(exampleArray, exampleComparator)
@@ -20,24 +22,23 @@ export function stableSort(array, comparator) {
     if (order !== 0) return order;
     return a[1] - b[1];
   });
-  return stabilizedThis.map(el => el[0]);
-} // ==============================================================
+  return stabilizedThis.map((el) => el[0]);
+}
 
-// ==============================================================
 export default function useMuiTable(props) {
-  const [order, setOrder] = useState(props.defaultOrder || 'asc');
-  const [orderBy, setOrderBy] = useState(props.defaultOrderBy || 'name');
+  const [order, setOrder] = useState(props.defaultOrder || "asc");
+  const [orderBy, setOrderBy] = useState(props.defaultOrderBy || "name");
   const [selected, setSelected] = useState(props.defaultSelected || []);
   const [page, setPage] = useState(props.defaultPage || 0);
   const [rowsPerPage, setRowsPerPage] = useState(props.defaultRowsPerPage || 5);
 
   const handleRequestSort = (_, property) => {
-    const isAsc = orderBy === property && order === 'asc';
-    setOrder(isAsc ? 'desc' : 'asc');
+    const isAsc = orderBy === property && order === "asc";
+    setOrder(isAsc ? "desc" : "asc");
     setOrderBy(property);
   };
 
-  const handleSelectAllRows = newSelected => event => {
+  const handleSelectAllRows = (newSelected) => (event) => {
     if (event?.target.checked) {
       setSelected(newSelected);
       return;
@@ -57,7 +58,10 @@ export default function useMuiTable(props) {
     } else if (selectedIndex === selected.length - 1) {
       newSelected = newSelected.concat(selected.slice(0, -1));
     } else if (selectedIndex > 0) {
-      newSelected = newSelected.concat(selected.slice(0, selectedIndex), selected.slice(selectedIndex + 1));
+      newSelected = newSelected.concat(
+        selected.slice(0, selectedIndex),
+        selected.slice(selectedIndex + 1)
+      );
     }
 
     setSelected(newSelected);
@@ -65,14 +69,15 @@ export default function useMuiTable(props) {
 
   const handleChangePage = (_, newPage) => setPage(newPage);
 
-  const handleChangeRowsPerPage = event => {
+  const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
 
-  const isSelected = id => selected.indexOf(id) !== -1;
+  const isSelected = (id) => selected.indexOf(id) !== -1;
 
-  const emptyRows = (page, rowsPerPage, dataLength) => page > 0 ? Math.max(0, (1 + page) * rowsPerPage - dataLength) : 0;
+  const emptyRows = (page, rowsPerPage, dataLength) =>
+    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - dataLength) : 0;
 
   return {
     page,
@@ -88,6 +93,6 @@ export default function useMuiTable(props) {
     handleChangePage,
     handleRequestSort,
     handleSelectAllRows,
-    handleChangeRowsPerPage
+    handleChangeRowsPerPage,
   };
 }

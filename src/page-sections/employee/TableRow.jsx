@@ -49,7 +49,7 @@ export default function TableRowView(props) {
                   },
                 }}
               >
-                {data?.user_defined_code || "-"}
+                {data?._id || "-"}
               </Paragraph>
 
               {/* <Paragraph fontSize={13}>#{data.id || "-"}</Paragraph> */}

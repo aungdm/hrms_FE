@@ -17,8 +17,9 @@ import { useState } from "react";
 import { useFormik } from "formik"; // CUSTOM COMPONENTS
 import * as Yup from "yup";
 import { create, get, update } from "../request.js";
+import { getWorkSchedules } from "../../workSchedule/request.js";
 import convertToFormData from "@/utils/convertToFormData.js";
-// import { toast } from "react-toastify";
+import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { useParams } from "react-router-dom";
 import { useLocation } from "react-router-dom";
@@ -44,6 +45,7 @@ export default function CreateView() {
   console.log({ id }, { params }, location.pathname);
 
   const [mode, setMode] = useState(false);
+  const [workSchedules, setWorkSchedules] = useState([]);
 
   const salutationList = [
     { label: "Mr.", value: "Mr." },
@@ -308,30 +310,44 @@ export default function CreateView() {
     validationSchema,
     onSubmit: async (values) => {
       console.log({ values });
+      console.log({ mode });
       try {
         // const formData = convertToFormData(values);
 
         let responseData;
         if (!mode) {
-          responseData = await create(values);
+          console.log("Creating employee");
+          // Adding _id field with user_defined_code value for new employee creation
+          const employeeData = {
+            ...values,
+            _id: values.user_defined_code.toString(), // Convert to string as MongoDB IDs are strings
+          };
+          console.log("Employee data with custom ID:", employeeData);
+          responseData = await create(employeeData);
           console.log({ responseData });
+
+          if (responseData.success) {
+            toast.success("Employee created successfully");
+            resetForm();
+            navigate("/employee-list");
+          } else {
+            toast.error("Error creating employee. Please try again.");
+          }
         } else {
+          console.log("Updating employee");
           //   formData.append("_method", "put");
           responseData = await update(id, values);
+
+          if (responseData.success) {
+            toast.success("Employee updated successfully");
+            navigate("/employee-list");
+          } else {
+            toast.error("Error updating employee. Please try again.");
+          }
         }
-        console.log({ responseData });
-        // if (responseData.success) {
-        //   toast.success(
-        //     isEdit
-        //       ? "Service updated successfully"
-        //       : "Service created successfully "
-        //   );
-        //   resetForm();
-        //   navigate("/services-list");
-        // }
       } catch (error) {
         console.error(error);
-        throw error;
+        toast.error("An error occurred. Please try again.");
       }
     },
   });
@@ -373,6 +389,11 @@ export default function CreateView() {
         leaveTypes,
       } = response.data;
       if (response.success) {
+        // Ensure workSchedules are loaded before setting timeSlot
+        if (workSchedules.length === 0) {
+          await fetchWorkSchedules();
+        }
+
         setValues({
           name: name || "",
           father_or_husband_name: father_or_husband_name || "",
@@ -415,7 +436,21 @@ export default function CreateView() {
     }
   };
 
+  // Fetch work schedules
+  const fetchWorkSchedules = async () => {
+    try {
+      const response = await getWorkSchedules("", 100, 0);
+      if (response?.success && response?.data) {
+        setWorkSchedules(response.data);
+      }
+    } catch (error) {
+      console.error("Error fetching work schedules:", error);
+    }
+  };
+
   useEffect(() => {
+    fetchWorkSchedules();
+
     if (id) {
       fetchRecord(id);
     }
@@ -1251,16 +1286,45 @@ export default function CreateView() {
           </Grid>
           <Grid container spacing={2}>
             <Grid p={3} size={{ md: 6, sm: 12, xs: 12 }}>
-              <TextField
-                type="text"
+              <Autocomplete
                 fullWidth
-                name="timeSlot"
-                label="Time Slot"
-                value={values.timeSlot}
-                onChange={handleChange}
-                helperText={touched.timeSlot && errors.timeSlot}
-                error={Boolean(touched.timeSlot && errors.timeSlot)}
-                inputProps={{ readOnly: mode === "view" }}
+                disablePortal
+                options={workSchedules}
+                getOptionLabel={(option) => {
+                  // Handle both object and string cases
+                  if (typeof option === "object" && option !== null) {
+                    return `${option.name} (${option.shiftStart} - ${option.shiftEnd})`;
+                  }
+                  // If it's a string ID, try to find the matching schedule
+                  const schedule = workSchedules.find((s) => s._id === option);
+                  return schedule
+                    ? `${schedule.name} (${schedule.shiftStart} - ${schedule.shiftEnd})`
+                    : option || "";
+                }}
+                value={
+                  workSchedules.find((opt) => opt._id === values.timeSlot) ||
+                  values.timeSlot ||
+                  null
+                }
+                onChange={(event, newValue) => {
+                  handleChange({
+                    target: {
+                      name: "timeSlot",
+                      value: newValue?._id || "",
+                    },
+                  });
+                }}
+                disabled={mode === "view"}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    sx={{ "& .MuiInputBase-root": { height: "auto" } }}
+                    name="timeSlot"
+                    label="Work Schedule"
+                    helperText={touched.timeSlot && errors.timeSlot}
+                    error={Boolean(touched.timeSlot && errors.timeSlot)}
+                  />
+                )}
               />
             </Grid>
           </Grid>
@@ -1277,68 +1341,4 @@ export default function CreateView() {
       </form>
     </>
   );
-}
-
-{
-  /* <Grid p={3} sx={{ mb: 4 }}
-              size={{
-                sm: 6,
-                xs: 12,
-              }}
-            >
-              <Paragraph fontSize={14} sx={{ pb: 2 }}>Role </Paragraph>
-              <TextField
-                select
-                fullWidth
-                name="role_id"
-                value={values.role_id}
-                style={{ color: "red" }}
-                onChange={(e) =>
-                  handleChange({
-                    target: {
-                      name: "role_id",
-                      value: Number(e.target.value),
-                    },
-                  })
-                }
-                helperText={touched.role_id && errors.role_id}
-                error={Boolean(touched.role_id && errors.role_id)}
-                slotProps={{
-                  select: {
-                    native: true,
-                  },
-                }}
-              >
-                <option value="" disabled>
-                  Assign Role
-                </option>
-                {Object.values(roles).map((role) => (
-                <option key={role.id} value={role.id}>
-                  {role.name.charAt(0).toUpperCase() +
-                    role.name.slice(1).replace("-", " ")}
-                </option>
-              ))}
-              </TextField>
-            </Grid> */
-}
-
-{
-  /* <Grid size={5}>
-            <Card
-              sx={{
-                my: 3,
-              }}
-            >
-              <DropZone
-                file={files}
-                onRemove={handleRemoveFile}
-                onDrop={handleDropFile}
-              />
-              {touched.image && errors.image && (
-                <Paragraph color="error.main" mt={2}>
-                  {errors.image}
-                </Paragraph>
-              )}
-            </Card>
-          </Grid> */
 }

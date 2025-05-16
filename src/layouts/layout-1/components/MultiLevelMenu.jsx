@@ -1,13 +1,9 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom"; // CUSTOM DEFINED HOOK
-
 import useAuth from "@/hooks/useAuth"; // LAYOUT BASED HOOK
-
 import useLayout from "@/layouts/layout-1/context/useLayout"; // CUSTOM COMPONENTS
-
 import SidebarAccordion from "./SidebarAccordion";
-// import { navigations } from "@/layouts/layout-parts/navigation"; // CUSTOM STYLED COMPONENTS
 import duotone from "@/icons/duotone";
 import {
   ItemText,
@@ -23,35 +19,112 @@ export default function MultiLevelMenu({ sidebarCompact }) {
 
   const navigations = [
     {
-      name: "Analytics",
-      icon: duotone.PersonChalkboard,
+      name: "People",
+      icon: duotone.Calendar,
       children: [
         {
-          name: "Analytics 1",
-          path: "/",
+          name: "Employee",
+          path: "/employee-list",
+        },
+        {
+          name: "Salary Revisions",
+          path: "/salary-revisions-list",
         },
       ],
     },
-    // {
-    //   name: t("users"),
-    //   icon: duotone.UserList,
-    //   path: "/",
-    // },
     {
-      name: "Employee",
-      icon: duotone.UserList,
-      path: "/employee-list",
+      name: "Attendance",
+      icon: duotone.Calendar,
+      children: [
+        {
+          name: "Time Sheet",
+          path: "/time-sheet-list",
+        },
+        {
+          name: "Attendance Logs",
+          path: "/attendance-logs-list",
+        },
+      ],
     },
     {
-      name: "Salary Revisions",
-      icon: duotone.UserList,
-      path: "/salary-revisions-list",
+      name: "Payroll",
+      icon: duotone.Wallet,
+      children: [
+        {
+          name: "Pay Rolls",
+          icon: duotone.Dollar,
+          path: "/pay-rolls-list",
+        },
+        {
+          name: "Salary Sheet",
+          icon: duotone.FileText,
+          path: "/salary-sheet-list",
+        },
+        {
+          name: "Pay Slips",
+          icon: duotone.Receipt,
+          path: "/pay-slips-list",
+        },
+        {
+          name: "Custom PayItems",
+          icon: duotone.Settings,
+          children: [
+            {
+              name: "Fine / Deduction",
+              path: "/fine-deduction-list",
+            },
+            {
+              name: "Other Deductions",
+              path: "/other-deduction-list",
+            },
+            {
+              name: "Other Incentives",
+              path: "/other-incentives-list",
+            },
+            {
+              name: "Arrears",
+              path: "/arrears-list",
+            },
+          ],
+        },
+      ],
     },
-    // {
-    //   name: t("services"),
-    //   icon: duotone.TodoList,
-    //   path: "/services-list",
-    // },
+    {
+      name: "Requests",
+      icon: duotone.Wallet,
+      children: [
+        {
+          name: "Leave",
+          path: "/leave-list",
+        },
+        {
+          name: "Overtime",
+          path: "/overtime-list",
+        },
+        {
+          name: "Punch",
+          path: "/punch-list",
+        },
+        {
+          name: "Loan",
+          path: "/attendance-logs-list",
+        },
+      ],
+    },
+    {
+      name: "Settings",
+      icon: duotone.Wallet,
+      children: [
+        {
+          name: "Time Slots",
+          path: "/time-slot-list",
+        },
+        {
+          name: "Attendance Logs",
+          path: "/attendance-logs-list",
+        },
+      ],
+    },
     // {
     //   name: t("bookings"),
     //   icon: duotone.Calender,

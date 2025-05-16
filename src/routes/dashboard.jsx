@@ -77,12 +77,99 @@ const EmployeeCreateView = Loadable(
 const EmployeeUpdateView = Loadable(
   lazy(() => import("@/pages/dashboard/employee/create"))
 );
+const AttendanceLogsListView = Loadable(
+  lazy(() => import("@/pages/dashboard/attendanceLogs/list"))
+);
+
+const AttendanceLogsCreateView = Loadable(
+  lazy(() => import("@/pages/dashboard/attendanceLogs/create"))
+);
+
 const SalaryRevisionView = Loadable(
   lazy(() => import("@/pages/dashboard/salaryRevision/list"))
 );
 
 const SalaryRevisionCreateView = Loadable(
   lazy(() => import("@/pages/dashboard/salaryRevision/create"))
+);
+
+const TimeSheetListView = Loadable(
+  lazy(() => import("@/pages/dashboard/timeSheet/list"))
+);
+
+const TimeSheetCreateView = Loadable(
+  lazy(() => import("@/pages/dashboard/timeSheet/create"))
+);
+const FineDeductionListView = Loadable(
+  lazy(() => import("@/pages/dashboard/fineDeduction/list"))
+);
+
+const FineDeductionCreateView = Loadable(
+  lazy(() => import("@/pages/dashboard/fineDeduction/create"))
+);
+const OtherDeductionListView = Loadable(
+  lazy(() => import("@/pages/dashboard/otherDeduction/list"))
+);
+
+const OtherDeductionCreateView = Loadable(
+  lazy(() => import("@/pages/dashboard/otherDeduction/create"))
+);
+const OtherIncentivesListView = Loadable(
+  lazy(() => import("@/pages/dashboard/otherIncentives/list"))
+);
+const OtherIncentivesCreateView = Loadable(
+  lazy(() => import("@/pages/dashboard/otherIncentives/create"))
+);
+const ArrearsListView = Loadable(
+  lazy(() => import("@/pages/dashboard/arrears/list"))
+);
+const ArrearsCreateView = Loadable(
+  lazy(() => import("@/pages/dashboard/arrears/create"))
+);
+const SalarySheetListView = Loadable(
+  lazy(() => import("@/pages/dashboard/salarySheet/list"))
+);
+const SalarySheetCreateView = Loadable(
+  lazy(() => import("@/pages/dashboard/salarySheet/create"))
+);
+const PayRollsListView = Loadable(
+  lazy(() => import("@/pages/dashboard/payRolls/list"))
+);
+const PayRollsCreateView = Loadable(
+  lazy(() => import("@/pages/dashboard/payRolls/create"))
+);
+const PaySlipsListView = Loadable(
+  lazy(() => import("@/pages/dashboard/paySlips/list"))
+);
+const PaySlipsCreateView = Loadable(
+  lazy(() => import("@/pages/dashboard/paySlips/create"))
+);
+const PaySlipView = Loadable(
+  lazy(() => import("@/pages/dashboard/paySlips/paySlip"))
+);
+const WorkScheduleListView = Loadable(
+  lazy(() => import("@/pages/dashboard/workSchedule/list"))
+);
+const WorkScheduleCreateView = Loadable(
+  lazy(() => import("@/pages/dashboard/workSchedule/create"))
+);
+const LeaveListView = Loadable(
+  lazy(() => import("@/pages/dashboard/leave/list"))
+);
+const LeaveCreateView = Loadable(
+  lazy(() => import("@/pages/dashboard/leave/create"))
+);
+const PunchListView = Loadable(
+  lazy(() => import("@/pages/dashboard/punch/list"))
+);
+const PunchCreateView = Loadable(
+  lazy(() => import("@/pages/dashboard/punch/create"))
+);
+const OvertimeListView = Loadable(
+  lazy(() => import("@/pages/dashboard/overtime/list"))
+);
+const OvertimeCreateView = Loadable(
+  lazy(() => import("@/pages/dashboard/overtime/create"))
 );
 const BookingListView = Loadable(
   lazy(() => import("@/pages/dashboard/bookings/BookingList"))
@@ -175,6 +262,9 @@ const ActiveLayout = () => {
   const { settings } = useSettings();
   return settings.activeLayout === "layout2" ? <LayoutV2 /> : <LayoutV1 />;
 };
+
+// Import the Overtime list view
+import OvertimeList from "@/page-sections/overtime/page-view/list";
 
 export const DashboardRoutes = [
   {
@@ -272,12 +362,189 @@ export const DashboardRoutes = [
         element: <SalaryRevisionCreateView />,
       },
       {
+        path: "time-sheet-list",
+        element: <TimeSheetListView />,
+      },
+      {
+        path: "time-sheet-create",
+        element: <TimeSheetCreateView />,
+      },
+      {
+        path: "time-sheet-update/:id",
+        element: <TimeSheetCreateView />,
+      },
+      {
+        path: "time-sheet-view/:id",
+        element: <TimeSheetCreateView />,
+      },
+      {
+        path: "attendance-logs-list",
+        element: <AttendanceLogsListView />,
+      },
+      {
+        path: "attendance-logs-create",
+        element: <AttendanceLogsCreateView />,
+      },
+      {
+        path: "attendance-logs-update/:id",
+        element: <AttendanceLogsCreateView />,
+      },
+      {
+        path: "attendance-logs-view/:id",
+        element: <AttendanceLogsCreateView />,
+      },
+      {
+        path: "fine-deduction-list",
+        element: <FineDeductionListView />,
+      },
+      {
+        path: "fine-deduction-create",
+        element: <FineDeductionCreateView />,
+      },
+      {
+        path: "fine-deduction-update/:id",
+        element: <FineDeductionCreateView />,
+      },
+      {
+        path: "fine-deduction-view/:id",
+        element: <FineDeductionCreateView />,
+      },
+      {
+        path: "other-deduction-list",
+        element: <OtherDeductionListView />,
+      },
+      {
+        path: "other-deduction-create",
+        element: <OtherDeductionCreateView />,
+      },
+      {
+        path: "other-deduction-update/:id",
+        element: <OtherDeductionCreateView />,
+      },
+      {
+        path: "other-deduction-view/:id",
+        element: <OtherDeductionCreateView />,
+      },
+      {
+        path: "other-incentives-list",
+        element: <OtherIncentivesListView />,
+      },
+      {
+        path: "other-incentives-create",
+        element: <OtherIncentivesCreateView />,
+      },
+      {
+        path: "other-incentives-update/:id",
+        element: <OtherIncentivesCreateView />,
+      },
+      {
+        path: "other-incentives-view/:id",
+        element: <OtherIncentivesCreateView />,
+      },
+      {
+        path: "arrears-list",
+        element: <ArrearsListView />,
+      },
+      {
+        path: "arrears-create",
+        element: <ArrearsCreateView />,
+      },
+      {
+        path: "arrears-update/:id",
+        element: <ArrearsCreateView />,
+      },
+      {
+        path: "arrears-view/:id",
+        element: <ArrearsCreateView />,
+      },
+      {
+        path: "salary-sheet-list",
+        element: <SalarySheetListView />,
+      },
+      {
+        path: "pay-rolls-list",
+        element: <PayRollsListView />,
+      },
+      {
+        path: "pay-rolls-create",
+        element: <PayRollsCreateView />,
+      },
+      {
+        path: "pay-rolls-update/:id",
+        element: <PayRollsCreateView />,
+      },
+      {
+        path: "pay-rolls-view/:id",
+        element: <PayRollsCreateView />,
+      },
+      {
+        path: "pay-slips-list",
+        element: <PaySlipsListView />,
+      },
+      {
+        path: "pay-slips-data/:id",
+        element: <PaySlipsCreateView />,
+      },
+      {
+        path: "pay-slips-view/:id",
+        element: <PaySlipView />,
+      },
+      {
         path: "service-create",
         element: <ServicesCreate />,
       },
       {
         path: "service-create/:id",
         element: <ServicesCreate />,
+      },
+      {
+        path: "time-slot-list",
+        element: <WorkScheduleListView />,
+      },
+      {
+        path: "time-slot-create",
+        element: <WorkScheduleCreateView />,
+      },
+      {
+        path: "time-slot-update/:id",
+        element: <WorkScheduleCreateView />,
+      },
+
+      {
+        path: "leave-list",
+        element: <LeaveListView />,
+      },
+      {
+        path: "leave-create",
+        element: <LeaveCreateView />,
+      },
+      {
+        path: "leave-update/:id",
+        element: <LeaveCreateView />,
+      },
+      {
+        path: "punch-list",
+        element: <PunchListView />,
+      },
+      {
+        path: "punch-create",
+        element: <PunchCreateView />,
+      },
+      {
+        path: "punch-update/:id",
+        element: <PunchCreateView />,
+      },
+      {
+        path: "overtime-list",
+        element: <OvertimeList />,
+      },
+      {
+        path: "overtime-create",
+        element: <OvertimeCreateView />,
+      },
+      {
+        path: "overtime-update/:id",
+        element: <OvertimeCreateView />,
       },
       {
         path: "bookings-list",

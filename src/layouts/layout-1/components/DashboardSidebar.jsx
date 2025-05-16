@@ -1,17 +1,13 @@
 import { useState } from "react";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton"; // LAYOUT BASED HOOK
-
 import useLayout from "@/layouts/layout-1/context/useLayout"; // CUSTOM COMPONENTS
-
 import MultiLevelMenu from "./MultiLevelMenu";
 import Link from "@/components/link";
 import Scrollbar from "@/components/scrollbar";
 import FlexBetween from "@/components/flexbox/FlexBetween";
 import UserAccount from "@/layouts/layout-parts/UserAccount"; // CUSTOM ICON COMPONENT
-
 import ArrowLeftToLine from "@/icons/duotone/ArrowLeftToLine"; // STYLED COMPONENTS
-
 import { SidebarWrapper } from "@/layouts/layout-1/styles";
 const TOP_HEADER_AREA = 70;
 import appicon from "@/assets/app-icon.png";

@@ -135,3 +135,18 @@ export const deleteMultipleService = async (ids) => {
     throw error;
   }
 };
+
+export const updateSalary = async (id, data) => {
+  try {
+    const response = await axios.patch(`/employee/update/${id}`, data);
+    console.log({ response });
+    if (response.data.success) {
+      return { data: response?.data?.data?.data, success: true };
+    } else {
+      return { success: false };
+    }
+  } catch (error) {
+    console.error("Error updating services:", error.message);
+    throw error;
+  }
+};

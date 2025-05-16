@@ -16,7 +16,12 @@ import TableBody from "@mui/material/TableBody";
 import TableRowView from "../TableRow.jsx";
 import { useEffect } from "react";
 import TableSkeleton from "@/components/loader/TableSkeleton.jsx";
-import { deleteRecord, getRecords, deleteMultipleService } from "../request.js";
+import {
+  deleteRecord,
+  getRecords,
+  deleteMultipleService,
+  updateSalary,
+} from "../request.js";
 import { toast } from "react-toastify";
 import useDebounce from "@/hooks/debounceHook";
 
@@ -42,6 +47,7 @@ export default function ListView() {
   const [searchString, setSearchString] = useState("");
   const debouncedSearchString = useDebounce(searchString, 2000);
   console.log({ debouncedSearchString });
+
   const handleSearch = (key, value) => {
     console.log({ key }, { value });
     setSearchString(value);
@@ -77,7 +83,6 @@ export default function ListView() {
       setLoading(true);
       const response = await getRecords(
         debouncedSearchString,
-        "",
         rowsPerPage,
         page
       );
@@ -94,9 +99,13 @@ export default function ListView() {
     }
   }, [rowsPerPage, page, debouncedSearchString]);
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id, employeeId, previousSalary) => {
     try {
       const response = await deleteRecord(id);
+      const salaryData = await updateSalary(employeeId, {
+        after_probation_gross_salary: previousSalary,
+      });
+      console.log({ salaryData });
       console.log({ response }, "delete Service");
       if (response.success) {
         toast.success("Deleted successfully");

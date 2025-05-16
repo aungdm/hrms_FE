@@ -62,7 +62,11 @@ export default function TableRowView(props) {
               title="Undo"
               handleClick={() => {
                 handleCloseOpenMenu();
-                handleDelete(data._id);
+                handleDelete(
+                  data._id,
+                  data?.employment?._id,
+                  data?.previousSalary
+                );
               }}
             />
           </TableMoreMenu>
