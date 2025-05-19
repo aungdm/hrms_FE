@@ -49,24 +49,24 @@ export default function TableRowView(props) {
                   },
                 }}
               >
-                {data?.deviceUserId || "-"}
+                {/* {data?.deviceUserId || "-"} */}
               </Paragraph>
 
               {/* <Paragraph fontSize={13}>#{data.id || "-"}</Paragraph> */}
             </div>
           </FlexBox>
         </TableCell>
-        <TableCell>{data?.name || "-"}</TableCell>
+        {/* <TableCell>{data?.name || "-"}</TableCell> */}
 
         <TableCell padding="normal">
-          {utils.formatISOtDateTime(data?.recordTime) || "-"}
+          {/* {utils.formatISOtDateTime(data?.recordTime) || "-"} */}
         </TableCell>
 
         <TableCell padding="normal">
-          {data?.deviceId || "-"}
+          {/* {data?.deviceId || "-"} */}
         </TableCell>
 
-        <TableCell padding="normal">
+        {/* <TableCell padding="normal">
           <TableMoreMenu
             open={openMenuEl}
             handleOpen={handleOpenMenu}
@@ -97,7 +97,7 @@ export default function TableRowView(props) {
               }}
             />
           </TableMoreMenu>
-        </TableCell>
+        </TableCell> */}
       </TableRow>
     </>
   );

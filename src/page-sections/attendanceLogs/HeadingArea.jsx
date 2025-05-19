@@ -30,13 +30,13 @@ export default function HeadingArea() {
         </IconWrapper>
         <Paragraph fontSize={16}>Logs</Paragraph>
       </FlexBox>
-      <Button
+      {/* <Button
         variant="contained"
         startIcon={<Add />}
         onClick={() => navigate("/employee-create")}
       >
         Create
-      </Button>
+      </Button> */}
     </FlexBetween>
   );
 }
