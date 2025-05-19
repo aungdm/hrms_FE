@@ -106,7 +106,7 @@ export default function CreateView() {
         const response = await create(values);
         if (response.success) {
           toast.success("Work Schedule created successfully");
-          navigate("/work-schedule-list");
+          navigate("/time-slot-list");
           } else {
           toast.error("Failed to create work schedule");
           }
@@ -115,7 +115,7 @@ export default function CreateView() {
         const response = await update(id, values);
         if (response.success) {
           toast.success("Work Schedule updated successfully");
-          navigate("/work-schedule-list");
+          navigate("/time-slot-list");
           } else {
           toast.error("Failed to update work schedule");
           }

@@ -33,7 +33,7 @@ export default function HeadingArea() {
       <Button
         variant="contained"
         startIcon={<Add />}
-        onClick={() => navigate("/work-schedule-create")}
+        onClick={() => navigate("/time-slot-create")}
       >
         Create
       </Button>

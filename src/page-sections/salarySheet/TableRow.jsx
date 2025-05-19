@@ -49,21 +49,21 @@ export default function TableRowView(props) {
                   },
                 }}
               >
-                {data?.user_defined_code || "-"}
+                {/* {data?.user_defined_code || "-"} */}
               </Paragraph>
 
               {/* <Paragraph fontSize={13}>#{data.id || "-"}</Paragraph> */}
             </div>
           </FlexBox>
         </TableCell>
-        <TableCell>{data?.name || "-"}</TableCell>
+        {/* <TableCell>{data?.name || "-"}</TableCell> */}
 
-        <TableCell padding="normal">{data?.designation || "-"}</TableCell>
+        {/* <TableCell padding="normal">{data?.designation || "-"}</TableCell> */}
 
         <TableCell padding="normal">
-          {data?.joining_date.slice(0, 10) || "-"}
+          {/* {data?.joining_date.slice(0, 10) || "-"} */}
         </TableCell>
-
+{/* 
         <TableCell padding="normal">
           <TableMoreMenu
             open={openMenuEl}
@@ -95,7 +95,7 @@ export default function TableRowView(props) {
               }}
             />
           </TableMoreMenu>
-        </TableCell>
+        </TableCell> */}
       </TableRow>
     </>
   );
