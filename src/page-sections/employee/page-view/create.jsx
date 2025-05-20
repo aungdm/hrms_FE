@@ -189,6 +189,15 @@ export default function CreateView() {
     { id: 2, label: "USD", value: "USD" },
     { id: 3, label: "Euro", value: "Euro" },
   ];
+  const workDaysList = [
+    { id: 0, label: "Sunday", value: 0 },
+    { id: 1, label: "Monday", value: 1 },
+    { id: 2, label: "Tuesday", value: 2 },
+    { id: 3, label: "Wednesday", value: 3 },
+    { id: 4, label: "Thursday", value: 4 },
+    { id: 5, label: "Friday", value: 5 },
+    { id: 6, label: "Saturday", value: 6 },
+  ];
 
   const initialValues = {
     name: "",
@@ -224,6 +233,7 @@ export default function CreateView() {
     role: "",
     timeSlot: "",
     leaveTypes: "",
+    workDays: [1, 2, 3, 4, 5], // Default Monday to Friday
   };
 
   const validationSchema = Yup.object().shape({
@@ -294,6 +304,10 @@ export default function CreateView() {
     role: Yup.string().required("Role is Required!"),
     timeSlot: Yup.string().required("Time Slot is Required!"),
     leaveTypes: Yup.string().required("Leave Types is Required!"),
+    workDays: Yup.array()
+      .of(Yup.number().min(0).max(6))
+      .min(1, "At least one work day must be selected")
+      .required("Work days are Required!"),
   });
 
   const {
@@ -387,6 +401,7 @@ export default function CreateView() {
         role,
         timeSlot,
         leaveTypes,
+        workDays,
       } = response.data;
       if (response.success) {
         // Ensure workSchedules are loaded before setting timeSlot
@@ -427,6 +442,8 @@ export default function CreateView() {
           role: role || "",
           timeSlot: timeSlot || "",
           leaveTypes: leaveTypes || "",
+          workDays: workDays || [1, 2, 3, 4, 5],
+
         });
         // setFiles(response?.data?.image || null);
       }
@@ -1323,6 +1340,40 @@ export default function CreateView() {
                     label="Work Schedule"
                     helperText={touched.timeSlot && errors.timeSlot}
                     error={Boolean(touched.timeSlot && errors.timeSlot)}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid p={3} size={{ md: 6, sm: 12, xs: 12 }}>
+              <Autocomplete
+                sx={{ minHeight: "100px" }}
+                multiple
+                id="workDays"
+                options={workDaysList}
+                getOptionLabel={(option) =>
+                  typeof option === "object"
+                    ? option.label
+                    : workDaysList.find((day) => day.value === option)?.label ||
+                      ""
+                }
+                value={values?.workDays?.map(
+                  (dayValue) =>
+                    workDaysList.find((day) => day.value === dayValue) ||
+                    dayValue
+                )}
+                onChange={(_, newValue) => {
+                  const selectedValues = newValue.map((item) =>
+                    typeof item === "object" ? item.value : item
+                  );
+                  setFieldValue("workDays", selectedValues);
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Work Days *"
+                    placeholder="Select work days"
+                    error={touched.workDays && Boolean(errors.workDays)}
+                    helperText={touched.workDays && errors.workDays}
                   />
                 )}
               />
