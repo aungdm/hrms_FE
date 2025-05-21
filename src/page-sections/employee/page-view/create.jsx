@@ -84,7 +84,7 @@ export default function CreateView() {
     { id: 9, label: "HR", value: "HR" },
     { id: 10, label: "Operations", value: "Operations" },
     { id: 11, label: "Sales Outbound", value: "Sales Outbound" },
-
+    { id: 12, label: "Admin", value: "Admin" },
     {
       id: 13,
       label: "Corporate Legal Department",
@@ -126,6 +126,7 @@ export default function CreateView() {
     { id: 13, label: "Supervisor", value: "Supervisor" },
     { id: 14, label: "Team Lead", value: "Team Lead" },
 
+
     // Managerial Roles
     { id: 15, label: "HR Assistant", value: "HR Assistant" },
     { id: 16, label: "HR Manager", value: "HR Manager" },
@@ -150,6 +151,8 @@ export default function CreateView() {
     { id: 29, label: "Head", value: "Head" },
     { id: 30, label: "Manager", value: "Manager" },
     { id: 31, label: "CEO", value: "CEO" },
+    { id: 32, label: "Office Boy", value: "Office Boy" },
+
 
     // Other Roles
     { id: 32, label: "Gardener", value: "Gardener" },
