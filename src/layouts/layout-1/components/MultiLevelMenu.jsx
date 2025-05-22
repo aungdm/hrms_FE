@@ -44,6 +44,10 @@ export default function MultiLevelMenu({ sidebarCompact }) {
           name: "Attendance Logs",
           path: "/attendance-logs-list",
         },
+        {
+          name: "Employee Schedule",
+          path: "/employee-schedule-list",
+        },
       ],
     },
     {

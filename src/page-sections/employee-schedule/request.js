@@ -1,0 +1,188 @@
+import axios from "axios";
+
+export const getEmployeeSchedules = async (
+  month,
+  year,
+  page = 1,
+  perPage = 10
+) => {
+  try {
+    const response = await axios.get("employeeSchedule", {
+      params: {
+        month,
+        year,
+        page,
+        perPage
+      },
+    });
+    
+    if (response?.data?.success) {
+      return {
+        data: response?.data?.data?.data,
+        success: true,
+        totalRecords: response?.data?.data?.meta?.total,
+      };
+    } else {
+      return { success: false };
+    }
+  } catch (error) {
+    console.error("Error fetching employee schedules:", error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+export const getEmployeeSchedule = async (
+  employee_id,
+  month,
+  year
+) => {
+  try {
+    const response = await axios.get("employeeSchedule/employee", {
+      params: {
+        employee_id,
+        month,
+        year
+      },
+    });
+    
+    if (response?.data?.success) {
+      return {
+        data: response?.data?.data,
+        success: true,
+      };
+    } else {
+      return { success: false };
+    }
+  } catch (error) {
+    console.error("Error fetching employee schedule:", error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+export const generateEmployeeSchedule = async (
+  employee_id,
+  month,
+  year
+) => {
+  try {
+    const response = await axios.post("employeeSchedule/generate", {
+      employee_id,
+      month,
+      year
+    });
+    
+    if (response?.data?.success) {
+      return {
+        data: response?.data?.data,
+        success: true,
+      };
+    } else {
+      return { success: false };
+    }
+  } catch (error) {
+    console.error("Error generating employee schedule:", error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+export const generateAllEmployeeSchedules = async (
+  month,
+  year
+) => {
+  try {
+    const response = await axios.post("employeeSchedule/generate-all", {
+      month,
+      year
+    });
+    
+    if (response?.data?.success) {
+      return {
+        data: response?.data?.data,
+        success: true,
+      };
+    } else {
+      return { success: false };
+    }
+  } catch (error) {
+    console.error("Error generating all employee schedules:", error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+export const updateEmployeeScheduleDay = async (
+  schedule_id,
+  date,
+  isDayOff,
+  start,
+  end,
+  notes
+) => {
+  try {
+    // Update the specific day
+    const response = await axios.put("employeeSchedule/update-day", {
+      schedule_id,
+      date,
+      isDayOff,
+      start,
+      end,
+      notes
+    });
+    
+    if (response?.data?.success) {
+      // After updating, get the full schedule data to ensure we have complete data
+      // Extract employee_id, month, and year from the response data
+      const updatedSchedule = response?.data?.data;
+      const employee_id = updatedSchedule?.employee_id;
+      const month = updatedSchedule?.month;
+      const year = updatedSchedule?.year;
+      
+      // If we have the necessary data, fetch the complete schedule
+      if (employee_id && month && year) {
+        try {
+          const fullScheduleResponse = await axios.get("employeeSchedule/employee", {
+            params: { employee_id, month, year }
+          });
+          
+          if (fullScheduleResponse?.data?.success) {
+            return {
+              data: fullScheduleResponse?.data?.data,
+              success: true,
+            };
+          }
+        } catch (err) {
+          console.warn("Error fetching full schedule after update:", err);
+          // Fall back to the original response data if fetch fails
+        }
+      }
+      
+      // Return the original response data if we couldn't fetch the full schedule
+      return {
+        data: updatedSchedule,
+        success: true,
+      };
+    } else {
+      return { success: false };
+    }
+  } catch (error) {
+    console.error("Error updating employee schedule day:", error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+export const deleteEmployeeSchedule = async (id) => {
+  try {
+    const response = await axios.delete(`employeeSchedule/${id}`);
+    
+    if (response?.data?.success) {
+      return {
+        data: response?.data?.data,
+        success: true,
+      };
+    } else {
+      return { success: false };
+    }
+  } catch (error) {
+    console.error("Error deleting employee schedule:", error.message);
+    return { success: false, error: error.message };
+  }
+}; 

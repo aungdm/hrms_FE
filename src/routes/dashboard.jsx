@@ -258,6 +258,10 @@ const ProjectDetails = Loadable(
 );
 // const TeamMember = Loadable(lazy(() => import('@/pages/dashboard/projects/team-member')));
 
+const EmployeeScheduleListView = Loadable(
+  lazy(() => import("@/pages/dashboard/employee-schedule/list"))
+);
+
 const ActiveLayout = () => {
   const { settings } = useSettings();
   return settings.activeLayout === "layout2" ? <LayoutV2 /> : <LayoutV1 />;
@@ -658,6 +662,10 @@ export const DashboardRoutes = [
             element: <MailDetails />,
           },
         ],
+      },
+      {
+        path: "employee-schedule-list",
+        element: <EmployeeScheduleListView />,
       },
     ],
   },

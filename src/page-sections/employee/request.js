@@ -113,3 +113,26 @@ export const deleteMultipleService = async (ids) => {
     throw error;
   }
 };
+
+export const getAllEmployees = async () => {
+  try {
+    const response = await axios.get("employee/get", {
+      params: {
+        perPage: 1000, // Get a large number to effectively get all employees
+      },
+    });
+    
+    if (response?.data?.success) {
+      return {
+        data: response?.data?.data?.data,
+        success: true,
+        totalRecords: response?.data?.data?.meta?.total,
+      };
+    } else {
+      return { success: false };
+    }
+  } catch (error) {
+    console.error("Error fetching all employees:", error.message);
+    return { success: false, error: error.message };
+  }
+};

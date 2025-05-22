@@ -236,7 +236,7 @@ export default function CreateView() {
     role: "",
     timeSlot: "",
     leaveTypes: "",
-    workDays: [1, 2, 3, 4, 5], // Default Monday to Friday
+    workDays: [1, 2, 3, 4, 5,6,7], // Default Monday to Friday
   };
 
   const validationSchema = Yup.object().shape({

@@ -21,7 +21,7 @@
     "@mui/lab": "^6.0.0-beta.10",
     "@mui/material": "^6.4.1",
     "@mui/x-data-grid": "^7.18.0",
-    "@mui/x-date-pickers": "^7.24.0",
+    "@mui/x-date-pickers": "^8.4.0",
     "@mui/x-tree-view": "^7.18.0",
     "@react-google-maps/api": "^2.20.3",
     "@south-paw/react-vector-maps": "^3.2.0",
