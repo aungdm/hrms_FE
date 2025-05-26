@@ -257,9 +257,9 @@ export default function OvertimeTableRow(props) {
           <Stack direction="row" spacing={1} alignItems="center">
             {formatISOtDateTime(data?.date)}
             {data?.isManuallyUpdated && (
-              <Chip
+          <Chip 
                 label="Manual"
-                size="small"
+            size="small"
                 sx={{
                   bgcolor: "#f50057",
                   color: "white",

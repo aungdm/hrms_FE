@@ -34,6 +34,40 @@ export const getWorkSchedules = async (
   }
 };
 
+// Get all work schedules without pagination
+export const getAllWorkSchedules = async () => {
+  try {
+    // Using a large perPage value to get all records in one request
+    const response = await axios.get("workSchedule", {
+      params: {
+        perPage: 1000, // Large enough to get all schedules
+        page: 1,
+        sortField: "name",
+        sortOrder: "asc"
+      },
+    });
+    
+    if (response?.data?.success) {
+      return {
+        data: response?.data?.data?.data,
+        success: true,
+      };
+    } else {
+      return { 
+        success: false,
+        message: response?.data?.message || "Failed to fetch work schedules"
+      };
+    }
+  } catch (error) {
+    console.error("Error fetching all work schedules:", error.message);
+    return { 
+      success: false, 
+      error: error.message,
+      message: "An error occurred while fetching work schedules"
+    };
+  }
+};
+
 export const create = async (data) => {
   console.log({ data });
   try {

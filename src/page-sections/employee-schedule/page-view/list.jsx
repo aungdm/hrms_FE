@@ -18,7 +18,15 @@ import {
   Paper,
   InputAdornment,
   IconButton,
-  Tooltip
+  Tooltip,
+  Tabs,
+  Tab,
+  Chip,
+  Avatar,
+  Autocomplete,
+  TextField,
+  Switch,
+  FormControlLabel
 } from '@mui/material';
 import { H6 } from '@/components/typography';
 import { 
@@ -30,11 +38,20 @@ import {
   ViewDay as ViewDayIcon,
   Person as PersonIcon,
   CalendarToday as CalendarTodayIcon,
-  Refresh as RefreshIcon
+  Refresh as RefreshIcon,
+  CompareArrows as CompareArrowsIcon,
+  Group as GroupIcon,
+  GridView as GridViewIcon,
+  ViewList as ViewListIcon,
+  SelectAll as SelectAllIcon,
+  ClearAll as ClearAllIcon,
+  GridOn as GridOnIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import ScheduleCalendar from '../components/ScheduleCalendar';
-import { getEmployeeSchedule, getEmployeeSchedules, generateAllEmployeeSchedules } from '../request';
+import ScheduleTimeline from '../components/ScheduleTimeline';
+import ScheduleTimelineGrid from '../components/ScheduleTimelineGrid';
+import { getEmployeeSchedule, getEmployeeSchedules, generateAllEmployeeSchedules, getMultipleEmployeeSchedules } from '../request';
 import { getAllEmployees } from '../../employee/request';
 import { format } from 'date-fns';
 
@@ -77,6 +94,26 @@ const PageTitle = styled(Typography)(({ theme }) => ({
   gap: theme.spacing(1),
 }));
 
+const EmployeeChip = styled(Chip)(({ theme, selected }) => ({
+  margin: theme.spacing(0.5),
+  backgroundColor: selected ? theme.palette.primary.main : theme.palette.background.paper,
+  color: selected ? theme.palette.primary.contrastText : theme.palette.text.primary,
+  fontWeight: selected ? 'bold' : 'normal',
+  boxShadow: selected ? theme.shadows[2] : 'none',
+  '&:hover': {
+    backgroundColor: selected ? theme.palette.primary.dark : theme.palette.action.hover,
+  }
+}));
+
+const ViewToggleWrapper = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  border: `1px solid ${theme.palette.divider}`,
+  borderRadius: theme.shape.borderRadius,
+  backgroundColor: theme.palette.background.paper,
+  overflow: 'hidden',
+}));
+
 // Get current month and year for default values
 const today = new Date();
 const currentMonth = today.getMonth() + 1; // Adding 1 because JavaScript months are 0-indexed
@@ -101,6 +138,8 @@ const months = [
   { value: 12, label: 'December' }
 ];
 
+const MAX_EMPLOYEES = 10;
+
 export default function ListView() {
   const navigate = useNavigate();
   const theme = useTheme();
@@ -108,13 +147,15 @@ export default function ListView() {
   // State for filters and data
   const [month, setMonth] = useState(currentMonth);
   const [year, setYear] = useState(currentYear);
-  const [selectedEmployee, setSelectedEmployee] = useState('');
+  const [selectedEmployees, setSelectedEmployees] = useState([]);
   const [employees, setEmployees] = useState([]);
-  const [schedule, setSchedule] = useState(null);
+  const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [generatingSchedules, setGeneratingSchedules] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'timeline'
   
   // Fetch employees for the dropdown
   useEffect(() => {
@@ -132,28 +173,61 @@ export default function ListView() {
     fetchEmployees();
   }, []);
   
-  // Fetch schedule data
-  const fetchSchedule = async () => {
+  // Fetch schedules data
+  const fetchSchedules = async () => {
     try {
       setLoading(true);
       setError('');
       
-      // If an employee is selected, fetch their specific schedule
-      if (selectedEmployee) {
-        const response = await getEmployeeSchedule(selectedEmployee, month, year);
+      if (selectedEmployees.length === 0) {
+        setError('Please select at least one employee to view schedules');
+        setSchedules([]);
+        setLoading(false);
+        return;
+      }
+      
+      if (selectedEmployees.length === 1) {
+        // For single employee, use the existing function to maintain all functionality
+        const response = await getEmployeeSchedule(selectedEmployees[0], month, year);
         if (response.success) {
-          setSchedule(response.data);
+          // Add employee name to each schedule
+          const employeeObj = employees.find(emp => emp._id === selectedEmployees[0]);
+          if (response.data && employeeObj) {
+            response.data.employee_name = employeeObj.name;
+          }
+          setSchedules([response.data]);
+          setSuccessMessage('Schedule loaded successfully');
         } else {
-          setError('No schedule found for this employee in the selected month');
-          setSchedule(null);
+          setError('Failed to load employee schedule');
+          setSchedules([]);
         }
       } else {
-        setError('Please select an employee to view their schedule');
-        setSchedule(null);
+        // For multiple employees, use the new function
+        const response = await getMultipleEmployeeSchedules(selectedEmployees, month, year);
+        if (response.success) {
+          // Add employee names to each schedule
+          const schedulesWithNames = response.data.map(schedule => {
+            const employeeObj = employees.find(emp => emp._id === schedule.employee_id);
+            return {
+              ...schedule,
+              employee_name: employeeObj ? employeeObj.name : 'Employee'
+            };
+          });
+          
+          setSchedules(schedulesWithNames);
+          if (response.failedCount > 0) {
+            setSuccessMessage(`Loaded ${schedulesWithNames.length} schedules. ${response.failedCount} failed to load.`);
+          } else {
+            setSuccessMessage('All schedules loaded successfully');
+          }
+        } else {
+          setError('Failed to load employee schedules');
+          setSchedules([]);
+        }
       }
     } catch (err) {
-      setError('Error fetching schedule: ' + (err.message || 'Unknown error'));
-      setSchedule(null);
+      setError('Error fetching schedules: ' + (err.message || 'Unknown error'));
+      setSchedules([]);
     } finally {
       setLoading(false);
     }
@@ -173,9 +247,9 @@ export default function ListView() {
           `Successfully generated schedules for ${response.data.success} employees. ${response.data.failed} failed.`
         );
         
-        // If we have a selected employee, refresh their schedule
-        if (selectedEmployee) {
-          fetchSchedule();
+        // If we have selected employees, refresh their schedules
+        if (selectedEmployees.length > 0) {
+          fetchSchedules();
         }
       } else {
         setError('Failed to generate schedules');
@@ -187,11 +261,17 @@ export default function ListView() {
     }
   };
   
-  // Handle filter changes
-  const handleEmployeeChange = (event) => {
-    setSelectedEmployee(event.target.value);
+  // Handle employee selection
+  const handleEmployeeChange = (event, newValue) => {
+    // Limit to MAX_EMPLOYEES
+    if (newValue.length <= MAX_EMPLOYEES) {
+      setSelectedEmployees(newValue.map(employee => employee._id));
+    } else {
+      setError(`You can select up to ${MAX_EMPLOYEES} employees at once`);
+    }
   };
   
+  // Handle month and year changes
   const handleMonthChange = (event) => {
     setMonth(event.target.value);
   };
@@ -200,33 +280,72 @@ export default function ListView() {
     setYear(event.target.value);
   };
   
-  // Handle schedule updates
-  const handleScheduleUpdate = (updatedSchedule) => {
-    if (updatedSchedule && schedule) {
-      // Merge the updated schedule with existing schedule to preserve time_slot_id if needed
-      updatedSchedule = {
-        ...updatedSchedule,
-        time_slot_id: updatedSchedule.time_slot_id || schedule.time_slot_id
-      };
+  // Handle schedule updates for a specific employee
+  const handleScheduleUpdate = (updatedSchedule, employeeIndex) => {
+    // Check if this is a refresh request from batch update
+    if (updatedSchedule && updatedSchedule.needsRefresh) {
+      console.log('Refreshing all schedules after batch update');
+      // Refetch all schedules
+      fetchSchedules();
+      setSuccessMessage('Multiple schedules updated successfully');
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
+      return;
     }
     
-    setSchedule(updatedSchedule);
-    setSuccessMessage('Schedule updated successfully');
-    
-    // Clear success message after 3 seconds
-    setTimeout(() => {
-      setSuccessMessage('');
-    }, 3000);
-  };
-  
-  // Find current employee name
-  const getCurrentEmployeeName = () => {
-    if (!selectedEmployee || !employees.length) return null;
-    const employee = employees.find(e => e._id === selectedEmployee);
-    return employee ? employee.name : null;
+    // Handle single schedule update
+    if (updatedSchedule && schedules[employeeIndex]) {
+      // Make sure we preserve important schedule data that might not be in the updated schedule
+      updatedSchedule = {
+        ...updatedSchedule,
+        // If the updated schedule doesn't have time_slot_id but the original does, keep the original
+        time_slot_id: updatedSchedule.time_slot_id || schedules[employeeIndex].time_slot_id,
+        // Always preserve employee name and ID
+        employee_name: schedules[employeeIndex].employee_name,
+        employee_id: updatedSchedule.employee_id || schedules[employeeIndex].employee_id,
+      };
+      
+      // Update the specific employee's schedule in the list
+      const newSchedules = [...schedules];
+      newSchedules[employeeIndex] = updatedSchedule;
+      
+      setSchedules(newSchedules);
+      setSuccessMessage('Schedule updated successfully');
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
+    }
   };
 
-  const employeeName = getCurrentEmployeeName();
+  // Toggle between view modes
+  const handleToggleViewMode = (mode) => {
+    setViewMode(mode);
+  };
+
+  // Helper to get employee name by ID
+  const getEmployeeName = (employeeId) => {
+    const employee = employees.find(e => e._id === employeeId);
+    return employee ? employee.name : 'Employee';
+  };
+  
+  // Helper to get employee initials
+  const getEmployeeInitials = (employeeName) => {
+    if (!employeeName) return 'E';
+    const nameParts = employeeName.split(' ');
+    if (nameParts.length === 1) return nameParts[0].charAt(0);
+    return nameParts[0].charAt(0) + nameParts[nameParts.length - 1].charAt(0);
+  };
+
+  // Helper to get employee object from ID
+  const getEmployeeObject = (employeeId) => {
+    return employees.find(e => e._id === employeeId) || null;
+  };
+  
   const monthName = months.find(m => m.value === month)?.label;
   
   return (
@@ -235,10 +354,19 @@ export default function ListView() {
       <HeaderSection>
         <PageTitle>
           <CalendarMonth color="primary" />
-          Employee Schedule
+          Employee Schedules
         </PageTitle>
 
-        <Box>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <ActionButton 
+            variant="outlined" 
+            color="primary"
+            startIcon={showFilters ? <ClearAllIcon /> : <FilterAltIcon />}
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            {showFilters ? 'Hide Filters' : 'Show Filters'}
+          </ActionButton>
+
           <ActionButton 
             variant="contained" 
             color="primary"
@@ -252,107 +380,164 @@ export default function ListView() {
       </HeaderSection>
 
       {/* Filters card */}
-      <FilterCard elevation={0}>
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          mb: 2
-        }}>
-          <FilterAltIcon sx={{ mr: 1 }} color="primary" />
-          <Typography variant="h6">Schedule Filters</Typography>
-        </Box>
+      {showFilters && (
+        <FilterCard elevation={0}>
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            mb: 2
+          }}>
+            <FilterAltIcon sx={{ mr: 1 }} color="primary" />
+            <Typography variant="h6">Schedule Filters</Typography>
+          </Box>
 
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={5}>
-            <FormControl fullWidth variant="outlined">
-              <InputLabel id="employee-select-label">Select Employee</InputLabel>
-              <Select
-                labelId="employee-select-label"
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={6}>
+              <Autocomplete
+                multiple
+                fullWidth
                 id="employee-select"
-                value={selectedEmployee}
-                label="Select Employee"
+                options={employees}
+                getOptionLabel={(option) => option.name}
+                isOptionEqualToValue={(option, value) => option._id === value._id}
+                value={employees.filter(emp => selectedEmployees.includes(emp._id))}
                 onChange={handleEmployeeChange}
-                startAdornment={
-                  <InputAdornment position="start">
-                    <PersonIcon color="primary" />
-                  </InputAdornment>
+                renderInput={(params) => (
+                  <TextField 
+                    {...params} 
+                    label="Select Employees (Max 10)"
+                    variant="outlined"
+                    placeholder="Search employees..."
+                    InputProps={{
+                      ...params.InputProps,
+                      startAdornment: (
+                        <>
+                          <InputAdornment position="start">
+                            <GroupIcon color="primary" />
+                          </InputAdornment>
+                          {params.InputProps.startAdornment}
+                        </>
+                      )
+                    }}
+                  />
+                )}
+                renderTags={(value, getTagProps) =>
+                  value.map((option, index) => (
+                    <Chip
+                      avatar={<Avatar>{getEmployeeInitials(option.name)}</Avatar>}
+                      label={option.name}
+                      {...getTagProps({ index })}
+                      variant="outlined"
+                      color="primary"
+                      key={option._id}
+                    />
+                  ))
                 }
+              />
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                {selectedEmployees.length} of {MAX_EMPLOYEES} employees selected
+              </Typography>
+            </Grid>
+            
+            <Grid item xs={6} md={2}>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="month-select-label">Month</InputLabel>
+                <Select
+                  labelId="month-select-label"
+                  id="month-select"
+                  value={month}
+                  label="Month"
+                  onChange={handleMonthChange}
+                  startAdornment={
+                    <InputAdornment position="start">
+                      <CalendarTodayIcon color="primary" />
+                    </InputAdornment>
+                  }
+                >
+                  {months.map((monthOption) => (
+                    <MenuItem key={monthOption.value} value={monthOption.value}>
+                      {monthOption.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            
+            <Grid item xs={6} md={2}>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="year-select-label">Year</InputLabel>
+                <Select
+                  labelId="year-select-label"
+                  id="year-select"
+                  value={year}
+                  label="Year"
+                  onChange={handleYearChange}
+                  startAdornment={
+                    <InputAdornment position="start">
+                      <CalendarTodayIcon color="primary" />
+                    </InputAdornment>
+                  }
+                >
+                  {years.map((yearOption) => (
+                    <MenuItem key={yearOption} value={yearOption}>
+                      {yearOption}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            
+            <Grid item xs={12} md={2}>
+              <ActionButton 
+                fullWidth 
+                variant="contained" 
+                color="primary"
+                onClick={fetchSchedules}
+                disabled={loading || selectedEmployees.length === 0}
+                startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <ViewDayIcon />}
+                sx={{ height: '56px' }}
               >
-                <MenuItem value="">
-                  <em>Select an employee</em>
-                </MenuItem>
-                {employees.map((employee) => (
-                  <MenuItem key={employee._id} value={employee._id}>
-                    {employee.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+                {loading ? 'Loading...' : 'View Schedules'}
+              </ActionButton>
+            </Grid>
           </Grid>
-          
-          <Grid item xs={12} md={3}>
-            <FormControl fullWidth variant="outlined">
-              <InputLabel id="month-select-label">Month</InputLabel>
-              <Select
-                labelId="month-select-label"
-                id="month-select"
-                value={month}
-                label="Month"
-                onChange={handleMonthChange}
-                startAdornment={
-                  <InputAdornment position="start">
-                    <CalendarTodayIcon color="primary" />
-                  </InputAdornment>
-                }
-              >
-                {months.map((monthOption) => (
-                  <MenuItem key={monthOption.value} value={monthOption.value}>
-                    {monthOption.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          
-          <Grid item xs={12} md={2}>
-            <FormControl fullWidth variant="outlined">
-              <InputLabel id="year-select-label">Year</InputLabel>
-              <Select
-                labelId="year-select-label"
-                id="year-select"
-                value={year}
-                label="Year"
-                onChange={handleYearChange}
-                startAdornment={
-                  <InputAdornment position="start">
-                    <CalendarTodayIcon color="primary" />
-                  </InputAdornment>
-                }
-              >
-                {years.map((yearOption) => (
-                  <MenuItem key={yearOption} value={yearOption}>
-                    {yearOption}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          
-          <Grid item xs={12} md={2}>
-            <ActionButton 
-              fullWidth 
-              variant="contained" 
-              color="primary"
-              onClick={fetchSchedule}
-              disabled={loading || !selectedEmployee}
-              startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <ViewDayIcon />}
-              sx={{ height: '56px' }}
-            >
-              {loading ? 'Loading...' : 'View Schedule'}
-            </ActionButton>
-          </Grid>
-        </Grid>
-      </FilterCard>
+
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 3 }}>
+            <Typography variant="body2" color="text.secondary">
+              Viewing schedules for {monthName} {year}
+            </Typography>
+            
+            {/* View Mode Toggle */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="body2" color="text.secondary">
+                View Mode:
+              </Typography>
+              <ViewToggleWrapper>
+                <Tooltip title="Grid View">
+                  <IconButton
+                    color={viewMode === 'grid' ? 'primary' : 'default'}
+                    onClick={() => handleToggleViewMode('grid')}
+                    size="small"
+                    sx={{ borderRadius: 0, p: 1 }}
+                  >
+                    <GridOnIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Timeline View">
+                  <IconButton
+                    color={viewMode === 'timeline' ? 'primary' : 'default'}
+                    onClick={() => handleToggleViewMode('timeline')}
+                    size="small"
+                    sx={{ borderRadius: 0, p: 1 }}
+                  >
+                    <ViewListIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </ViewToggleWrapper>
+            </Box>
+          </Box>
+        </FilterCard>
+      )}
       
       {/* Success/Error Messages */}
       {successMessage && (
@@ -383,41 +568,36 @@ export default function ListView() {
         </Alert>
       )}
 
-      {/* Schedule content card */}
-      <Card 
-        sx={{ 
-          p: 3, 
-          borderRadius: 2, 
-          boxShadow: 3,
-          overflow: 'hidden'
-        }}
-      >
-        {/* Schedule information header */}
-        {schedule && employeeName && (
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="h5" sx={{ mb: 1, fontWeight: 'bold', color: 'primary.main' }}>
-              {employeeName}'s Schedule
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Viewing schedule for {monthName} {year} 
-              {schedule.time_slot_id?.name && <> • Time slot: {schedule.time_slot_id.name}</>} 
-              {schedule.time_slot_id?.workDays && Array.isArray(schedule.time_slot_id.workDays) && (
-                <> • Working days: {[...schedule.time_slot_id.workDays].sort().map(d => 
-                  ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d]
-                ).join(', ')}</>
-              )}
-            </Typography>
-            <Divider sx={{ mt: 2 }} />
-          </Box>
-        )}
-      
-        {/* Schedule Calendar */}
-        {schedule ? (
-          <ScheduleCalendar 
-            schedule={schedule} 
-            onUpdateDay={handleScheduleUpdate} 
-          />
-        ) : (
+      {/* Schedule content */}
+      {schedules.length > 0 ? (
+        <Box sx={{ pt: 2 }}>
+          {viewMode === 'grid' ? (
+            // Grid view - days displayed only once at top
+            <ScheduleTimelineGrid 
+              schedules={schedules} 
+              onUpdateDay={handleScheduleUpdate}
+            />
+          ) : (
+            // Timeline view - individual timelines for each employee
+            schedules.map((schedule, index) => {
+              const employeeName = schedule.employee_name || 'Employee';
+              const employeeInitials = getEmployeeInitials(employeeName);
+              
+              return (
+                <ScheduleTimeline
+                  key={schedule._id || index}
+                  schedule={schedule}
+                  employeeName={employeeName}
+                  employeeInitials={employeeInitials}
+                  onUpdateDay={(updatedSchedule) => handleScheduleUpdate(updatedSchedule, index)}
+                />
+              );
+            })
+          )}
+        </Box>
+      ) : (
+        // No schedules view
+        <Card sx={{ p: 3, borderRadius: 2, boxShadow: 3 }}>
           <Box 
             sx={{ 
               display: 'flex', 
@@ -432,10 +612,10 @@ export default function ListView() {
           >
             <CalendarMonth sx={{ fontSize: 80, color: 'action.disabled', mb: 3, opacity: 0.7 }} />
             <Typography variant="h5" color="text.secondary" gutterBottom fontWeight="medium">
-              No Schedule Selected
+              No Schedules Selected
             </Typography>
             <Typography variant="body1" color="text.secondary" align="center" sx={{ maxWidth: 500, mb: 3 }}>
-              Select an employee and a month/year from the filters above, then click "View Schedule" to see their schedule.
+              Select up to {MAX_EMPLOYEES} employees and a month/year from the filters above, then click "View Schedules" to see their schedules.
             </Typography>
             
             <StyledButton 
@@ -447,8 +627,8 @@ export default function ListView() {
               Refresh Page
             </StyledButton>
           </Box>
-        )}
-      </Card>
+        </Card>
+      )}
     </Box>
   );
 } 
