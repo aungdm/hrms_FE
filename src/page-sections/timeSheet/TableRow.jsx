@@ -104,23 +104,24 @@ export default function TableRowView(props) {
       </Box>
     );
   };
-  
+
   // Check if all three statuses are "Absent"
-  const isAbsent = data?.status === "Absent" && 
-                  data?.checkinStatus === "Absent" && 
-                  data?.checkoutStatus === "Absent";
-                  
+  const isAbsent =
+    data?.status === "Absent" &&
+    data?.checkinStatus === "Absent" &&
+    data?.checkoutStatus === "Absent";
+
   // Handle opening the confirmation dialog
   const handleOpenConfirmDialog = () => {
     setConfirmDialogOpen(true);
     handleCloseOpenMenu();
   };
-  
+
   // Handle closing the confirmation dialog
   const handleCloseConfirmDialog = () => {
     setConfirmDialogOpen(false);
   };
-  
+
   // Handle creating a leave request
   const handleCreateLeaveRequest = async () => {
     try {
@@ -129,11 +130,11 @@ export default function TableRowView(props) {
         employeeId: data?.employeeId?._id,
         date: data?.date,
         status: "Pending",
-        createdFromAbsence: true
+        createdFromAbsence: true,
       };
-      
+
       const response = await createLeave(leaveData);
-      
+
       if (response.success) {
         toast.success("Leave request created successfully");
       } else {
@@ -224,7 +225,14 @@ export default function TableRowView(props) {
             color: "text.secondary",
           }}
         >
-          {data?.employeeId?.name || "--"}
+          <Box>
+            {/* Display Name */}
+            {data?.employeeId?.name || "--"}
+          </Box>
+          <Box sx={{ fontSize: "10px" }}>
+            {/* Display User Code */}
+            {data?.employeeId?.user_defined_code || "--"}
+          </Box>
         </TableCell>
         <TableCell>{data?.name || "--"}</TableCell>
         <TableCell
@@ -323,7 +331,7 @@ export default function TableRowView(props) {
           {data?.overTimeStatus || "--"}
         </TableCell>
       </TableRow>
-      
+
       {/* Confirmation Dialog for Leave Request */}
       <Dialog
         open={confirmDialogOpen}
@@ -331,21 +339,30 @@ export default function TableRowView(props) {
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
       >
-        <DialogTitle id="alert-dialog-title">
-          Create Leave Request
-        </DialogTitle>
+        <DialogTitle id="alert-dialog-title">Create Leave Request</DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
-            Are you sure you want to create a leave request for <strong>{data?.employeeId?.name}</strong> on <strong>{formatISOtDateTime(data?.date)}</strong>?
-            <br /><br />
-            This will create a new leave request with <strong>Pending</strong> status. The request will need to be approved by a manager.
+            Are you sure you want to create a leave request for{" "}
+            <strong>{data?.employeeId?.name}</strong> on{" "}
+            <strong>{formatISOtDateTime(data?.date)}</strong>?
+            <br />
+            <br />
+            This will create a new leave request with <strong>
+              Pending
+            </strong>{" "}
+            status. The request will need to be approved by a manager.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseConfirmDialog} color="primary">
             Cancel
           </Button>
-          <Button onClick={handleCreateLeaveRequest} color="primary" variant="contained" autoFocus>
+          <Button
+            onClick={handleCreateLeaveRequest}
+            color="primary"
+            variant="contained"
+            autoFocus
+          >
             Create Leave Request
           </Button>
         </DialogActions>

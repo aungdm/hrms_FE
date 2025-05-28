@@ -67,7 +67,7 @@ export const get = async (id) => {
 
 export const update = async (id, data) => {
   try {
-    const response = await axios.put(`/employee/update/${id}`, data);
+    const response = await axios.patch(`/employee/update/${id}`, data);
     console.log({ response });
     if (response.data.success) {
       return { data: response.data.data, success: true };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Box, 
   Card, 
@@ -51,7 +51,7 @@ import { useNavigate } from 'react-router-dom';
 import ScheduleCalendar from '../components/ScheduleCalendar';
 import ScheduleTimeline from '../components/ScheduleTimeline';
 import ScheduleTimelineGrid from '../components/ScheduleTimelineGrid';
-import { getEmployeeSchedule, getEmployeeSchedules, generateAllEmployeeSchedules, getMultipleEmployeeSchedules } from '../request';
+import { getEmployeeSchedule, getEmployeeSchedules, generateAllEmployeeSchedules, getMultipleEmployeeSchedules, revertEmployeeSchedulesToDefault } from '../request';
 import { getAllEmployees } from '../../employee/request';
 import { format } from 'date-fns';
 
@@ -138,8 +138,6 @@ const months = [
   { value: 12, label: 'December' }
 ];
 
-const MAX_EMPLOYEES = 10;
-
 export default function ListView() {
   const navigate = useNavigate();
   const theme = useTheme();
@@ -157,6 +155,22 @@ export default function ListView() {
   const [showFilters, setShowFilters] = useState(true);
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'timeline'
   
+  // Add state for departments
+  const [departments, setDepartments] = useState([]);
+  const [selectedDepartment, setSelectedDepartment] = useState('');
+  
+  // Extract unique departments from employees
+  useEffect(() => {
+    if (employees.length > 0) {
+      const uniqueDepartments = [...new Set(employees.map(emp => emp.department))]
+        .filter(Boolean)
+        .sort()
+        .map(dept => ({ value: dept, label: dept }));
+      
+      setDepartments([{ value: '', label: 'All Departments' }, ...uniqueDepartments]);
+    }
+  }, [employees]);
+  
   // Fetch employees for the dropdown
   useEffect(() => {
     const fetchEmployees = async () => {
@@ -172,6 +186,14 @@ export default function ListView() {
     
     fetchEmployees();
   }, []);
+  
+  // Filtered employees based on selected department
+  const filteredEmployees = useMemo(() => {
+    if (!selectedDepartment) {
+      return employees;
+    }
+    return employees.filter(emp => emp.department === selectedDepartment);
+  }, [employees, selectedDepartment]);
   
   // Fetch schedules data
   const fetchSchedules = async () => {
@@ -263,12 +285,33 @@ export default function ListView() {
   
   // Handle employee selection
   const handleEmployeeChange = (event, newValue) => {
-    // Limit to MAX_EMPLOYEES
-    if (newValue.length <= MAX_EMPLOYEES) {
-      setSelectedEmployees(newValue.map(employee => employee._id));
+    // Remove the limit check
+    setSelectedEmployees(newValue.map(employee => employee._id));
+  };
+  
+  // Handle department change
+  const handleDepartmentChange = (event) => {
+    const dept = event.target.value;
+    setSelectedDepartment(dept);
+    
+    // If department changes, reset selected employees
+    setSelectedEmployees([]);
+  };
+  
+  // Helper to select all employees from current department
+  const handleSelectAllEmployees = () => {
+    if (selectedDepartment) {
+      const deptEmployeeIds = filteredEmployees.map(emp => emp._id);
+      setSelectedEmployees(deptEmployeeIds);
     } else {
-      setError(`You can select up to ${MAX_EMPLOYEES} employees at once`);
+      // If no department is selected, don't allow selecting all employees
+      setError('Please select a department first to use this feature');
     }
+  };
+  
+  // Helper to clear employee selection
+  const handleClearEmployeeSelection = () => {
+    setSelectedEmployees([]);
   };
   
   // Handle month and year changes
@@ -319,6 +362,31 @@ export default function ListView() {
       setTimeout(() => {
         setSuccessMessage('');
       }, 3000);
+    }
+  };
+
+  // Handle reverting schedules to default
+  const handleRevertSchedules = async () => {
+    try {
+      setLoading(true); // Use loading state for this operation
+      setError('');
+      setSuccessMessage('');
+
+      const response = await revertEmployeeSchedulesToDefault(selectedEmployees, month, year);
+
+      if (response.success) {
+        setSuccessMessage(
+          response.message || `Successfully reverted schedules for ${response.data.success.length} employees.`
+        );
+        // Refresh the schedules after successful revert
+        fetchSchedules();
+      } else {
+        setError(response.message || 'Failed to revert schedules to default');
+      }
+    } catch (err) {
+      setError('Error reverting schedules: ' + (err.message || 'Unknown error'));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -376,6 +444,18 @@ export default function ListView() {
           >
             {generatingSchedules ? <CircularProgress size={20} color="inherit" /> : 'Generate All Schedules'}
           </ActionButton>
+
+          {selectedEmployees.length > 0 && ( // Only show button if employees are selected
+            <ActionButton
+              variant="outlined"
+              color="secondary"
+              startIcon={<RefreshIcon />} // Use Refresh icon for revert
+              onClick={handleRevertSchedules}
+              disabled={loading || generatingSchedules} // Disable if loading or generating
+            >
+              Revert to Default
+            </ActionButton>
+          )}
         </Box>
       </HeaderSection>
 
@@ -392,54 +472,113 @@ export default function ListView() {
           </Box>
 
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              <Autocomplete
-                multiple
-                fullWidth
-                id="employee-select"
-                options={employees}
-                getOptionLabel={(option) => option.name}
-                isOptionEqualToValue={(option, value) => option._id === value._id}
-                value={employees.filter(emp => selectedEmployees.includes(emp._id))}
-                onChange={handleEmployeeChange}
-                renderInput={(params) => (
-                  <TextField 
-                    {...params} 
-                    label="Select Employees (Max 10)"
-                    variant="outlined"
-                    placeholder="Search employees..."
-                    InputProps={{
-                      ...params.InputProps,
-                      startAdornment: (
-                        <>
-                          <InputAdornment position="start">
-                            <GroupIcon color="primary" />
-                          </InputAdornment>
-                          {params.InputProps.startAdornment}
-                        </>
-                      )
-                    }}
-                  />
-                )}
-                renderTags={(value, getTagProps) =>
-                  value.map((option, index) => (
-                    <Chip
-                      avatar={<Avatar>{getEmployeeInitials(option.name)}</Avatar>}
-                      label={option.name}
-                      {...getTagProps({ index })}
-                      variant="outlined"
-                      color="primary"
-                      key={option._id}
-                    />
-                  ))
-                }
-              />
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                {selectedEmployees.length} of {MAX_EMPLOYEES} employees selected
-              </Typography>
+            {/* Department Filter */}
+            <Grid item xs={12} md={3}>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="department-select-label">Department</InputLabel>
+                <Select
+                  labelId="department-select-label"
+                  id="department-select"
+                  value={selectedDepartment}
+                  label="Department"
+                  onChange={handleDepartmentChange}
+                  startAdornment={
+                    <InputAdornment position="start">
+                      <GroupIcon color="primary" />
+                    </InputAdornment>
+                  }
+                >
+                  {departments.map((dept) => (
+                    <MenuItem key={dept.value} value={dept.value}>
+                      {dept.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Grid>
             
-            <Grid item xs={6} md={2}>
+            {/* Employee Selection - update width */}
+            <Grid item xs={12} md={5}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <Autocomplete
+                  multiple
+                  fullWidth
+                  id="employee-select"
+                  options={filteredEmployees}
+                  getOptionLabel={(option) => option.name}
+                  isOptionEqualToValue={(option, value) => option._id === value._id}
+                  value={employees.filter(emp => selectedEmployees.includes(emp._id))}
+                  onChange={handleEmployeeChange}
+                  renderInput={(params) => (
+                    <TextField 
+                      {...params} 
+                      label="Select Employees"
+                      variant="outlined"
+                      placeholder="Search employees..."
+                      InputProps={{
+                        ...params.InputProps,
+                        startAdornment: (
+                          <>
+                            <InputAdornment position="start">
+                              <GroupIcon color="primary" />
+                            </InputAdornment>
+                            {params.InputProps.startAdornment}
+                          </>
+                        )
+                      }}
+                    />
+                  )}
+                  renderTags={(value, getTagProps) =>
+                    value.map((option, index) => (
+                      <Chip
+                        avatar={<Avatar>{getEmployeeInitials(option.name)}</Avatar>}
+                        label={option.name}
+                        {...getTagProps({ index })}
+                        variant="outlined"
+                        color="primary"
+                        key={option._id}
+                      />
+                    ))
+                  }
+                />
+                
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="caption" color="text.secondary">
+                    {selectedEmployees.length} employees selected
+                  </Typography>
+                  
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    {selectedEmployees.length > 0 && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="error"
+                        onClick={handleClearEmployeeSelection}
+                        startIcon={<ClearAllIcon />}
+                      >
+                        Clear
+                      </Button>
+                    )}
+                    
+                    {selectedDepartment && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="primary"
+                        onClick={handleSelectAllEmployees}
+                        startIcon={<SelectAllIcon />}
+                        disabled={filteredEmployees.length === 0}
+                      >
+                        Select All {filteredEmployees.length > 0 ? `(${filteredEmployees.length})` : ''}
+                      </Button>
+                    )}
+                  </Box>
+                </Box>
+              </Box>
+            </Grid>
+            
+            {/* Month and Year selection - update width */}
+            <Grid item xs={6} md={1.5}>
               <FormControl fullWidth variant="outlined">
                 <InputLabel id="month-select-label">Month</InputLabel>
                 <Select
@@ -463,7 +602,7 @@ export default function ListView() {
               </FormControl>
             </Grid>
             
-            <Grid item xs={6} md={2}>
+            <Grid item xs={6} md={1.5}>
               <FormControl fullWidth variant="outlined">
                 <InputLabel id="year-select-label">Year</InputLabel>
                 <Select
@@ -487,7 +626,8 @@ export default function ListView() {
               </FormControl>
             </Grid>
             
-            <Grid item xs={12} md={2}>
+            {/* View Button */}
+            <Grid item xs={12} md={1}>
               <ActionButton 
                 fullWidth 
                 variant="contained" 
@@ -497,7 +637,7 @@ export default function ListView() {
                 startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <ViewDayIcon />}
                 sx={{ height: '56px' }}
               >
-                {loading ? 'Loading...' : 'View Schedules'}
+                {loading ? 'Loading...' : 'View'}
               </ActionButton>
             </Grid>
           </Grid>
@@ -505,6 +645,8 @@ export default function ListView() {
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 3 }}>
             <Typography variant="body2" color="text.secondary">
               Viewing schedules for {monthName} {year}
+              {selectedDepartment && ` • Department: ${selectedDepartment}`}
+              {selectedEmployees.length > 0 && ` • ${selectedEmployees.length} employees selected`}
             </Typography>
             
             {/* View Mode Toggle */}
@@ -615,7 +757,7 @@ export default function ListView() {
               No Schedules Selected
             </Typography>
             <Typography variant="body1" color="text.secondary" align="center" sx={{ maxWidth: 500, mb: 3 }}>
-              Select up to {MAX_EMPLOYEES} employees and a month/year from the filters above, then click "View Schedules" to see their schedules.
+              Select employees and a month/year from the filters above, then click "View Schedules" to see their schedules.
             </Typography>
             
             <StyledButton 

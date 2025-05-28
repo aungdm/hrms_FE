@@ -253,3 +253,37 @@ export const updateMultipleEmployeeScheduleDays = async (schedulesData) => {
     };
   }
 }; 
+
+export const revertEmployeeSchedulesToDefault = async (
+  employee_ids,
+  month,
+  year
+) => {
+  try {
+    const response = await axios.post("employeeSchedule/revert", {
+      employee_ids,
+      month,
+      year,
+    });
+
+    if (response?.data?.success) {
+      return {
+        data: response?.data?.data,
+        success: true,
+        message: response?.data?.message || "Schedules reverted to default successfully",
+      };
+    } else {
+      return {
+        success: false,
+        message: response?.data?.message || "Failed to revert schedules",
+      };
+    }
+  } catch (error) {
+    console.error("Error reverting employee schedules:", error.message);
+    return {
+      success: false,
+      error: error.message,
+      message: "An error occurred while reverting schedules",
+    };
+  }
+}; 

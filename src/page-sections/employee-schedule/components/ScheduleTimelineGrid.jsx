@@ -712,6 +712,8 @@ const ScheduleTimelineGrid = ({ schedules, onUpdateDay }) => {
         {schedules.map((schedule, employeeIndex) => {
           // Get employee name and initials
           const employeeName = schedule.employee_id.name || 'Employee';
+          const employeeCode = schedule.employee_id._id || '--';
+          console.log(employeeCode);
           const employeeInitials = getEmployeeInitials(employeeName);
           const timeSlotName = schedule.time_slot_id?.name || 'Schedule';
           
@@ -722,6 +724,9 @@ const ScheduleTimelineGrid = ({ schedules, onUpdateDay }) => {
                 <Box>
                   <Typography variant="subtitle2" noWrap>
                     {employeeName}
+                  </Typography>
+                  <Typography variant="subtitle2" noWrap>
+                    {employeeCode|| '--'}
                   </Typography>
                 </Box>
               </EmployeeNameCell>
