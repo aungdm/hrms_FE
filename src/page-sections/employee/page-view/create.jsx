@@ -29,88 +29,6 @@ import countryList from "country-list";
 import Autocomplete from "@mui/material/Autocomplete";
 import { format } from "date-fns";
 import { inc } from "nprogress";
-import { InputAdornment, IconButton } from '@mui/material';
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
-
-// Define validation schemas outside the component
-const commonValidationFields = {
-  name: Yup.string()
-    .trim()
-    .min(2, "Name must be at least 2 characters")
-    .max(50, "Name must be at most 50 characters")
-    .required("Name is Required!"),
-  father_or_husband_name: Yup.string()
-    .trim()
-    .min(2, "Father/Husband Name must be at least 2 characters")
-    .required("Father or Husband Name is Required!"),
-  salutation: Yup.string().required("Salutation is Required!"),
-  d_o_b: Yup.date()
-    .max(new Date(), "Date of Birth cannot be in the future")
-    .required("Date of Birth is Required!"),
-  mobile_no: Yup.string()
-    .matches(/^[0-9]{10,15}$/, "Enter a valid Mobile No (10-15 digits)")
-    .required("Mobile No is Required!"),
-  cnic_no: Yup.string()
-    .matches(/^[0-9]{13}$/, "CNIC No must be exactly 13 digits")
-    .required("CNIC No is Required!"),
-  nationality: Yup.string().required("Nationality is Required!"),
-  gender: Yup.string()
-    .oneOf(["Male", "Female", "Other", "Mr"], "Invalid gender selection")
-    .required("Gender is Required!"),
-  user_defined_code: Yup.number()
-    .integer("User Code must be an integer")
-    .positive("User Code must be a positive number")
-    .required("User Code is Required!"),
-  joining_date: Yup.date()
-    .max(new Date(), "Joining Date cannot be in the future")
-    .required("Joining Date is Required!"),
-  probation: Yup.boolean()
-    .test('is-boolean', 'Probation is Required!', value => typeof value === 'boolean'),
-  location: Yup.string().required("Location is Required!"),
-  department: Yup.string().required("Department is Required!"),
-  designation: Yup.string().required("Designation is Required!"),
-  job_title: Yup.string().required("Job Title is Required!"),
-  official_email: Yup.string()
-    .email("Enter a valid email address")
-    .required("Official Email is Required!"),
-  employee_type: Yup.string().required("Employee Type is Required!"),
-  payroll: Yup.string().required("Payroll is required"),
-  payroll_type: Yup.string().required("Payroll Type is Required"),
-  payment_method: Yup.string().required("Payment Method is required"),
-  currency: Yup.string().required("Currency is required"),
-  probation_salary: Yup.string().required("Probation Salary is required"),
-  after_probation_gross_salary: Yup.string().required(
-    "After Probation Gross Salary is required"
-  ),
-  description: Yup.string(),
-  employment_type: Yup.string().required("Employment Type is Required!"),
-  email_username: Yup.string()
-    .trim()
-    .min(5, "Email/Username must be at least 5 characters")
-    .required("Email/Username is Required!"),
-  role: Yup.string().required("Role is Required!"),
-  timeSlot: Yup.string().required("Time Slot is Required!"),
-  leaveTypes: Yup.string().required("Leave Types is Required!"),
-  workDays: Yup.array()
-    .of(Yup.number().min(0).max(6))
-    .min(1, "At least one work day must be selected")
-    .required("Work days are Required!"),
-};
-
-const createValidationSchema = Yup.object().shape({
-  ...commonValidationFields,
-  password: Yup.string()
-    .min(5, "Password must be at least 5 characters")
-    .required("Password is Required!"),
-});
-
-const editValidationSchema = Yup.object().shape({
-  ...commonValidationFields,
-  // Password is optional in edit mode, but still has min length if entered
-  password: Yup.string()
-    .min(5, "Password must be at least 5 characters"),
-});
 
 export default function CreateView() {
   const navigate = useNavigate();
@@ -150,7 +68,7 @@ export default function CreateView() {
 
   const locationList = [{ label: "Lahore", value: "Lahore" }];
 
-  const departmentList = [  
+  const departmentList = [
     { id: 1, label: "Production", value: "Production" },
     {
       id: 2,
@@ -284,15 +202,6 @@ export default function CreateView() {
     { id: 6, label: "Saturday", value: 6 },
   ];
 
-  // State for password visibility
-  const [showPassword, setShowPassword] = useState(false);
-
-  const handleClickShowPassword = () => setShowPassword((show) => !show);
-
-  const handleMouseDownPassword = (event) => {
-    event.preventDefault();
-  };
-
   const initialValues = {
     name: "",
     father_or_husband_name: "",
@@ -304,7 +213,7 @@ export default function CreateView() {
     gender: "",
     user_defined_code: "",
     joining_date: "",
-    probation: "", // Keep as empty string initially
+    probation: "",
     location: "",
     department: "",
     designation: "",
@@ -330,6 +239,80 @@ export default function CreateView() {
     workDays: [1, 2, 3, 4, 5,6,7], // Default Monday to Friday
   };
 
+  const validationSchema = Yup.object().shape({
+    name: Yup.string()
+      .trim()
+      .min(2, "Name must be at least 2 characters")
+      .max(50, "Name must be at most 50 characters")
+      .required("Name is Required!"),
+    father_or_husband_name: Yup.string()
+      .trim()
+      .min(2, "Father/Husband Name must be at least 2 characters")
+      .required("Father or Husband Name is Required!"),
+    salutation: Yup.string().required("Salutation is Required!"),
+    d_o_b: Yup.date()
+      .max(new Date(), "Date of Birth cannot be in the future")
+      .required("Date of Birth is Required!"),
+    mobile_no: Yup.string()
+      .matches(/^[0-9]{10,15}$/, "Enter a valid Mobile No (10-15 digits)")
+      .required("Mobile No is Required!"),
+    cnic_no: Yup.string()
+      .matches(/^[0-9]{13}$/, "CNIC No must be exactly 13 digits")
+      .required("CNIC No is Required!"),
+    nationality: Yup.string().required("Nationality is Required!"),
+    gender: Yup.string()
+      .oneOf(["Male", "Female", "Other", "Mr"], "Invalid gender selection")
+      .required("Gender is Required!"),
+    user_defined_code: Yup.number()
+      .integer("User Code must be an integer")
+      .positive("User Code must be a positive number")
+      .required("User Code is Required!"),
+    joining_date: Yup.date()
+      .max(new Date(), "Joining Date cannot be in the future")
+      .required("Joining Date is Required!"),
+    probation: Yup.string().required("Probation is Required!"),
+    location: Yup.string().required("Location is Required!"),
+    department: Yup.string().required("Department is Required!"),
+    designation: Yup.string().required("Designation is Required!"),
+    job_title: Yup.string().required("Job Title is Required!"),
+    official_email: Yup.string()
+      .email("Enter a valid email address")
+      .required("Official Email is Required!"),
+    employee_type: Yup.string().required("Employee Type is Required!"),
+    payroll: Yup.string().required("Payroll is required"),
+    payroll_type: Yup.string().required("Payroll Type is Required"),
+    payment_method: Yup.string().required("Payment Method is required"),
+    currency: Yup.string().required("Currency is required"),
+    probation_salary: Yup.string().required("Probation Salary is required"),
+    after_probation_gross_salary: Yup.string().required(
+      "After Probation Gross Salary is required"
+    ),
+    description: Yup.string(),
+    employment_type: Yup.string().required("Employment Type is Required!"),
+    email_username: Yup.string()
+      .trim()
+      .min(5, "Email/Username must be at least 5 characters")
+      .required("Email/Username is Required!"),
+    password: Yup.string()
+      .min(8, "Password must be at least 8 characters")
+      .matches(/[A-Z]/, "Password must contain at least one uppercase letter")
+      .matches(/[a-z]/, "Password must contain at least one lowercase letter")
+      .matches(/[0-9]/, "Password must contain at least one number")
+      .matches(
+        /[@$!%*?&]/,
+        "Password must contain at least one special character (@$!%*?&)"
+      )
+      .required("Password is Required!"),
+    // timeZone: Yup.string().required("Time Zone is Required!"),
+    role: Yup.string().required("Role is Required!"),
+    timeSlot: Yup.string().required("Time Slot is Required!"),
+    leaveTypes: Yup.string().required("Leave Types is Required!"),
+    workDays: Yup.array()
+      .of(Yup.number().min(0).max(6))
+      .min(1, "At least one work day must be selected")
+      .required("Work days are Required!"),
+  });
+
   const {
     values,
     errors,
@@ -341,15 +324,10 @@ export default function CreateView() {
     setValues,
   } = useFormik({
     initialValues,
-    // Select validation schema based on presence of id
-    validationSchema: id ? editValidationSchema : createValidationSchema,
+    validationSchema,
     onSubmit: async (values) => {
-      console.log('Attempting to submit form');
-      console.log('Formik values:', values);
-      console.log('Formik errors before submission:', errors);
-      console.log('Using validation schema:', id ? 'editValidationSchema' : 'createValidationSchema');
-      console.log('Current mode:', mode);
-      console.log('Current id:', id);
+      console.log({ values });
+      console.log({ mode });
       try {
         // const formData = convertToFormData(values);
 
@@ -447,7 +425,7 @@ export default function CreateView() {
           joining_date: joining_date
             ? format(new Date(joining_date), "yyyy-MM-dd")
             : "",
-          probation: probation,
+          probation: probation || "",
           location: location || "",
           department: department || "",
           designation: designation || "",
@@ -494,18 +472,13 @@ export default function CreateView() {
     fetchWorkSchedules();
 
     if (id) {
-      console.log('Edit mode: Fetching record for id:', id);
       fetchRecord(id);
-    } else {
-      console.log('Create mode');
     }
 
     if (location.pathname.includes("view")) {
-      console.log('View mode');
       return setMode("view");
     } else if (id) {
       setMode("edit");
-      console.log('Setting mode to edit');
     }
   }, []);
 
@@ -811,7 +784,7 @@ export default function CreateView() {
                   handleChange({
                     target: {
                       name: "probation",
-                      value: newValue?.value,
+                      value: newValue?.value || "",
                     },
                   });
                 }}
@@ -1291,30 +1264,14 @@ export default function CreateView() {
           <Grid container spacing={2}>
             <Grid p={3} size={{ md: 6, sm: 12, xs: 12 }}>
               <TextField
+                type="password"
                 fullWidth
                 name="password"
                 label="Password"
-                variant="outlined"
-                type={showPassword ? 'text' : 'password'}
-                onBlur={handleChange}
-                onChange={handleChange}
                 value={values.password}
-                error={touched.password && Boolean(errors.password)}
+                onChange={handleChange}
                 helperText={touched.password && errors.password}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        aria-label="toggle password visibility"
-                        onClick={handleClickShowPassword}
-                        onMouseDown={handleMouseDownPassword}
-                        edge="end"
-                      >
-                        {showPassword ? <VisibilityOff /> : <Visibility />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
+                error={Boolean(touched.password && errors.password)}
               />
             </Grid>
             <Grid p={3} size={{ md: 6, sm: 12, xs: 12 }}>
