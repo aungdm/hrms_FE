@@ -168,6 +168,9 @@ const PunchCreateView = Loadable(
 const OvertimeListView = Loadable(
   lazy(() => import("@/pages/dashboard/overtime/list"))
 );
+const RelaxationRequestListView = Loadable(
+  lazy(() => import("@/pages/dashboard/relaxationRequest/list"))
+);
 const OvertimeCreateView = Loadable(
   lazy(() => import("@/pages/dashboard/overtime/create"))
 );
@@ -557,6 +560,10 @@ export const DashboardRoutes = [
       {
         path: "bookings-detail",
         element: <BookingDetail />,
+      },
+      {
+        path: "relaxation-request-list",
+        element: <RelaxationRequestListView />,
       },
       {
         path: "account",

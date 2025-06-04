@@ -110,6 +110,10 @@ export default function MultiLevelMenu({ sidebarCompact }) {
           path: "/punch-list",
         },
         {
+          name: "Relaxation",
+          path: "/relaxation-request-list",
+        },
+        {
           name: "Loan",
           path: "/attendance-logs-list",
         },
