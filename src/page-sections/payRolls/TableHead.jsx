@@ -9,55 +9,67 @@ import { isDark } from "@/utils/constants";
 
 const headCells = [
   {
-    id: "code",
-    numeric: true,
-    disablePadding: false,
-    label: "Code",
-  },
-  {
-    id: "name",
-    numeric: true,
-    disablePadding: false,
-    label: "Name",
-  },
-  {
-    id: "tax_structure",
+    id: "employeeId",
     numeric: false,
     disablePadding: false,
-    label: "Tax Structure",
+    label: "Employee ID",
   },
-
   {
-    id: "month",
+    id: "employeeName",
+    numeric: false,
+    disablePadding: false,
+    label: "Employee Name",
+  },
+  {
+    id: "payrollType",
+    numeric: false,
+    disablePadding: false,
+    label: "Payroll Type",
+  },
+  {
+    id: "payPeriod",
+    numeric: false,
+    disablePadding: false,
+    label: "Pay Period",
+  },
+  {
+    id: "basicSalary",
     numeric: true,
     disablePadding: false,
-    label: "Month",
+    label: "Basic Salary",
   },
   {
-    id: "last_Running",
+    id: "totalAdditions",
     numeric: true,
     disablePadding: false,
-    label: "Last Running",
+    label: "Additions",
   },
   {
-    id: "status",
+    id: "totalDeductions",
     numeric: true,
+    disablePadding: false,
+    label: "Deductions",
+  },
+  {
+    id: "netSalary",
+    numeric: true,
+    disablePadding: false,
+    label: "Net Salary",
+  },
+  {
+    id: "payrollStatus",
+    numeric: false,
     disablePadding: false,
     label: "Status",
   },
   {
-    id: "last_Closing",
-    numeric: true,
-    disablePadding: false,
-    label: "Last Closing",
-  },
-  {
     id: "actions",
-    numeric: true,
+    numeric: false,
     disablePadding: false,
     label: "Actions",
   },
 ];
+
 export default function TableHeadView(props) {
   const {
     onSelectAllRows,

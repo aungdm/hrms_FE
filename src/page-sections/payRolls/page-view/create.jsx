@@ -6,512 +6,265 @@ import {
   TextField,
   Button,
   Grid,
-  Switch,
   Stack,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Chip,
+  LinearProgress,
+  Alert,
+  AlertTitle,
+  Divider,
 } from "@mui/material";
-import ShoppingCart from "@/icons/ShoppingCart.jsx";
 import { Paragraph } from "@/components/typography";
 import IconWrapper from "@/components/icon-wrapper/IconWrapper.jsx";
-import FlexBox from "@/components/flexbox/FlexBox.jsx";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import Autocomplete from "@mui/material/Autocomplete";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import {
-  create,
-  update,
-  // searchEmployees,
-  get,
-  // updateSalary,
-} from "../request.js";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
-import useDebounce from "@/hooks/debounceHook.js";
-import { format } from "date-fns";
+import { generatePayroll, getEmployees } from "../request.js";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import duotone from "@/icons/duotone";
 
 export default function CreateView() {
-  const [mode, setMode] = useState(false);
   const [employees, setEmployees] = useState([]);
-  const [employeeData, setEmployeeData] = useState({
-    employee: {},
-    percentCalculateStatus: false,
-  });
-
-  const { employee, percentCalculateStatus } = employeeData;
-  const [searchString, setSearchString] = useState("");
-  const debouncedSearchString = useDebounce(searchString, 1000);
+  const [loading, setLoading] = useState(false);
+  const [processing, setProcessing] = useState(false);
+  const [result, setResult] = useState(null);
+  
   const navigate = useNavigate();
-  const params = useParams();
-  const location = useLocation();
-  const id = params.id;
+  const TodoList = duotone.TodoList;
 
   // Initial Form Values
   const initialValues = {
-    date: "",
-    previousSalary: "",
-    salary: "",
-    name: "",
-    percentage: "", // Added percentage field
-    employment: null,
-    description: "",
+    startDate: null,
+    endDate: null,
+    employeeIds: [],
+    payrollType: ""
   };
 
   // Form Validation Schema
   const validationSchema = Yup.object().shape({
-    date: Yup.date().required("Effective Date is Required!"),
-    employment: Yup.object()
-      .nullable()
-      .required("Employee selection is required"),
-    salary: Yup.number().required("Salary is Required!"),
-    previousSalary: Yup.number().required("Previous Salary is Required!"),
-    name: Yup.string().required("Name is Required!"),
-    description: Yup.string(),
+    startDate: Yup.date().required("Start date is required"),
+    endDate: Yup.date().required("End date is required"),
+    payrollType: Yup.string()
   });
-
-  const payrollTypeList = [
-    { id: 1, label: "PKR", value: "PKR" },
-    { id: 2, label: "USD", value: "USD" },
-    { id: 3, label: "Euro", value: "Euro" },
-  ];
-
-  const taxStructureList = [
-    {
-      id: 1,
-      label: "Tax Structure 2020-2021",
-      value: "Tax Structure 2020-2021",
-    },
-    {
-      id: 2,
-      label: "Tax Structure 2021-2022",
-      value: "Tax Structure 2021-2022",
-    },
-    {
-      id: 3,
-      label: "Tax Structure 2022-2023",
-      value: "Tax Structure 2022-2023",
-    },
-    {
-      id: 4,
-      label: "Tax Structure 2023-2024",
-      value: "Tax Structure 2023-2024",
-    },
-    {
-      id: 5,
-      label: "Tax Structure 2024-2025",
-      value: "Tax Structure 2024-2025",
-    },
-  ];
 
   // Formik Hook
   const {
     values,
     errors,
-    handleChange,
-    handleSubmit,
     touched,
+    handleSubmit,
     setFieldValue,
-    setValues,
+    isValid,
+    dirty
   } = useFormik({
     initialValues,
     validationSchema,
     onSubmit: async (values) => {
-      // console.log({ values });
-      // const object = { ...values, employment: values.employment?._id };
-      // console.log({ object });
-      // try {
-      //   let responseData;
-      //   // if (!mode) {
-      //   responseData = await create(object);
-      //   const salaryData = await updateSalary(values.employment?._id, {
-      //     after_probation_gross_salary: values.salary,
-      //   });
-      //   console.log({ salaryData });
-      //   if (responseData.success) {
-      //     toast.success("Salary Revision created successfully ");
-      //     resetForm();
-      //     navigate("/salary-revisions-list");
-      //   }
-      //   // } else {
-      //   // responseData = await update(id, values);
-      //   // }
-      //   console.log("Response:", responseData);
-      // } catch (error) {
-      //   console.error(error);
-      //   toast.error("Error Creating Salary Revision");
-      // }
+      try {
+        setProcessing(true);
+        setResult(null);
+
+        // Format dates as ISO strings
+        const payload = {
+          startDate: values.startDate.toISOString(),
+          endDate: values.endDate.toISOString(),
+          employeeIds: values.employeeIds.length > 0 ? values.employeeIds.map(emp => emp._id) : []
+        };
+
+        const response = await generatePayroll(payload);
+        
+        if (response.success) {
+          toast.success("Payroll generation initiated");
+          setResult({
+            success: response.data.success,
+            failed: response.data.failed,
+            errors: response.data.errors,
+          });
+
+          // If at least one payroll was successfully generated, enable the view button
+          if (response.data.success > 0) {
+            setTimeout(() => {
+              navigate("/pay-rolls-list");
+            }, 3000);
+          }
+        } else {
+          toast.error(response.message || "Error generating payroll");
+        }
+      } catch (error) {
+        console.error(error);
+        toast.error("Error generating payroll");
+      } finally {
+        setProcessing(false);
+      }
     },
   });
 
-  // Fetch employee list when user types in the search field
-  const fetchList = useCallback(async () => {
+  const fetchEmployees = useCallback(async (search = "") => {
     try {
-      const response = await searchEmployees(debouncedSearchString);
-      console.log({ response }, " employee in salary revision");
-
+      setLoading(true);
+      const response = await getEmployees(search, 100, 1);
       if (response?.success) {
         setEmployees(response.data);
       }
     } catch (error) {
       console.error(error);
+      toast.error("Error fetching employees");
+    } finally {
+      setLoading(false);
     }
-  }, [debouncedSearchString]);
+  }, []);
 
-  // Handles percentage input and updates salary dynamically
-  const handlePercentageChange = (e) => {
-    const percent = parseFloat(e.target.value);
-    const baseSalary = Number(employee?.after_probation_gross_salary) || 0;
-
-    if (!isNaN(percent)) {
-      const incrementedSalary = baseSalary + (baseSalary * percent) / 100;
-      setValues({
-        ...values,
-        salary: incrementedSalary,
-        percentage: e.target.value,
-      });
-    } else {
-      setValues({ ...values, salary: baseSalary, percentage: "" });
-    }
-  };
-
-  const fetchRecord = async (id) => {
-    try {
-      const response = await get(id);
-      console.log(response?.data);
-      const { date, previousSalary, salary, description, employment, name } =
-        response.data;
-      if (response.success) {
-        setValues({
-          date: date ? format(new Date(date), "yyyy-MM-dd") : "",
-          employment: employment || "",
-          previousSalary: previousSalary || "",
-          salary: salary || "",
-          description: description || "",
-          name: name || "",
-        });
-        setEmployeeData({ ...employeeData, employee: employment });
-      }
-    } catch (error) {
-      console.error(error);
-      throw error;
-    }
-  };
-
-  // Fetch employee list when search string changes
-  // useEffect(() => {
-  //   if (debouncedSearchString) {
-  //     fetchList();
-  //   }
-  // }, [debouncedSearchString, fetchList]);
-
-  // Determine mode (view/edit) based on the URL
   useEffect(() => {
-    if (id) {
-      fetchRecord(id);
-    }
-
-    if (location.pathname.includes("view")) {
-      setMode("view");
-    } else if (id) {
-      // fetchRecord(id);
-      setMode("edit");
-    }
-  }, [id, location.pathname]);
+    fetchEmployees();
+  }, [fetchEmployees]);
 
   return (
-    <>
-      {/* Header Section */}
-      <Box mb={4} p={2}>
-        <FlexBox alignItems="center">
+    <Card sx={{ p: 3 }}>
+      <Box mb={3}>
+        <Stack direction="row" alignItems="center" mb={1}>
           <IconWrapper>
-            <ShoppingCart sx={{ color: "primary.main" }} />
+            <TodoList sx={{ color: "primary.main" }} />
           </IconWrapper>
-          <Paragraph sx={{ fontWeight: 600 }} fontSize={16}>
-            Pay Roll
-          </Paragraph>
-        </FlexBox>
+          <Typography variant="h5">Generate Payroll</Typography>
+        </Stack>
+        <Typography color="text.secondary" variant="body2">
+          Generate payroll for employees based on attendance records
+        </Typography>
       </Box>
 
-      {/* Form Section */}
+      <Divider sx={{ mb: 3 }} />
+
       <form onSubmit={handleSubmit}>
-        <Card elevation={22} sx={{ p: 3 }}>
-          <Grid container spacing={2}>
-            {/* Employee Selection */}
-            {/* <Grid p={3} md={6} sm={12} xs={12}>
-              <Autocomplete
-                fullWidth
-                disablePortal
-                options={employees}
-                getOptionLabel={(option) => option?.name || ""}
-                value={values.employment}
-                onChange={(event, newValue) => {
-                  setFieldValue("employment", newValue);
-                  setEmployeeData({ ...employeeData, employee: newValue });
-                  setFieldValue(
-                    "previousSalary",
-                    newValue?.after_probation_gross_salary || ""
-                  );
-                  setFieldValue("name", newValue?.name || "");
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={6}>
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <DatePicker
+                label="Start Date"
+                value={values.startDate}
+                onChange={(date) => setFieldValue("startDate", date)}
+                slotProps={{ 
+                  textField: { 
+                    fullWidth: true,
+                    error: touched.startDate && Boolean(errors.startDate),
+                    helperText: touched.startDate && errors.startDate
+                  } 
                 }}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Select Employee"
-                    onChange={(e) => setSearchString(e.target.value)}
-                    helperText={touched.employment && errors.employment}
-                    error={Boolean(touched.employment && errors.employment)}
-                  />
-                )}
               />
-            </Grid> */}
-            <Grid p={3} md={6} sm={12} xs={12}>
-              <TextField
-                inputProps={{ readOnly: mode === "view" }}
-                type="text"
-                readOnly
-                fullWidth
-                name="name"
-                label="Name"
-                value={values.name}
-                onChange={handleChange}
-                helperText={touched.name && errors.name}
-                error={Boolean(touched.name && errors.name)}
-              />
-            </Grid>
+            </LocalizationProvider>
+          </Grid>
 
-            <Grid p={3} md={6} sm={12} xs={12}>
-              <Autocomplete
-                fullWidth
-                disablePortal
-                options={payrollTypeList}
-                getOptionLabel={(option) => option.label}
-                value={
-                  payrollTypeList.find(
-                    (opt) => opt.value === values.currency
-                  ) || null
-                }
-                onChange={(event, newValue) => {
-                  handleChange({
-                    target: {
-                      name: "currency",
-                      value: newValue?.value || "",
-                    },
-                  });
+          <Grid item xs={12} md={6}>
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <DatePicker
+                label="End Date"
+                value={values.endDate}
+                onChange={(date) => setFieldValue("endDate", date)}
+                slotProps={{ 
+                  textField: { 
+                    fullWidth: true,
+                    error: touched.endDate && Boolean(errors.endDate),
+                    helperText: touched.endDate && errors.endDate
+                  } 
                 }}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    sx={{ "& .MuiInputBase-root": { height: "45px" } }}
-                    name="currency"
-                    label="Currency"
-                    helperText={touched.currency && errors.currency}
-                    error={Boolean(touched.currency && errors.currency)}
-                  />
-                )}
               />
-            </Grid>
-
-            {/* <Grid p={3} md={6} sm={12} xs={12}>
-              <TextField
-                inputProps={{ readOnly: mode === "view" }}
-                type="number"
-                readOnly
-                fullWidth
-                name="amount"
-                label="Amount"
-                value={values.amount}
-                onChange={handleChange}
-                helperText={touched.amount && errors.amount}
-                error={Boolean(touched.amount && errors.amount)}
-              />
-            </Grid> */}
-            {/* Effective Date */}
-            {/* <Grid p={3} md={6} sm={12} xs={12}>
-              <TextField
-                inputProps={{ readOnly: mode === "view" }}
-                type="date"
-                fullWidth
-                label="Date"
-                name="date"
-                value={values.date}
-                onChange={handleChange}
-                helperText={touched.date && errors.date}
-                error={Boolean(touched.date && errors.date)}
-              />
-            </Grid>*/}
+            </LocalizationProvider>
           </Grid>
 
-          <Grid container spacing={2}>
-            {/* Previous Salary */}
-            {/* <Grid p={3} md={6} sm={12} xs={12}>
-              <TextField
-                inputProps={{ readOnly: mode === "view" }}
-                type="number"
-                readOnly
-                fullWidth
-                name="amount"
-                label="Amount"
-                value={values.amount}
-                onChange={handleChange}
-                helperText={touched.amount && errors.amount}
-                error={Boolean(touched.amount && errors.amount)}
-              />
-            </Grid> */}
-            <Grid p={3} md={6} sm={12} xs={12}>
-              <Autocomplete
-                fullWidth
-                disablePortal
-                options={taxStructureList}
-                getOptionLabel={(option) => option.label}
-                value={
-                  taxStructureList.find(
-                    (opt) => opt.value === values.taxStructure
-                  ) || null
-                }
-                onChange={(event, newValue) => {
-                  handleChange({
-                    target: {
-                      name: "taxStructure",
-                      value: newValue?.value || "",
-                    },
-                  });
-                }}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    sx={{ "& .MuiInputBase-root": { height: "45px" } }}
-                    name="taxStructure"
-                    label="Tax Structure"
-                    helperText={touched.taxStructure && errors.taxStructure}
-                    error={Boolean(touched.taxStructure && errors.taxStructure)}
+          <Grid item xs={12}>
+            <Autocomplete
+              multiple
+              id="employeeIds"
+              options={employees}
+              loading={loading}
+              getOptionLabel={(option) => `${option.name} (${option.employeeId || option._id})`}
+              onChange={(e, value) => setFieldValue("employeeIds", value)}
+              renderTags={(value, getTagProps) =>
+                value.map((option, index) => (
+                  <Chip
+                    label={`${option.name}`}
+                    {...getTagProps({ index })}
+                    key={option._id}
                   />
-                )}
-              />
-            </Grid>
-
-            {/* Salary Type Switch */}
-            {mode !== "view" && (
-              <Grid p={3} sm={6} xs={12}>
-                <Typography fontSize={16}>Payroll Processing</Typography>
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <Typography color="#6950E8" fontWeight={600} fontSize={13}>
-                    Process From Date
-                  </Typography>
-                  <Switch
-                    checked={percentCalculateStatus}
-                    onChange={(e) =>
-                      setEmployeeData({
-                        ...employeeData,
-                        percentCalculateStatus: e.target.checked,
-                      })
-                    }
-                  />
-                  <Typography color="#6950E8" fontWeight={600} fontSize={13}>
-                    Process at Month End
-                  </Typography>
-                </Stack>
-              </Grid>
-            )}
+                ))
+              }
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  fullWidth
+                  label="Select Employees (leave empty for all)"
+                  placeholder="Search employees"
+                />
+              )}
+            />
+            <Typography variant="caption" color="text.secondary">
+              Leave empty to generate payroll for all employees
+            </Typography>
           </Grid>
 
-          <Grid container spacing={2}>
-            <Grid p={3} md={6} sm={12} xs={12}>
-              <TextField
-                inputProps={{ readOnly: mode === "view" }}
-                type="number"
-                fullWidth
-                name="payrollProcessingDate"
-                label="Payroll Processing Date"
-                value={values.payrollProcessingDate}
-                onChange={handleChange}
-                helperText={
-                  touched.payrollProcessingDate && errors.payrollProcessingDate
-                }
-                error={Boolean(
-                  touched.payrollProcessingDate && errors.payrollProcessingDate
-                )}
-              />
-            </Grid>
-            {mode !== "view" && (
-              <Grid p={3} sm={6} xs={12}>
-                <Typography fontSize={16}>Applicable Days</Typography>
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <Typography color="#6950E8" fontWeight={600} fontSize={13}>
-                    Actual
-                  </Typography>
-                  <Switch
-                    checked={percentCalculateStatus}
-                    onChange={(e) =>
-                      setEmployeeData({
-                        ...employeeData,
-                        percentCalculateStatus: e.target.checked,
-                      })
-                    }
-                  />
-                  <Typography color="#6950E8" fontWeight={600} fontSize={13}>
-                    Fixed
-                  </Typography>
-                </Stack>
-              </Grid>
-            )}
+          <Grid item xs={12}>
+            <Box textAlign="right" mt={3}>
+              <Button
+                variant="contained"
+                color="primary"
+                type="submit"
+                disabled={processing || !(isValid && dirty)}
+              >
+                Generate Payroll
+              </Button>
+            </Box>
           </Grid>
-          <Grid container spacing={2}>
-            <Grid p={3} md={6} sm={12} xs={12}>
-              <Autocomplete
-                fullWidth
-                disablePortal
-                options={taxStructureList}
-                getOptionLabel={(option) => option.label}
-                value={
-                  taxStructureList.find(
-                    (opt) => opt.value === values.taxStructure
-                  ) || null
-                }
-                onChange={(event, newValue) => {
-                  handleChange({
-                    target: {
-                      name: "taxStructure",
-                      value: newValue?.value || "",
-                    },
-                  });
-                }}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    sx={{ "& .MuiInputBase-root": { height: "45px" } }}
-                    name="taxStructure"
-                    label="Tax Structure"
-                    helperText={touched.taxStructure && errors.taxStructure}
-                    error={Boolean(touched.taxStructure && errors.taxStructure)}
-                  />
-                )}
-              />
-            </Grid>
-            <Grid p={3} md={6} sm={12} xs={12}>
-              <TextField
-                inputProps={{ readOnly: mode === "view" ? true : false }}
-                type="text"
-                fullWidth
-                name="description"
-                multiline
-                rows={4}
-                label="Description"
-                value={values.description}
-                onChange={handleChange}
-                helperText={touched.description && errors.description}
-                error={Boolean(touched.description && errors.description)}
-              />
-            </Grid>
-          </Grid>
-        </Card>
-
-        {/* Submit Button */}
-        {mode !== "view" && (
-          <Grid pt={3} pb={6} xs={12}>
-            <Button type="submit" variant="contained">
-              Submit
-            </Button>
-          </Grid>
-        )}
+        </Grid>
       </form>
-    </>
+
+      {processing && (
+        <Box mt={3}>
+          <Typography variant="body2" mb={1}>Processing payroll generation...</Typography>
+          <LinearProgress />
+        </Box>
+      )}
+
+      {result && (
+        <Box mt={3}>
+          <Alert 
+            severity={result.success > 0 ? "success" : "warning"}
+            sx={{ mb: 2 }}
+          >
+            <AlertTitle>Payroll Generation Results</AlertTitle>
+            <Typography variant="body2">
+              Successfully generated {result.success} payroll(s)
+            </Typography>
+            <Typography variant="body2">
+              Failed to generate {result.failed} payroll(s)
+            </Typography>
+          </Alert>
+
+          {result.failed > 0 && result.errors && result.errors.length > 0 && (
+            <Box mt={2}>
+              <Typography variant="subtitle2" color="error">Errors:</Typography>
+              {result.errors.map((err, index) => (
+                <Typography key={index} variant="caption" color="error.main" display="block">
+                  • {err.name}: {err.error}
+                </Typography>
+              ))}
+            </Box>
+          )}
+
+          {result.success > 0 && (
+            <Box mt={2} textAlign="right">
+              <Typography variant="body2" mb={1}>
+                Redirecting to payroll list...
+              </Typography>
+            </Box>
+          )}
+        </Box>
+      )}
+    </Card>
   );
 }
