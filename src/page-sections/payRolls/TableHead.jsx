@@ -9,7 +9,7 @@ import { isDark } from "@/utils/constants";
 
 const headCells = [
   {
-    id: "employeeId",
+      id: "employeeId",
     numeric: false,
     disablePadding: false,
     label: "Employee ID",
