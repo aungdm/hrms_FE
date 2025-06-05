@@ -362,8 +362,8 @@ export default function OvertimeTableRow(props) {
             color: data?.overtimeMinutes > 0 ? "#ff9800" : "text.secondary", // Orange color for overtime
           }}
         >
-          {data?.overtimeMinutes
-            ? formatMinutesToHoursMinutes(data?.overtimeMinutes)
+          {data?.overTimeMinutes
+            ? formatMinutesToHoursMinutes(data?.overTimeMinutes)
             : "0"}
         </TableCell>
 

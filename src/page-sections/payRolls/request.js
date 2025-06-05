@@ -290,7 +290,7 @@ export const getPayrollSummary = async (startDate, endDate) => {
 
 export const getEmployees = async (search, perPage, page) => {
   try {
-    const response = await axios.get("/employee", {
+    const response = await axios.get("/employee/get", {
       params: {
         search,
         page,
