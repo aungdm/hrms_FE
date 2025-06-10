@@ -69,8 +69,8 @@ const formatMinutes = (minutes) => {
 export default function OvertimeEditModal({ open, handleClose, record, onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    overtimeStart: "",
-    overtimeEnd: "",
+    firstEntry: "",
+    lastExit: "",
     approvalStatus: "",
     overtimeMinutes: 0
   });
@@ -79,26 +79,24 @@ export default function OvertimeEditModal({ open, handleClose, record, onSuccess
   useEffect(() => {
     if (record) {
       setFormData({
-        overtimeStart: formatTimeForInput(record.overtTimeStart),
-        overtimeEnd: formatTimeForInput(record.overtTimeEnd),
-        approvalStatus: record.overTimeStatus || 
-                       (record.approvedOverTime ? "Approved" : "Pending"),
+        firstEntry: formatTimeForInput(record.firstEntry),
+        lastExit: formatTimeForInput(record.lastExit),
+        approvalStatus: record.overTimeStatus || (record.approvedOverTime ? "Approved" : "Pending"),
         overtimeMinutes: record.overTimeMinutes || record.overtimeMinutes || 0
       });
     }
   }, [record]);
 
-  // Calculate overtime minutes when start or end time changes
+  // Calculate overtime minutes when firstEntry or lastExit changes
   useEffect(() => {
-    if (formData.overtimeStart && formData.overtimeEnd && record?.date) {
-      const minutes = calculateMinutes(
-        formData.overtimeStart, 
-        formData.overtimeEnd, 
-        new Date(record.date)
-      );
-      setFormData(prev => ({ ...prev, overtimeMinutes: minutes }));
+    if (formData.firstEntry && formData.lastExit && record?.date) {
+      const start = parseTimeToDate(formData.firstEntry, new Date(record.date));
+      const end = parseTimeToDate(formData.lastExit, new Date(record.date));
+      if (start && end) {
+        setFormData(prev => ({ ...prev, overtimeMinutes: Math.round((end - start) / (1000 * 60)) }));
+      }
     }
-  }, [formData.overtimeStart, formData.overtimeEnd, record?.date]);
+  }, [formData.firstEntry, formData.lastExit, record?.date]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -107,20 +105,23 @@ export default function OvertimeEditModal({ open, handleClose, record, onSuccess
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     try {
       setLoading(true);
-      
-      // Prepare data for API
       const date = new Date(record.date);
+      console.log({ date}, "date");
+      let firstEntryDate = formData.firstEntry ? parseTimeToDate(formData.firstEntry, date) : undefined;
+      let lastExitDate = formData.lastExit ? parseTimeToDate(formData.lastExit, date) : undefined;
+      console.log({ firstEntryDate, lastExitDate}, "firstEntryDate and lastExitDate");
+      // If firstEntry is after lastExit, add a day to lastExit
+      // if (firstEntryDate && lastExitDate && firstEntryDate > lastExitDate) {
+      //   lastExitDate.setDate(lastExitDate.getDate() + 1);
+      // }
       const data = {
-        overtimeStart: formData.overtimeStart ? parseTimeToDate(formData.overtimeStart, date) : undefined,
-        overtimeEnd: formData.overtimeEnd ? parseTimeToDate(formData.overtimeEnd, date) : undefined,
+        firstEntry: firstEntryDate,
+        lastExit: lastExitDate,
         approvalStatus: formData.approvalStatus
       };
-      
       const response = await updateOvertimeDetails(record._id, data);
-      
       if (response.success) {
         toast.success("Overtime details updated successfully");
         if (onSuccess) onSuccess();
@@ -171,9 +172,9 @@ export default function OvertimeEditModal({ open, handleClose, record, onSuccess
               <TextField
                 fullWidth
                 type="time"
-                label="Overtime Start"
-                name="overtimeStart"
-                value={formData.overtimeStart}
+                label="First Entry"
+                name="firstEntry"
+                value={formData.firstEntry}
                 onChange={handleChange}
                 InputLabelProps={{ shrink: true }}
               />
@@ -183,22 +184,22 @@ export default function OvertimeEditModal({ open, handleClose, record, onSuccess
               <TextField
                 fullWidth
                 type="time"
-                label="Overtime End"
-                name="overtimeEnd"
-                value={formData.overtimeEnd}
+                label="Last Exit"
+                name="lastExit"
+                value={formData.lastExit}
                 onChange={handleChange}
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
             
-            <Grid item xs={12}>
+            {/* <Grid item xs={12}>
               <Stack direction="row" spacing={2} alignItems="center">
                 <Typography variant="subtitle1">Overtime Duration:</Typography>
                 <Typography variant="body1" fontWeight="500" color="primary">
                   {formatMinutes(formData.overtimeMinutes)}
                 </Typography>
               </Stack>
-            </Grid>
+            </Grid> */}
             
             <Grid item xs={12}>
               <FormControl fullWidth>
