@@ -175,10 +175,10 @@ export default function RelaxationRequestTableRow(props) {
   };
 
   // Open confirmation dialog for relaxation request
-  const openConfirmation = (recordId, currentStatus) => {
+  const openConfirmation = (recordId, currentStatus,btnAction) => {
     setConfirmDialog({
       open: true,
-      action: currentStatus === "Pending" ? "approveOrReject" : null,
+      action: btnAction === "trigger" ? "approveOrReject" : null,
       recordId,
       currentStatus
     });
@@ -192,14 +192,14 @@ export default function RelaxationRequestTableRow(props) {
           <Stack direction="row" spacing={1}>
             {data.relaxationRequestStatus === "Pending" && (
                 <Tooltip title="Approve Request">
-                    <IconButton size="small" onClick={() => openConfirmation(data._id, "Approved")}>
+                    <IconButton size="small" onClick={() => openConfirmation(data._id, "Approved","trigger")}>
                         <ThumbUpAltIcon color="success" fontSize="small" />
                     </IconButton>
                 </Tooltip>
             )}
              {data.relaxationRequestStatus === "Pending" && (
                 <Tooltip title="Reject Request">
-                    <IconButton size="small" onClick={() => openConfirmation(data._id, "Reject")}>
+                    <IconButton size="small" onClick={() => openConfirmation(data._id, "Reject" , "trigger")}>
                         <ThumbDownAltIcon color="error" fontSize="small" />
                     </IconButton>
                 </Tooltip>
