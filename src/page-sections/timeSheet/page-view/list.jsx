@@ -405,7 +405,7 @@ export default function ListView() {
                 rowsPerPage={rowsPerPage}
                 count={totalRecords}
                 onPageChange={handleChangePage}
-                rowsPerPageOptions={[5, 10, 25]}
+                rowsPerPageOptions={[10, 20, 30, 50]}
                 onRowsPerPageChange={handleChangeRowsPerPage}
               />
             </Box>

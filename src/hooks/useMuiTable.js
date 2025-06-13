@@ -30,7 +30,7 @@ export default function useMuiTable(props) {
   const [orderBy, setOrderBy] = useState(props.defaultOrderBy || "name");
   const [selected, setSelected] = useState(props.defaultSelected || []);
   const [page, setPage] = useState(props.defaultPage || 0);
-  const [rowsPerPage, setRowsPerPage] = useState(props.defaultRowsPerPage || 5);
+  const [rowsPerPage, setRowsPerPage] = useState(props.defaultRowsPerPage || 30);
 
   const handleRequestSort = (_, property) => {
     const isAsc = orderBy === property && order === "asc";
