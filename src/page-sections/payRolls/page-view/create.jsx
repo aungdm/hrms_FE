@@ -35,6 +35,7 @@ export default function CreateView() {
   const [loading, setLoading] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [result, setResult] = useState(null);
+  const [filteredEmployees, setFilteredEmployees] = useState([]);
   
   const navigate = useNavigate();
   const TodoList = duotone.TodoList;
@@ -51,7 +52,7 @@ export default function CreateView() {
   const validationSchema = Yup.object().shape({
     startDate: Yup.date().required("Start date is required"),
     endDate: Yup.date().required("End date is required"),
-    payrollType: Yup.string()
+    payrollType: Yup.string().required("Payroll type is required")
   });
 
   // Formik Hook
@@ -75,25 +76,24 @@ export default function CreateView() {
         const payload = {
           startDate: values.startDate.toISOString(),
           endDate: values.endDate.toISOString(),
-          employeeIds: values.employeeIds.length > 0 ? values.employeeIds.map(emp => emp._id) : []
+          employeeIds: values.employeeIds.length > 0 ? values.employeeIds.map(emp => emp._id) : [],
+          payrollType: values.payrollType
         };
 
         const response = await generatePayroll(payload);
         
         if (response.success) {
-          toast.success("Payroll generation initiated");
+          toast.success(`${values.payrollType} payroll generation initiated`);
           setResult({
-            success: response.data.success,
-            failed: response.data.failed,
-            errors: response.data.errors,
+            success: response.data.length || 0,
+            failed: 0,
+            errors: []
           });
 
-          // If at least one payroll was successfully generated, enable the view button
-          if (response.data.success > 0) {
-            setTimeout(() => {
-              navigate("/pay-rolls-list");
-            }, 3000);
-          }
+          // Navigate to the list page
+          setTimeout(() => {
+            navigate("/pay-rolls-list");
+          }, 3000);
         } else {
           toast.error(response.message || "Error generating payroll");
         }
@@ -121,6 +121,16 @@ export default function CreateView() {
     }
   }, []);
 
+  // Filter employees based on selected payroll type
+  useEffect(() => {
+    if (values.payrollType && employees.length > 0) {
+      const filtered = employees.filter(emp => emp.payroll_type === values.payrollType);
+      setFilteredEmployees(filtered);
+    } else {
+      setFilteredEmployees(employees);
+    }
+  }, [values.payrollType, employees]);
+
   useEffect(() => {
     fetchEmployees();
   }, [fetchEmployees]);
@@ -143,6 +153,29 @@ export default function CreateView() {
 
       <form onSubmit={handleSubmit}>
         <Grid container spacing={3}>
+          <Grid item xs={12}>
+            <FormControl fullWidth error={touched.payrollType && Boolean(errors.payrollType)}>
+              <InputLabel>Payroll Type</InputLabel>
+              <Select
+                value={values.payrollType}
+                label="Payroll Type"
+                onChange={(e) => {
+                  setFieldValue("payrollType", e.target.value);
+                  // Clear selected employees when changing payroll type
+                  setFieldValue("employeeIds", []);
+                }}
+              >
+                <MenuItem value="Hourly">Hourly</MenuItem>
+                <MenuItem value="Monthly">Monthly</MenuItem>
+              </Select>
+              {touched.payrollType && errors.payrollType && (
+                <Typography color="error" variant="caption">
+                  {errors.payrollType}
+                </Typography>
+              )}
+            </FormControl>
+          </Grid>
+
           <Grid item xs={12} md={6}>
             <LocalizationProvider dateAdapter={AdapterDateFns}>
               <DatePicker
@@ -181,7 +214,7 @@ export default function CreateView() {
             <Autocomplete
               multiple
               id="employeeIds"
-              options={employees}
+              options={filteredEmployees}
               loading={loading}
               getOptionLabel={(option) => `${option.name} (${option.employeeId || option._id})`}
               onChange={(e, value) => setFieldValue("employeeIds", value)}
@@ -198,71 +231,53 @@ export default function CreateView() {
                 <TextField
                   {...params}
                   fullWidth
-                  label="Select Employees (leave empty for all)"
-                  placeholder="Search employees"
+                  label="Select Employees (Optional)"
+                  placeholder="Leave empty to include all employees"
+                  helperText={values.payrollType ? 
+                    `Showing ${values.payrollType} employees only` : 
+                    "Select payroll type first to filter employees"}
                 />
               )}
+              disabled={!values.payrollType}
             />
-            <Typography variant="caption" color="text.secondary">
-              Leave empty to generate payroll for all employees
-            </Typography>
           </Grid>
 
           <Grid item xs={12}>
-            <Box textAlign="right" mt={3}>
-              <Button
-                variant="contained"
-                color="primary"
-                type="submit"
-                disabled={processing || !(isValid && dirty)}
-              >
-                Generate Payroll
-              </Button>
-            </Box>
+            <Button
+              fullWidth
+              type="submit"
+              color="primary"
+              variant="contained"
+              disabled={!isValid || processing || !values.payrollType}
+            >
+              {processing ? "Generating..." : "Generate Payroll"}
+            </Button>
           </Grid>
         </Grid>
       </form>
 
       {processing && (
         <Box mt={3}>
-          <Typography variant="body2" mb={1}>Processing payroll generation...</Typography>
           <LinearProgress />
+          <Typography mt={1} align="center">
+            Processing payroll data...
+          </Typography>
         </Box>
       )}
 
       {result && (
         <Box mt={3}>
-          <Alert 
-            severity={result.success > 0 ? "success" : "warning"}
-            sx={{ mb: 2 }}
-          >
-            <AlertTitle>Payroll Generation Results</AlertTitle>
-            <Typography variant="body2">
-              Successfully generated {result.success} payroll(s)
+          <Alert severity={result.success > 0 ? "success" : "error"}>
+            <AlertTitle>Payroll Generation Result</AlertTitle>
+            <Typography>
+              {result.success} payrolls successfully generated
             </Typography>
-            <Typography variant="body2">
-              Failed to generate {result.failed} payroll(s)
-            </Typography>
-          </Alert>
-
-          {result.failed > 0 && result.errors && result.errors.length > 0 && (
-            <Box mt={2}>
-              <Typography variant="subtitle2" color="error">Errors:</Typography>
-              {result.errors.map((err, index) => (
-                <Typography key={index} variant="caption" color="error.main" display="block">
-                  • {err.name}: {err.error}
-                </Typography>
-              ))}
-            </Box>
-          )}
-
-          {result.success > 0 && (
-            <Box mt={2} textAlign="right">
-              <Typography variant="body2" mb={1}>
-                Redirecting to payroll list...
+            {result.failed > 0 && (
+              <Typography color="error">
+                {result.failed} payrolls failed to generate
               </Typography>
-            </Box>
-          )}
+            )}
+          </Alert>
         </Box>
       )}
     </Card>

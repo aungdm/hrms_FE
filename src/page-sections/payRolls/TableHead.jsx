@@ -9,7 +9,7 @@ import { isDark } from "@/utils/constants";
 
 const headCells = [
   {
-      id: "employeeId",
+    id: "employeeId",
     numeric: false,
     disablePadding: false,
     label: "Employee ID",
@@ -19,6 +19,12 @@ const headCells = [
     numeric: false,
     disablePadding: false,
     label: "Employee Name",
+  },
+  {
+    id: "designation",
+    numeric: false,
+    disablePadding: false,
+    label: "Designation",
   },
   {
     id: "payrollType",
@@ -33,22 +39,28 @@ const headCells = [
     label: "Pay Period",
   },
   {
-    id: "basicSalary",
+    id: "grossSalary",
     numeric: true,
     disablePadding: false,
-    label: "Basic Salary",
+    label: "Gross Salary",
   },
   {
-    id: "totalAdditions",
-    numeric: true,
-    disablePadding: false,
-    label: "Additions",
-  },
-  {
-    id: "totalDeductions",
+    id: "deductions",
     numeric: true,
     disablePadding: false,
     label: "Deductions",
+  },
+  {
+    id: "otherDeductions",
+    numeric: true,
+    disablePadding: false,
+    label: "Other Deductions",
+  },
+  {
+    id: "overtime",
+    numeric: true,
+    disablePadding: false,
+    label: "Overtime Pay",
   },
   {
     id: "netSalary",
@@ -57,7 +69,7 @@ const headCells = [
     label: "Net Salary",
   },
   {
-    id: "payrollStatus",
+    id: "status",
     numeric: false,
     disablePadding: false,
     label: "Status",
@@ -78,10 +90,18 @@ export default function TableHeadView(props) {
     numSelected,
     rowCount,
     onRequestSort,
+    payrollType
   } = props;
 
   const createSortHandler = (property) => (event) => {
     onRequestSort(event, property);
+  };
+
+  // Filter header cells based on payroll type
+  const getFilteredHeadCells = () => {
+    if (!payrollType || payrollType === 'all') return headCells;
+    
+    return headCells;
   };
 
   return (
@@ -102,7 +122,7 @@ export default function TableHeadView(props) {
             />
           </TableCell> */}
 
-          {headCells.map((headCell) => (
+          {getFilteredHeadCells().map((headCell) => (
             <TableCell
               key={headCell.id}
               padding={headCell.disablePadding ? "none" : "normal"}

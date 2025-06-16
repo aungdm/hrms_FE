@@ -19,6 +19,7 @@ const StatusChip = ({ status }) => {
   let color = "default";
   
   switch (status) {
+    case "Generated":
     case "Draft":
       color = "warning";
       break;
@@ -28,6 +29,7 @@ const StatusChip = ({ status }) => {
     case "Paid":
       color = "info";
       break;
+    case "Rejected":
     case "Cancelled":
       color = "error";
       break;
@@ -50,7 +52,7 @@ const formatDateRange = (startDate, endDate) => {
 };
 
 export default function TableRowView(props) {
-  const { data, isSelected, handleSelectRow, handleDelete, handleApprove, handleMarkAsPaid, handleGeneratePdf } = props;
+  const { data, isSelected, handleSelectRow, handleDelete, handleApprove, handleMarkAsPaid, handleGeneratePdf, handleViewPdf } = props;
   const navigate = useNavigate();
   const [openMenuEl, setOpenMenuEl] = useState(null);
 
@@ -61,28 +63,121 @@ export default function TableRowView(props) {
   const handleCloseOpenMenu = () => setOpenMenuEl(null);
 
   // Determine which actions to show based on payroll status
-  const isDraft = data?.payrollStatus === "Draft";
-  const isApproved = data?.payrollStatus === "Approved";
+  const isDraft = data?.status === "Generated" || data?.status === "Draft";
+  const isApproved = data?.status === "Approved";
   
+  // Determine salary fields based on payroll type (Hourly vs Monthly)
+  const renderSalaryFields = () => {
+    if (data?.payrollType === "Hourly" || data?._type === "Hourly") {
+      return (
+        <>
+          <TableCell>{formatCurrency(data?.grossSalary || 0)}</TableCell>
+          <TableCell>{formatCurrency(data?.lateFines || 0)}</TableCell>
+          <TableCell>{formatCurrency(data?.otherDeductions || 0)}</TableCell>
+          <TableCell>{formatCurrency(data?.overtimePay || 0)}</TableCell>
+        </>
+      );
+    } else {
+      return (
+        <>
+          <TableCell>{formatCurrency(data?.grossSalary || 0)}</TableCell>
+          <TableCell>{formatCurrency(data?.absentDeductions || 0)}</TableCell>
+          <TableCell>{formatCurrency(data?.otherDeductions || 0)}</TableCell>
+          <TableCell>-</TableCell>
+        </>
+      );
+    }
+  };
+  
+  const iconList = [
+    {
+      Icon: Visibility,
+      title: "View",
+      onClick: () => {
+        handleCloseOpenMenu();
+        navigate(`/pay-rolls-view/${data._id}`);
+      },
+    },
+    {
+      Icon: PictureAsPdf,
+      title: "Generate Payslip",
+      onClick: () => {
+        handleCloseOpenMenu();
+        handleGeneratePdf(data._id, data?.payrollType || data?._type);
+      },
+    },
+    {
+      Icon: Visibility,
+      title: "View Payslip",
+      onClick: () => {
+        handleCloseOpenMenu();
+        handleViewPdf(data._id, data?.payrollType || data?._type);
+      },
+    },
+  ];
+
+  if (isDraft) {
+    iconList.push(
+      {
+        Icon: Edit,
+        title: "Edit",
+        onClick: () => {
+          handleCloseOpenMenu();
+          navigate(`/pay-rolls-update/${data._id}`);
+        },
+      },
+      {
+        Icon: CheckCircle,
+        title: "Approve",
+        onClick: () => {
+          handleCloseOpenMenu();
+          handleApprove(data._id, data?.payrollType || data?._type);
+        },
+      },
+      {
+        Icon: DeleteOutline,
+        title: "Delete",
+        onClick: () => {
+          handleCloseOpenMenu();
+          handleDelete(data._id, data?.payrollType || data?._type);
+        },
+      }
+    );
+  }
+
+  if (isApproved) {
+    iconList.push(
+      {
+        Icon: AttachMoney,
+        title: "Mark as Paid",
+        onClick: () => {
+          handleCloseOpenMenu();
+          handleMarkAsPaid(data._id, data?.payrollType || data?._type);
+        },
+      }
+    );
+  }
+
   return (
     <>
       <TableRow hover>
-        <TableCell>{data?.employeeId?.employeeId || "-"}</TableCell>
+        <TableCell>{data?.employeeId || "-"}</TableCell>
         <TableCell>
           <FlexBox alignItems="center" gap={1}>
             <Paragraph fontWeight={500} color="text.primary">
-              {data?.employeeId?.name || "-"}
+              {data?.employeeName || "-"}
             </Paragraph>
           </FlexBox>
         </TableCell>
-        <TableCell>{data?.payrollType || "-"}</TableCell>
+        <TableCell>{data?.designation || "-"}</TableCell>
+        <TableCell>{data?.payrollType || data?._type || "-"}</TableCell>
         <TableCell>{formatDateRange(data?.startDate, data?.endDate)}</TableCell>
-        <TableCell>{formatCurrency(data?.basicSalary || 0)}</TableCell>
-        <TableCell>{formatCurrency(data?.totalAdditions || 0)}</TableCell>
-        <TableCell>{formatCurrency(data?.totalDeductions || 0)}</TableCell>
+        
+        {renderSalaryFields()}
+        
         <TableCell>{formatCurrency(data?.netSalary || 0)}</TableCell>
         <TableCell>
-          <StatusChip status={data?.payrollStatus || "Draft"} />
+          <StatusChip status={data?.status || "Generated"} />
         </TableCell>
 
         <TableCell>
@@ -91,65 +186,14 @@ export default function TableRowView(props) {
             handleOpen={handleOpenMenu}
             handleClose={handleCloseOpenMenu}
           >
-            <TableMoreMenuItem
-              Icon={Visibility}
-              title="View"
-              handleClick={() => {
-                handleCloseOpenMenu();
-                navigate(`/pay-rolls-view/${data._id}`);
-              }}
-            />
-            
-            {isDraft && (
-              <>
-                <TableMoreMenuItem
-                  Icon={Edit}
-                  title="Edit"
-                  handleClick={() => {
-                    handleCloseOpenMenu();
-                    navigate(`/pay-rolls-update/${data._id}`);
-                  }}
-                />
-                
-                <TableMoreMenuItem
-                  Icon={CheckCircle}
-                  title="Approve"
-                  handleClick={() => {
-                    handleCloseOpenMenu();
-                    handleApprove(data._id);
-                  }}
-                />
-                
-                <TableMoreMenuItem
-                  Icon={DeleteOutline}
-                  title="Delete"
-                  handleClick={() => {
-                    handleCloseOpenMenu();
-                    handleDelete(data._id);
-                  }}
-                />
-              </>
-            )}
-            
-            {isApproved && (
+            {iconList.map((item, index) => (
               <TableMoreMenuItem
-                Icon={AttachMoney}
-                title="Mark as Paid"
-                handleClick={() => {
-                  handleCloseOpenMenu();
-                  handleMarkAsPaid(data._id);
-                }}
+                key={index}
+                Icon={item.Icon}
+                title={item.title}
+                handleClick={item.onClick}
               />
-            )}
-            
-            <TableMoreMenuItem
-              Icon={PictureAsPdf}
-              title="Generate PDF"
-              handleClick={() => {
-                handleCloseOpenMenu();
-                handleGeneratePdf(data._id);
-              }}
-            />
+            ))}
           </TableMoreMenu>
         </TableCell>
       </TableRow>

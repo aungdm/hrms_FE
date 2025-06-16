@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client'; // ROOT APP COMPONENT
+import '@/utils/axiosConfig'; // Import axios configuration
 
 import App from './App'; // SITE SETTINGS CONTEXT
 

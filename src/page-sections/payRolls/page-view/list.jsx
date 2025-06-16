@@ -92,12 +92,14 @@ export default function ListView() {
     }
   }, [rowsPerPage, page, debouncedSearchString, filters.startDate, filters.endDate, filters.employeeId, filters.payrollStatus, filters.payrollType]);
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id, payrollType) => {
     try {
-      const response = await deletePayroll(id);
+      const response = await deletePayroll(id, payrollType);
       if (response.success) {
-        toast.success("Payroll deleted successfully");
+        toast.success(response.message || "Payroll deleted successfully");
         await fetchList();
+      } else {
+        toast.error(response.message || "Error deleting payroll");
       }
     } catch (error) {
       console.error(error);
@@ -105,12 +107,14 @@ export default function ListView() {
     }
   };
 
-  const handleApprove = async (id) => {
+  const handleApprove = async (id, payrollType) => {
     try {
-      const response = await approvePayroll(id);
+      const response = await approvePayroll(id, payrollType);
       if (response.success) {
         toast.success("Payroll approved successfully");
         await fetchList();
+      } else {
+        toast.error(response.message || "Error approving payroll");
       }
     } catch (error) {
       console.error(error);
@@ -118,12 +122,14 @@ export default function ListView() {
     }
   };
 
-  const handleMarkAsPaid = async (id) => {
+  const handleMarkAsPaid = async (id, payrollType) => {
     try {
-      const response = await markPayrollAsPaid(id);
+      const response = await markPayrollAsPaid(id, payrollType);
       if (response.success) {
         toast.success("Payroll marked as paid successfully");
         await fetchList();
+      } else {
+        toast.error(response.message || "Error marking payroll as paid");
       }
     } catch (error) {
       console.error(error);
@@ -131,16 +137,53 @@ export default function ListView() {
     }
   };
 
-  const handleGeneratePdf = async (id) => {
+  const handleGeneratePdf = async (id, payrollType) => {
     try {
-      const response = await generatePayrollPdf(id);
-      if (response.success) {
-        // In a real implementation, you might want to provide a download link or open the PDF in a new window
-        toast.success("PDF generated successfully");
+      const response = await generatePayrollPdf(id, payrollType);
+      if (response.success && response.pdfBlob) {
+        // Create a URL for the blob and download it
+        const url = window.URL.createObjectURL(response.pdfBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Payslip_${id}_${new Date().toISOString().split('T')[0]}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        toast.success("Payslip downloaded successfully");
+      } else {
+        const errorMessage = response.error || "Error generating payslip";
+        console.error("PDF generation failed:", response);
+        toast.error(errorMessage);
       }
     } catch (error) {
-      console.error(error);
-      toast.error("Error generating PDF");
+      console.error("PDF generation error:", error);
+      toast.error("Error generating payslip");
+    }
+  };
+
+  // Handle viewing PDF in a new tab
+  const handleViewPdf = async (id, payrollType) => {
+    try {
+      const response = await generatePayrollPdf(id, payrollType);
+      if (response.success && response.pdfBlob) {
+        const url = window.URL.createObjectURL(response.pdfBlob);
+        window.open(url, '_blank');
+        toast.success("Payslip opened in new tab");
+        
+        // Clean up the URL after a delay
+        setTimeout(() => {
+          window.URL.revokeObjectURL(url);
+        }, 1000);
+      } else {
+        const errorMessage = response.error || "Error viewing payslip";
+        console.error("PDF view failed:", response);
+        toast.error(errorMessage);
+      }
+    } catch (error) {
+      console.error("PDF view error:", error);
+      toast.error("Error viewing payslip");
     }
   };
 
@@ -168,7 +211,6 @@ export default function ListView() {
                     label="Start Date"
                     value={filters.startDate}
                     onChange={(date) => handleFilterChange("startDate", date)}
-                    renderInput={(params) => <TextField {...params} />}
                     slotProps={{ textField: { fullWidth: true, size: "small" } }}
                     sx={{ width: '25%' }}
                   />
@@ -177,24 +219,23 @@ export default function ListView() {
                     label="End Date"
                     value={filters.endDate}
                     onChange={(date) => handleFilterChange("endDate", date)}
-                    renderInput={(params) => <TextField {...params} />}
                     slotProps={{ textField: { fullWidth: true, size: "small" } }}
                     sx={{ width: '25%' }}
                   />
                 </LocalizationProvider>
                 
                 <FormControl size="small" sx={{ width: '25%' }}>
-                  <InputLabel>Payroll Status</InputLabel>
+                  <InputLabel>Status</InputLabel>
                   <Select
                     value={filters.payrollStatus}
-                    label="Payroll Status"
+                    label="Status"
                     onChange={(e) => handleFilterChange("payrollStatus", e.target.value)}
                   >
                     <MenuItem value="">All</MenuItem>
-                    <MenuItem value="Draft">Draft</MenuItem>
+                    <MenuItem value="Generated">Generated</MenuItem>
                     <MenuItem value="Approved">Approved</MenuItem>
                     <MenuItem value="Paid">Paid</MenuItem>
-                    <MenuItem value="Cancelled">Cancelled</MenuItem>
+                    <MenuItem value="Rejected">Rejected</MenuItem>
                   </Select>
                 </FormControl>
                 
@@ -225,6 +266,7 @@ export default function ListView() {
                     onSelectAllRows={handleSelectAllRows(
                       data.map((row) => row._id)
                     )}
+                    payrollType={filters.payrollType}
                   />
 
                   <TableBody>
@@ -238,6 +280,7 @@ export default function ListView() {
                         handleApprove={handleApprove}
                         handleMarkAsPaid={handleMarkAsPaid}
                         handleGeneratePdf={handleGeneratePdf}
+                        handleViewPdf={handleViewPdf}
                       />
                     ))}
 
@@ -250,10 +293,10 @@ export default function ListView() {
               <TablePagination
                 page={page}
                 component="div"
-                rowsPerPage={rowsPerPage}
                 count={totalRecords}
+                rowsPerPage={rowsPerPage}
                 onPageChange={handleChangePage}
-                rowsPerPageOptions={[5, 10, 25]}
+                rowsPerPageOptions={[10, 25, 50]}
                 onRowsPerPageChange={handleChangeRowsPerPage}
               />
             </Box>

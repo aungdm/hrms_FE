@@ -21,6 +21,7 @@ import Divider from "@mui/material/Divider";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import Badge from "@mui/material/Badge";
+import Autocomplete from "@mui/material/Autocomplete";
 
 // Icons
 import SearchIcon from "@mui/icons-material/Search";
@@ -43,6 +44,7 @@ import OvertimeTableRow from "../TableRow.jsx";
 
 // API
 import { getRelaxationRequestRecords, getRelaxationRequestStatistics } from "../request.js";
+import { getAllEmployees } from "@/page-sections/employee/request.js";
 
 export default function RelaxationRequestListView() {
   const {
@@ -73,14 +75,31 @@ export default function RelaxationRequestListView() {
     approvedRequests: 0,
     rejectedRequests: 0,
   });
+  const [employees, setEmployees] = useState([]);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   const debouncedSearchText = useDebounce(searchText, 500);
+
+  // Fetch employees
+  const fetchEmployees = useCallback(async () => {
+    try {
+      const response = await getAllEmployees();
+      if (response.success) {
+        setEmployees(response.data);
+      }
+    } catch (error) {
+      console.error("Error fetching employees:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchEmployees();
+  }, [fetchEmployees]);
 
   // Fetch data
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      // let approvalStatus;
 
       const response = await getRelaxationRequestRecords(
         debouncedSearchText,
@@ -88,15 +107,12 @@ export default function RelaxationRequestListView() {
         page,
         dateRange.startDate,
         dateRange.endDate,
-        approvalFilter
-        // employeeId
-        // approvalStatus
+        approvalFilter,
+        selectedEmployee?._id // Pass employeeId for filtering
       );
 
       if (response?.success) {
-        // If on rejected tab, filter for rejected records
         let filteredData = response.data;
-
         console.log({ filteredData }, { approvalFilter });
         setData(filteredData);
         setTotalRecords(response.totalRecords);
@@ -116,7 +132,7 @@ export default function RelaxationRequestListView() {
     dateRange.startDate,
     dateRange.endDate,
     approvalFilter,
-    // tabValue,
+    selectedEmployee,
   ]);
 
   // Fetch statistics
@@ -124,7 +140,8 @@ export default function RelaxationRequestListView() {
     try {
       const response = await getRelaxationRequestStatistics(
         dateRange.startDate,
-        dateRange.endDate
+        dateRange.endDate,
+        selectedEmployee?._id // Pass employeeId for filtering stats
       );
 
       if (response?.success) {
@@ -141,7 +158,7 @@ export default function RelaxationRequestListView() {
     } catch (error) {
       console.error("Error fetching relaxation request statistics:", error);
     }
-  }, [dateRange.startDate, dateRange.endDate]);
+  }, [dateRange.startDate, dateRange.endDate, selectedEmployee]);
 
   useEffect(() => {
     if (tabValue === 0) {
@@ -151,8 +168,6 @@ export default function RelaxationRequestListView() {
     } else if (tabValue === 2) {
       setApprovalFilter("Approved");
     } else if (tabValue === 3) {
-      // For rejected tab, we keep approval filter as "all" since
-      // rejected status is filtered in fetchData function
       setApprovalFilter("Rejected");
     }
   }, [tabValue]);
@@ -162,8 +177,6 @@ export default function RelaxationRequestListView() {
     fetchData();
     fetchStats();
   }, [fetchData, fetchStats]);
-
-  // Update approval filter when tab changes
 
   // Filter data
   const filteredRecords = stableSort(data, getComparator(order, orderBy));
@@ -185,6 +198,10 @@ export default function RelaxationRequestListView() {
     setApprovalFilter(e.target.value);
   };
 
+  const handleEmployeeChange = (event, newValue) => {
+    setSelectedEmployee(newValue);
+  };
+
   const handleRefresh = () => {
     fetchData();
     fetchStats();
@@ -198,9 +215,6 @@ export default function RelaxationRequestListView() {
     setTabValue(newValue);
     // Reset to first page when changing tabs
     handleChangePage(null, 0);
-    // Reset approval filter when changing tabs
-    // setApprovalFilter("all");
-    // Fetch data will be called via the useEffect dependency
   };
 
   return (
@@ -419,6 +433,24 @@ export default function RelaxationRequestListView() {
                       </Grid>
 
                       <Grid item xs={12} sm={3}>
+                        <Autocomplete
+                          id="employee-filter"
+                          options={employees}
+                          getOptionLabel={(option) => option.name || ""}
+                          value={selectedEmployee}
+                          onChange={handleEmployeeChange}
+                          renderInput={(params) => (
+                            <TextField 
+                              {...params} 
+                              label="Filter by Employee" 
+                              size="small"
+                              fullWidth 
+                            />
+                          )}
+                        />
+                      </Grid>
+
+                      <Grid item xs={12} sm={3}>
                         <Button
                           variant="contained"
                           onClick={fetchData}
@@ -427,6 +459,18 @@ export default function RelaxationRequestListView() {
                           Apply Filters
                         </Button>
                       </Grid>
+
+                      {selectedEmployee && (
+                        <Grid item xs={12} sm={3}>
+                          <Button
+                            variant="outlined"
+                            onClick={() => setSelectedEmployee(null)}
+                            fullWidth
+                          >
+                            Clear Employee Filter
+                          </Button>
+                        </Grid>
+                      )}
                     </Grid>
                   </Box>
                 )}
