@@ -152,7 +152,8 @@ export default function PayrollView() {
         // Monthly employee
         salaryDetails = [
           ['Salary Details'],
-          ['Gross Salary', formatCurrency(payrollData.grossSalary || 0)],
+          ['Monthly Gross Salary', formatCurrency(payrollData.grossSalary || 0)],
+          ['Actual Gross Salary (Based on Hours)', formatCurrency(payrollData.actualGrossSalary || 0)],
           ['Absent Deductions', formatCurrency(payrollData.absentDeductions || 0)],
           ['Other Deductions', formatCurrency(payrollData.otherDeductions || 0)],
           ['Net Salary', formatCurrency(payrollData.netSalary || 0)]
@@ -394,9 +395,16 @@ export default function PayrollView() {
                   <Table>
                     <TableBody>
                       <TableRow>
-                        <TableCell component="th" width="30%">Gross Salary</TableCell>
+                        <TableCell component="th" width="30%">Monthly Gross Salary</TableCell>
                         <TableCell>{formatCurrency(payrollData.grossSalary || 0)}</TableCell>
                       </TableRow>
+                      
+                      {payrollData.actualGrossSalary !== undefined && (
+                        <TableRow>
+                          <TableCell component="th">Actual Gross Salary (Based on Hours)</TableCell>
+                          <TableCell>{formatCurrency(payrollData.actualGrossSalary || 0)}</TableCell>
+                        </TableRow>
+                      )}
                       
                       {isHourly ? (
                         // Hourly employee specific fields

@@ -449,8 +449,13 @@ const createPayslipPDF = (data) => {
   const salaryDetails = data.salaryDetails || data;
   
   // Draw salary details
-  pdf.text(`Gross Salary: Rs. ${(salaryDetails.grossSalary || 0).toLocaleString()}`, 20, yPosition);
+  pdf.text(`Monthly Gross Salary: Rs. ${(salaryDetails.grossSalary || 0).toLocaleString()}`, 20, yPosition);
   yPosition += 8;
+  
+  if (salaryDetails.actualGrossSalary !== undefined) {
+    pdf.text(`Actual Gross Salary (Based on Hours): Rs. ${(salaryDetails.actualGrossSalary || 0).toLocaleString()}`, 20, yPosition);
+    yPosition += 8;
+  }
   
   if (salaryDetails.perHourRate !== undefined || salaryDetails.hourlyRate !== undefined) {
     pdf.text(`Per Hour Rate: Rs. ${(salaryDetails.perHourRate || salaryDetails.hourlyRate || 0).toFixed(2)}`, 20, yPosition);
