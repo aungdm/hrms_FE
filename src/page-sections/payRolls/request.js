@@ -506,31 +506,46 @@ const createPayslipPDF = (data) => {
     
     // Header for daily calculations
     pdf.text('Date', 20, yPosition);
-    pdf.text('Status', 50, yPosition);
-    pdf.text('Hours', 80, yPosition);
-    pdf.text('Daily Pay', 100, yPosition);
-    pdf.text('Late Fine', 130, yPosition);
-    pdf.text('OT Pay', 160, yPosition);
-    pdf.text('Total', 180, yPosition);
+    pdf.text('Status', 45, yPosition);
+    if (employeeType === 'Hourly') {
+      pdf.text('Payable Hrs', 70, yPosition);
+      pdf.text('Daily Pay', 95, yPosition);
+      pdf.text('Late Fine', 120, yPosition);
+      pdf.text('OT Pay', 145, yPosition);
+      pdf.text('Total', 170, yPosition);
+    } else {
+      pdf.text('Present', 70, yPosition);
+      pdf.text('Deduction', 95, yPosition);
+      pdf.text('Total', 170, yPosition);
+    }
     yPosition += 8;
     
     // Draw a line
     pdf.line(20, yPosition - 2, 200, yPosition - 2);
     
     // Show first 10 days to fit on page
-    const maxDays = Math.min(dailyCalcs.length, Math.floor((280 - yPosition) / 8));
+    const maxDays = Math.min(dailyCalcs.length, Math.floor((270 - yPosition) / 8));
     
     for (let i = 0; i < maxDays; i++) {
       const day = dailyCalcs[i];
       const date = day.date ? new Date(day.date).toLocaleDateString('en-GB') : 'N/A';
       
       pdf.text(date, 20, yPosition);
-      pdf.text(day.status || 'N/A', 50, yPosition);
-      pdf.text(String(day.regularHours || day.hours || 0), 80, yPosition);
-      pdf.text(`Rs. ${(day.dailyPay || 0).toFixed(0)}`, 100, yPosition);
-      pdf.text(`Rs. ${(day.lateFine || 0).toFixed(0)}`, 130, yPosition);
-      pdf.text(`Rs. ${(day.overtimePay || 0).toFixed(0)}`, 160, yPosition);
-      pdf.text(`Rs. ${(day.totalDailyPay || day.total || 0).toFixed(0)}`, 180, yPosition);
+      pdf.text(day.status || 'N/A', 45, yPosition);
+      
+      if (employeeType === 'Hourly') {
+        const payableHours = day.payableHours || '0.00';
+        pdf.text(String(payableHours), 70, yPosition);
+        pdf.text(`Rs. ${(day.dailyPay || 0).toFixed(0)}`, 95, yPosition);
+        pdf.text(`Rs. ${(day.lateFine || 0).toFixed(0)}`, 120, yPosition);
+        pdf.text(`Rs. ${(day.overtimePay || 0).toFixed(0)}`, 145, yPosition);
+      } else {
+        const isPresent = day.status !== 'Absent' && !day.isDayDeducted;
+        pdf.text(isPresent ? 'Yes' : 'No', 70, yPosition);
+        pdf.text(`Rs. ${(day.dailyDeduction || day.otherDeduction || 0).toFixed(0)}`, 95, yPosition);
+      }
+      
+      pdf.text(`Rs. ${(day.totalDailyPay || day.total || 0).toFixed(0)}`, 170, yPosition);
       yPosition += 8;
     }
     
@@ -538,12 +553,27 @@ const createPayslipPDF = (data) => {
       pdf.setFontSize(8);
       pdf.setTextColor(100, 100, 100);
       pdf.text(`... and ${dailyCalcs.length - maxDays} more days`, 20, yPosition + 5);
+      yPosition += 10;
     }
     
-    // Add note about late fines
-    pdf.setFontSize(8);
-    pdf.setTextColor(100, 100, 100);
-    pdf.text('Note: First three late days are not charged with fines.', 20, yPosition + 15);
+    // Add a section for detailed calculation notes if space allows
+    if (employeeType === 'Hourly' && yPosition < 240) {
+      pdf.setFontSize(8);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text('Note: Detailed calculation information available in system records', 20, yPosition + 10);
+    }
+  }
+  
+  // Add payroll calculation notes based on employee type
+  pdf.setFontSize(8);
+  pdf.setTextColor(100, 100, 100);
+  if (employeeType === 'Hourly') {
+    pdf.text('Hourly Rate Calculation: Monthly Salary ÷ (26 days × 8 hours)', 20, yPosition + 15);
+    pdf.text('Late Fines: Leadership roles have higher fines than regular employees', 20, yPosition + 23);
+    pdf.text('Overtime: Leadership gets 2x rate for OT > 60 mins, others get standard rate', 20, yPosition + 31);
+  } else {
+    pdf.text('Monthly Salary Calculation: Fixed monthly amount minus deductions', 20, yPosition + 15);
+    pdf.text('Absent Day Deduction: Monthly Salary ÷ 26 working days', 20, yPosition + 23);
   }
   
   // Footer

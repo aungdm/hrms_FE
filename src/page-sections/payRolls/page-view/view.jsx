@@ -170,26 +170,40 @@ export default function PayrollView() {
       XLSX.utils.book_append_sheet(wb, ws, 'Payroll Summary');
       
       // For hourly employees, add a second sheet with daily calculations
-      if (payrollData.lateFines !== undefined && payrollData.dailyCalculations && payrollData.dailyCalculations.length > 0) {
+      if (payrollData.dailyCalculations && payrollData.dailyCalculations.length > 0) {
         // Create headers for daily calculations
-        const dailyHeaders = [
-          ['Date', 'Status', 'Regular Hours', 'Daily Pay', 'Late (mins)', 'Late Fine', 
+        const dailyHeaders = payrollData.payrollType === "Hourly" ? [
+          ['Date', 'Status', 'Payable Hours', 'Daily Pay', 'Late (mins)', 'Late Fine', 
            'Overtime (mins)', 'Overtime Pay', 'Total', 'Notes']
+        ] : [
+          ['Date', 'Status', 'Present', 'Deduction', 'Notes']
         ];
         
         // Map daily calculations to array format
-        const dailyData = payrollData.dailyCalculations.map(day => [
-          day.date ? format(new Date(day.date), 'dd/MM/yyyy') : '-',
-          day.status || '-',
-          day.regularHours || 0,
-          day.dailyPay || 0,
-          day.lateArrival || 0,
-          day.lateFine || 0,
-          day.overtimeMinutes || 0,
-          day.overtimePay || 0,
-          day.totalDailyPay || 0,
-          day.notes || '-'
-        ]);
+        const dailyData = payrollData.dailyCalculations.map(day => {
+          if (payrollData.payrollType === "Hourly") {
+            return [
+              day.date ? format(new Date(day.date), 'dd/MM/yyyy') : '-',
+              day.status || '-',
+              day.payableHours || '0.00',
+              day.dailyPay || 0,
+              day.lateArrival || 0,
+              day.lateFine || 0,
+              day.overtimeMinutes || 0,
+              day.overtimePay || 0,
+              day.totalDailyPay || 0,
+              day.notes || '-'
+            ];
+          } else {
+            return [
+              day.date ? format(new Date(day.date), 'dd/MM/yyyy') : '-',
+              day.status || '-',
+              day.status !== 'Absent' && !day.isDayDeducted ? 'Yes' : 'No',
+              day.dailyDeduction || day.otherDeduction || 0,
+              day.notes || '-'
+            ];
+          }
+        });
         
         // Combine headers and data
         const dailySheet = [...dailyHeaders, ...dailyData];
@@ -499,45 +513,293 @@ export default function PayrollView() {
               {/* Daily Calculations Section for Hourly Employees */}
               {isHourly && payrollData.dailyCalculations && payrollData.dailyCalculations.length > 0 && (
                 <Grid item xs={12} mt={3}>
-                  <Typography variant="h6" mb={2}>Daily Salary Calculations</Typography>
-                  <Typography variant="body2" color="text.secondary" mb={2}>
-                    Note: First three late days are not charged with fines.
-                  </Typography>
+                  <Stack direction="row" alignItems="center" justifyContent="space-between" mb={3}>
+                    <Box>
+                      <Typography variant="h6" mb={1}>Daily Salary Calculations</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Detailed breakdown of daily work hours, payments, and deductions
+                      </Typography>
+                    </Box>
+                    <Chip 
+                      label={`${payrollData.dailyCalculations.length} Days`} 
+                      color="primary" 
+                      variant="outlined" 
+                    />
+                  </Stack>
                   
-                  <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 440 }}>
-                    <Table stickyHeader>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Date</TableCell>
-                          <TableCell>Status</TableCell>
-                          <TableCell>Regular Hours</TableCell>
-                          <TableCell>Daily Pay</TableCell>
-                          <TableCell>Late (mins)</TableCell>
-                          <TableCell>Late Fine</TableCell>
-                          <TableCell>Overtime (mins)</TableCell>
-                          <TableCell>Overtime Pay</TableCell>
-                          <TableCell>Total</TableCell>
-                          <TableCell>Notes</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {payrollData.dailyCalculations.map((day, index) => (
-                          <TableRow key={index}>
-                            <TableCell>{day.date ? format(new Date(day.date), 'dd/MM/yyyy') : '-'}</TableCell>
-                            <TableCell>{day.status || '-'}</TableCell>
-                            <TableCell>{day.regularHours || 0}</TableCell>
-                            <TableCell>{formatCurrency(day.dailyPay || 0)}</TableCell>
-                            <TableCell>{day.lateArrival || 0}</TableCell>
-                            <TableCell>{formatCurrency(day.lateFine || 0)}</TableCell>
-                            <TableCell>{day.overtimeMinutes || 0}</TableCell>
-                            <TableCell>{formatCurrency(day.overtimePay || 0)}</TableCell>
-                            <TableCell>{formatCurrency(day.totalDailyPay || 0)}</TableCell>
-                            <TableCell>{day.notes || '-'}</TableCell>
+                  <Card variant="outlined" sx={{ overflow: 'hidden' }}>
+                    <TableContainer sx={{ maxHeight: 500, '&::-webkit-scrollbar': { width: 8 }, '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 4 } }}>
+                      <Table stickyHeader size="small">
+                        <TableHead>
+                          <TableRow sx={{ '& th': { bgcolor: 'grey.50', fontWeight: 600, fontSize: '0.875rem' } }}>
+                            <TableCell sx={{ minWidth: 100 }}>Date</TableCell>
+                            <TableCell sx={{ minWidth: 80 }}>Status</TableCell>
+                            <TableCell sx={{ minWidth: 100 }} align="center">Payable Hours</TableCell>
+                            <TableCell sx={{ minWidth: 100 }} align="right">Daily Pay</TableCell>
+                            <TableCell sx={{ minWidth: 80 }} align="center">Late (mins)</TableCell>
+                            <TableCell sx={{ minWidth: 100 }} align="right">Late Fine</TableCell>
+                            <TableCell sx={{ minWidth: 100 }} align="center">Overtime (mins)</TableCell>
+                            <TableCell sx={{ minWidth: 100 }} align="right">Overtime Pay</TableCell>
+                            <TableCell sx={{ minWidth: 100 }} align="right">Total</TableCell>
+                            <TableCell sx={{ minWidth: 300 }}>Notes</TableCell>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
+                        </TableHead>
+                        <TableBody>
+                          {payrollData.dailyCalculations.map((day, index) => (
+                            <TableRow 
+                              key={index}
+                              sx={{ 
+                                '&:hover': { bgcolor: 'grey.50' },
+                                '& td': { py: 1.5 }
+                              }}
+                            >
+                              <TableCell sx={{ fontWeight: 500 }}>
+                                {day.date ? format(new Date(day.date), 'dd/MM/yyyy') : '-'}
+                              </TableCell>
+                              <TableCell>
+                                <Chip 
+                                  label={day.status || 'N/A'} 
+                                  size="small" 
+                                  color={
+                                    day.status === 'Present' ? 'success' :
+                                    day.status === 'Absent' ? 'error' :
+                                    day.status === 'Late' ? 'warning' :
+                                    day.status === 'Half Day' ? 'info' : 'default'
+                                  }
+                                  variant="outlined"
+                                />
+                              </TableCell>
+                              <TableCell align="center" sx={{ fontFamily: 'monospace', fontWeight: 500 }}>
+                                {day.payableHours || '0.00'}
+                              </TableCell>
+                              <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
+                                {formatCurrency(day.dailyPay || 0)}
+                              </TableCell>
+                              <TableCell align="center" sx={{ 
+                                color: (day.lateArrival && day.lateArrival > 0) ? 'warning.main' : 'text.secondary',
+                                fontWeight: (day.lateArrival && day.lateArrival > 0) ? 500 : 400
+                              }}>
+                                {day.lateArrival || 0}
+                              </TableCell>
+                              <TableCell align="right" sx={{ 
+                                color: (day.lateFine && day.lateFine > 0) ? 'error.main' : 'text.secondary',
+                                fontFamily: 'monospace',
+                                fontWeight: (day.lateFine && day.lateFine > 0) ? 500 : 400
+                              }}>
+                                {formatCurrency(day.lateFine || 0)}
+                              </TableCell>
+                              <TableCell align="center" sx={{ 
+                                color: (day.overtimeMinutes && day.overtimeMinutes > 0) ? 'info.main' : 'text.secondary',
+                                fontWeight: (day.overtimeMinutes && day.overtimeMinutes > 0) ? 500 : 400
+                              }}>
+                                {day.overtimeMinutes || 0}
+                              </TableCell>
+                              <TableCell align="right" sx={{ 
+                                color: (day.overtimePay && day.overtimePay > 0) ? 'success.main' : 'text.secondary',
+                                fontFamily: 'monospace',
+                                fontWeight: (day.overtimePay && day.overtimePay > 0) ? 500 : 400
+                              }}>
+                                {formatCurrency(day.overtimePay || 0)}
+                              </TableCell>
+                              <TableCell align="right" sx={{ 
+                                fontFamily: 'monospace', 
+                                fontWeight: 600,
+                                color: (day.totalDailyPay || 0) < 0 ? 'error.main' : 'success.main'
+                              }}>
+                                {formatCurrency(day.totalDailyPay || 0)}
+                              </TableCell>
+                              <TableCell sx={{ 
+                                fontSize: '0.75rem', 
+                                color: 'text.secondary',
+                                maxWidth: 300,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                              }}>
+                                <Box 
+                                  component="span" 
+                                  title={day.notes || '-'}
+                                  sx={{ cursor: day.notes ? 'help' : 'default' }}
+                                >
+                                  {day.notes || '-'}
+                                </Box>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                    
+                    {/* Summary Footer */}
+                    <Box sx={{ p: 2, bgcolor: 'grey.50', borderTop: 1, borderColor: 'divider' }}>
+                      <Grid container spacing={2}>
+                        <Grid item xs={6} sm={3}>
+                          <Typography variant="caption" color="text.secondary" display="block">
+                            Total Days
+                          </Typography>
+                          <Typography variant="h6" color="primary">
+                            {payrollData.dailyCalculations.length}
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={6} sm={3}>
+                          <Typography variant="caption" color="text.secondary" display="block">
+                            Working Days
+                          </Typography>
+                          <Typography variant="h6" color="success.main">
+                            {payrollData.dailyCalculations.filter(day => day.status === 'Present' || day.status === 'Late').length}
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={6} sm={3}>
+                          <Typography variant="caption" color="text.secondary" display="block">
+                            Total Payable Hours
+                          </Typography>
+                          <Typography variant="h6" color="info.main">
+                            {payrollData.payableHours || 'N/A'}
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={6} sm={3}>
+                          <Typography variant="caption" color="text.secondary" display="block">
+                            Net Amount
+                          </Typography>
+                          <Typography variant="h6" color={payrollData.netSalary >= 0 ? 'success.main' : 'error.main'}>
+                            {formatCurrency(payrollData.netSalary || 0)}
+                          </Typography>
+                        </Grid>
+                      </Grid>
+                    </Box>
+                  </Card>
+                </Grid>
+              )}
+
+              {/* Daily Calculations Section for Monthly Employees */}
+              {!isHourly && payrollData.dailyCalculations && payrollData.dailyCalculations.length > 0 && (
+                <Grid item xs={12} mt={3}>
+                  <Stack direction="row" alignItems="center" justifyContent="space-between" mb={3}>
+                    <Box>
+                      <Typography variant="h6" mb={1}>Daily Attendance Breakdown</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Daily attendance status and deductions for monthly salary calculation
+                      </Typography>
+                    </Box>
+                    <Chip 
+                      label={`${payrollData.dailyCalculations.length} Days`} 
+                      color="primary" 
+                      variant="outlined" 
+                    />
+                  </Stack>
+                  
+                  <Card variant="outlined" sx={{ overflow: 'hidden' }}>
+                    <TableContainer sx={{ maxHeight: 400, '&::-webkit-scrollbar': { width: 8 }, '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 4 } }}>
+                      <Table stickyHeader size="small">
+                        <TableHead>
+                          <TableRow sx={{ '& th': { bgcolor: 'grey.50', fontWeight: 600, fontSize: '0.875rem' } }}>
+                            <TableCell sx={{ minWidth: 100 }}>Date</TableCell>
+                            <TableCell sx={{ minWidth: 120 }}>Status</TableCell>
+                            <TableCell sx={{ minWidth: 100 }} align="center">Present</TableCell>
+                            <TableCell sx={{ minWidth: 120 }} align="right">Deduction</TableCell>
+                            <TableCell sx={{ minWidth: 300 }}>Notes</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {payrollData.dailyCalculations.map((day, index) => (
+                            <TableRow 
+                              key={index}
+                              sx={{ 
+                                '&:hover': { bgcolor: 'grey.50' },
+                                '& td': { py: 1.5 }
+                              }}
+                            >
+                              <TableCell sx={{ fontWeight: 500 }}>
+                                {day.date ? format(new Date(day.date), 'dd/MM/yyyy') : '-'}
+                              </TableCell>
+                              <TableCell>
+                                <Chip 
+                                  label={day.status || 'N/A'} 
+                                  size="small" 
+                                  color={
+                                    day.status === 'Present' ? 'success' :
+                                    day.status === 'Absent' ? 'error' :
+                                    day.status === 'Leave' ? 'info' :
+                                    day.status === 'Holiday' ? 'secondary' : 'default'
+                                  }
+                                  variant="outlined"
+                                />
+                              </TableCell>
+                              <TableCell align="center">
+                                <Chip 
+                                  label={day.status !== 'Absent' && !day.isDayDeducted ? 'Yes' : 'No'}
+                                  size="small"
+                                  color={day.status !== 'Absent' && !day.isDayDeducted ? 'success' : 'error'}
+                                  variant="filled"
+                                />
+                              </TableCell>
+                              <TableCell align="right" sx={{ 
+                                color: (day.dailyDeduction && day.dailyDeduction > 0) || (day.otherDeduction && day.otherDeduction > 0) ? 'error.main' : 'text.secondary',
+                                fontFamily: 'monospace',
+                                fontWeight: (day.dailyDeduction && day.dailyDeduction > 0) || (day.otherDeduction && day.otherDeduction > 0) ? 500 : 400
+                              }}>
+                                {formatCurrency(day.dailyDeduction || day.otherDeduction || 0)}
+                              </TableCell>
+                              <TableCell sx={{ 
+                                fontSize: '0.75rem', 
+                                color: 'text.secondary',
+                                maxWidth: 300,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                              }}>
+                                <Box 
+                                  component="span" 
+                                  title={day.notes || '-'}
+                                  sx={{ cursor: day.notes ? 'help' : 'default' }}
+                                >
+                                  {day.notes || '-'}
+                                </Box>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                    
+                    {/* Summary Footer for Monthly */}
+                    <Box sx={{ p: 2, bgcolor: 'grey.50', borderTop: 1, borderColor: 'divider' }}>
+                      <Grid container spacing={2}>
+                        <Grid item xs={6} sm={3}>
+                          <Typography variant="caption" color="text.secondary" display="block">
+                            Total Days
+                          </Typography>
+                          <Typography variant="h6" color="primary">
+                            {payrollData.dailyCalculations.length}
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={6} sm={3}>
+                          <Typography variant="caption" color="text.secondary" display="block">
+                            Present Days
+                          </Typography>
+                          <Typography variant="h6" color="success.main">
+                            {payrollData.dailyCalculations.filter(day => day.status !== 'Absent' && !day.isDayDeducted).length}
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={6} sm={3}>
+                          <Typography variant="caption" color="text.secondary" display="block">
+                            Absent Days
+                          </Typography>
+                          <Typography variant="h6" color="error.main">
+                            {payrollData.absentDays || payrollData.dailyCalculations.filter(day => day.status === 'Absent' || day.isDayDeducted).length}
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={6} sm={3}>
+                          <Typography variant="caption" color="text.secondary" display="block">
+                            Net Salary
+                          </Typography>
+                          <Typography variant="h6" color={payrollData.netSalary >= 0 ? 'success.main' : 'error.main'}>
+                            {formatCurrency(payrollData.netSalary || 0)}
+                          </Typography>
+                        </Grid>
+                      </Grid>
+                    </Box>
+                  </Card>
                 </Grid>
               )}
             </Grid>

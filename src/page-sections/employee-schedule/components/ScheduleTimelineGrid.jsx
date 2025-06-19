@@ -301,9 +301,15 @@ const MultiEditFab = styled(Fab)(({ theme }) => ({
 }));
 
 const ScheduleTimelineGrid = ({ schedules, onUpdateDay }) => {
+  console.log(schedules)
   const theme = useTheme();
   const scrollContainerRef = useRef(null);
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [currentMonth, setCurrentMonth] = useState(() => {
+    if (schedules && schedules.length > 0 && schedules[0].month && schedules[0].year) {
+      return new Date(schedules[0].year, schedules[0].month - 1, 1);
+    }
+    return new Date();
+  });
   const [selectedDay, setSelectedDay] = useState(null);
   const [selectedEmployeeIndex, setSelectedEmployeeIndex] = useState(0);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -312,6 +318,14 @@ const ScheduleTimelineGrid = ({ schedules, onUpdateDay }) => {
   const [multiSelectMode, setMultiSelectMode] = useState(false);
   const [selectedSlots, setSelectedSlots] = useState([]);
   const [isMultiEditModalOpen, setIsMultiEditModalOpen] = useState(false);
+
+  // Update currentMonth when schedules change
+  useEffect(() => {
+    if (schedules && schedules.length > 0 && schedules[0].month && schedules[0].year) {
+      const newCurrentMonth = new Date(schedules[0].year, schedules[0].month - 1, 1);
+      setCurrentMonth(newCurrentMonth);
+    }
+  }, [schedules]);
 
   // Create array of days for the timeline
   const firstDay = startOfMonth(currentMonth);
@@ -384,7 +398,9 @@ const ScheduleTimelineGrid = ({ schedules, onUpdateDay }) => {
           day,
           daySchedule: slotDaySchedule,
           scheduleId: schedule._id,
-          employeeName: schedule.employee_id.name || `Employee ${employeeIndex + 1}`
+          employeeName: schedule.employee_name || 
+                       schedule.employee_id?.name || 
+                       `Employee ${employeeIndex + 1}`
         }
       ]);
     }
@@ -710,10 +726,17 @@ const ScheduleTimelineGrid = ({ schedules, onUpdateDay }) => {
         
         {/* Employee rows */}
         {schedules.map((schedule, employeeIndex) => {
-          // Get employee name and initials
-          const employeeName = schedule.employee_id.name || 'Employee';
-          const employeeCode = schedule.employee_id._id || '--';
-          console.log(employeeCode);
+          // Get employee name and initials - handle different data structures
+          const employeeName = schedule.employee_name || 
+                              schedule.employee_id?.name || 
+                              (typeof schedule.employee_id === 'string' ? 'Employee' : 'Employee');
+          const employeeCode = schedule.employee_id?.user_defined_code || 
+                              schedule.employee_id?._id || 
+                              schedule.employee_id || 
+                              '--';
+          console.log('Schedule data:', schedule);
+          console.log('Employee name:', employeeName);
+          console.log('Employee code:', employeeCode);
           const employeeInitials = getEmployeeInitials(employeeName);
           const timeSlotName = schedule.time_slot_id?.name || 'Schedule';
           
@@ -921,7 +944,9 @@ const ScheduleTimelineGrid = ({ schedules, onUpdateDay }) => {
             
             return {
               employeeIndex: slot.employeeIndex,
-              employeeName: schedule.employee_id.name || 'Employee',
+              employeeName: schedule.employee_name || 
+                           schedule.employee_id?.name || 
+                           'Employee',
               dayIndex: slot.dayIndex,
               daySchedule: daySchedule || { 
                 date: dayDate.toISOString(),
