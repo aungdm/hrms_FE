@@ -78,7 +78,7 @@ export default function OvertimeEditModal({ open, handleClose, record, onSuccess
   // Initialize form data when record changes
   useEffect(() => {
     if (record) {
-      setFormData({
+       setFormData({
         firstEntry: formatTimeForInput(record.firstEntry),
         lastExit: formatTimeForInput(record.lastExit),
         approvalStatus: record.overTimeStatus || (record.approvedOverTime ? "Approved" : "Pending"),
@@ -119,7 +119,8 @@ export default function OvertimeEditModal({ open, handleClose, record, onSuccess
       const data = {
         firstEntry: firstEntryDate,
         lastExit: lastExitDate,
-        approvalStatus: formData.approvalStatus
+        approvalStatus: formData.approvalStatus,
+        date: record.date
       };
       const response = await updateOvertimeDetails(record._id, data);
       if (response.success) {

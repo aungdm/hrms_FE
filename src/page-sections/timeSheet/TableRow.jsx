@@ -8,6 +8,7 @@ import Edit from "@mui/icons-material/Edit";
 import Visibility from "@mui/icons-material/Visibility";
 import DeleteOutline from "@mui/icons-material/DeleteOutline";
 import EventNote from "@mui/icons-material/EventNote";
+import AccessTime from "@mui/icons-material/AccessTime";
 import FlexBox from "@/components/flexbox/FlexBox";
 import { Paragraph } from "@/components/typography";
 import { TableMoreMenuItem, TableMoreMenu } from "@/components/table";
@@ -22,10 +23,16 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
 import { toast } from "react-toastify";
 
-// Import the createLeave function
+// Import the createLeave function and punch API functions
 import { createLeave } from "@/page-sections/leave/request";
+import { getPunches, createPunch } from "@/page-sections/punch/request";
 
 export default function TableRowView(props) {
   const { data, isSelected, handleSelectRow, handleDelete } = props;
@@ -33,6 +40,12 @@ export default function TableRowView(props) {
   const navigate = useNavigate();
   const [openMenuEl, setOpenMenuEl] = useState(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [punchRequestDialogOpen, setPunchRequestDialogOpen] = useState(false);
+  const [punchRequestData, setPunchRequestData] = useState({
+    time: "",
+    punchType: "",
+  });
+  const [loading, setLoading] = useState(false);
 
   const handleOpenMenu = (event) => {
     setOpenMenuEl(event.currentTarget);
@@ -111,6 +124,30 @@ export default function TableRowView(props) {
     data?.checkinStatus === "Absent" &&
     data?.checkoutStatus === "Absent";
 
+  // Check if attendance record has missing entries that can be requested via punch
+  const hasMissingEntries = () => {
+    return (
+      data?.status !== "Absent" &&
+      data?.status !== "Day Off" &&
+      (!data?.firstEntry || !data?.lastExit)
+    );
+  };
+
+  // Get available punch types based on missing entries
+  const getAvailablePunchTypes = () => {
+    const availableTypes = [];
+    
+    if (!data?.firstEntry) {
+      availableTypes.push({ value: "firstEntry", label: "First Entry" });
+    }
+    
+    if (!data?.lastExit) {
+      availableTypes.push({ value: "lastExit", label: "Last Exit" });
+    }
+
+    return availableTypes;
+  };
+
   // Handle opening the confirmation dialog
   const handleOpenConfirmDialog = () => {
     setConfirmDialogOpen(true);
@@ -120,6 +157,104 @@ export default function TableRowView(props) {
   // Handle closing the confirmation dialog
   const handleCloseConfirmDialog = () => {
     setConfirmDialogOpen(false);
+  };
+
+  // Handle opening punch request dialog
+  const handleOpenPunchRequestDialog = () => {
+    setPunchRequestDialogOpen(true);
+    setPunchRequestData({
+      time: "",
+      punchType: "",
+    });
+    handleCloseOpenMenu();
+  };
+
+  // Handle closing punch request dialog
+  const handleClosePunchRequestDialog = () => {
+    setPunchRequestDialogOpen(false);
+    setPunchRequestData({
+      time: "",
+      punchType: "",
+    });
+  };
+
+  // Handle punch request form input changes
+  const handlePunchRequestInputChange = (field, value) => {
+    setPunchRequestData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Check if punch request already exists for this attendance and punch type
+  const checkExistingPunchRequest = async (attendanceId, punchType) => {
+    try {
+      const response = await getPunches({
+        attendanceId: attendanceId,
+        punchType: punchType,
+        perPage: 1,
+        page: 1
+      });
+      
+      if (response.success) {
+        return response.data && response.data.length > 0;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Error checking existing punch request:', error);
+      return false;
+    }
+  };
+
+  // Handle creating a punch request
+  const handleCreatePunchRequest = async () => {
+    try {
+      if (!punchRequestData.time || !punchRequestData.punchType) {
+        toast.error("Please fill in all required fields");
+        return;
+      }
+
+      setLoading(true);
+
+      // Check if punch request already exists
+      const existingRequest = await checkExistingPunchRequest(data._id, punchRequestData.punchType);
+      
+      if (existingRequest) {
+        toast.error(`A punch request for ${punchRequestData.punchType} already exists for this attendance record`);
+        setLoading(false);
+        return;
+      }
+
+      // Format the time with the attendance date
+      const attendanceDate = new Date(data.date);
+      const [hours, minutes] = punchRequestData.time.split(':');
+      const punchDateTime = new Date(attendanceDate);
+      punchDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+
+      // Create punch request using the existing API function
+      const punchData = {
+        employeeId: data.employeeId._id,
+        attendanceId: data._id,
+        date: data.date,
+        time: punchDateTime.toISOString(),
+        punchType: punchRequestData.punchType,
+      };
+
+      const response = await createPunch(punchData);
+
+      if (response.success) {
+        toast.success("Punch request created successfully");
+        handleClosePunchRequestDialog();
+      } else {
+        toast.error("Failed to create punch request");
+      }
+    } catch (error) {
+      console.error("Error creating punch request:", error);
+      toast.error("An error occurred while creating punch request");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Handle creating a leave request
@@ -186,6 +321,13 @@ export default function TableRowView(props) {
                 Icon={EventNote}
                 title="Leave Request"
                 handleClick={handleOpenConfirmDialog}
+              />
+            )}
+            {hasMissingEntries() && (
+              <TableMoreMenuItem
+                Icon={AccessTime}
+                title="Punch Request"
+                handleClick={handleOpenPunchRequestDialog}
               />
             )}
           </TableMoreMenu>
@@ -364,6 +506,67 @@ export default function TableRowView(props) {
             autoFocus
           >
             Create Leave Request
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Punch Request Dialog */}
+      <Dialog
+        open={punchRequestDialogOpen}
+        onClose={handleClosePunchRequestDialog}
+        aria-labelledby="punch-request-dialog-title"
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle id="punch-request-dialog-title">
+          Create Punch Request
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 2 }}>
+            Create a punch request for <strong>{data?.employeeId?.name}</strong> on{" "}
+            <strong>{formatISOtDateTime(data?.date)}</strong>
+          </DialogContentText>
+          
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+            <TextField
+              label="Time"
+              type="time"
+              value={punchRequestData.time}
+              onChange={(e) => handlePunchRequestInputChange('time', e.target.value)}
+              fullWidth
+              required
+              InputLabelProps={{
+                shrink: true,
+              }}
+            />
+            
+            <FormControl fullWidth required>
+              <InputLabel>Punch Type</InputLabel>
+              <Select
+                value={punchRequestData.punchType}
+                onChange={(e) => handlePunchRequestInputChange('punchType', e.target.value)}
+                label="Punch Type"
+              >
+                {getAvailablePunchTypes().map((type) => (
+                  <MenuItem key={type.value} value={type.value}>
+                    {type.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClosePunchRequestDialog} color="primary">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleCreatePunchRequest}
+            color="primary"
+            variant="contained"
+            disabled={loading || !punchRequestData.time || !punchRequestData.punchType}
+          >
+            {loading ? "Creating..." : "Create Punch Request"}
           </Button>
         </DialogActions>
       </Dialog>
