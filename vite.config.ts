@@ -12,5 +12,15 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: 1500,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'pdf-libs': ['jspdf', 'jspdf-autotable', 'html2canvas'],
+        }
+      }
+    }
   },
+  optimizeDeps: {
+    include: ['jspdf', 'jspdf-autotable', 'html2canvas']
+  }
 })
