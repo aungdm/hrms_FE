@@ -303,6 +303,27 @@ export const getAttendanceRecordsByEmployee = async (employeeId, startDate, endD
   }
 };
 
+// Get attendance record by ID
+export const getAttendanceRecordById = async (attendanceId) => {
+  try {
+    if (!attendanceId) return { success: false, data: null };
+
+    const response = await axios.get(`dailyAttendance/get/${attendanceId}`);
+    
+    if (response?.data?.success) {
+      return {
+        success: true,
+        data: response?.data?.data,
+      };
+    } else {
+      return { success: false, data: null };
+    }
+  } catch (error) {
+    console.error("Error fetching attendance record by ID:", error);
+    return { success: false, data: null };
+  }
+};
+
 // Create a new punch request
 export const createPunch = async (punchData) => {
   try {
@@ -386,9 +407,16 @@ export const deletePunch = async (id) => {
 };
 
 // Approve or reject a punch request
-export const updatePunchStatus = async (id, status) => {
+export const updatePunchStatus = async (id, status, firstEntry = null, lastExit = null, date = null) => {
   try {
-    const response = await axios.patch(`/punch/${id}/status`, { status });
+    const payload = { status };
+    
+    // Add optional time fields if provided
+    if (firstEntry) payload.firstEntry = firstEntry;
+    if (lastExit) payload.lastExit = lastExit;
+    if (date) payload.date = date;
+    
+    const response = await axios.patch(`/punch/${id}/status`, payload);
     if (response.data) {
       return {
         success: true,

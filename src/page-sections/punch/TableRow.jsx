@@ -35,7 +35,7 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import PunchModal from "./components/PunchModal";
 
 // API
-import { deletePunch, updatePunchStatus } from "./request";
+import { deletePunch, updatePunchStatus, getAttendanceRecordById } from "./request";
 
 const TableRowView = ({ data, isSelected, handleSelectRow, refetchList, isAdmin }) => {
   // State management
@@ -89,7 +89,58 @@ const TableRowView = ({ data, isSelected, handleSelectRow, refetchList, isAdmin 
   // Handle status update
   const handleUpdateStatus = async () => {
     try {
-      const response = await updatePunchStatus(data._id, statusToChange);
+      // Fetch the daily attendance record using the attendanceId from punch record
+      const attendanceResponse = await getAttendanceRecordById(data.attendanceId);
+      console.log({ attendanceResponse }, "attendanceResponse");
+      
+      let firstEntry = null;
+      let lastExit = null;
+      
+      // Extract existing times from attendance record if available
+      if (attendanceResponse.success && attendanceResponse.data) {
+        const attendanceRecord = attendanceResponse.data;
+        
+        // Extract existing firstEntry time (HH:MM format)
+        if (attendanceRecord.firstEntry) {
+          const firstEntryDate = new Date(attendanceRecord.firstEntry);
+          firstEntry = `${firstEntryDate.getHours().toString().padStart(2, '0')}:${firstEntryDate.getMinutes().toString().padStart(2, '0')}`;
+        }
+        
+        // Extract existing lastExit time (HH:MM format)
+        if (attendanceRecord.lastExit) {
+          const lastExitDate = new Date(attendanceRecord.lastExit);
+          lastExit = `${lastExitDate.getHours().toString().padStart(2, '0')}:${lastExitDate.getMinutes().toString().padStart(2, '0')}`;
+        }
+      }
+      
+      console.log({ firstEntry, lastExit }, "firstEntry and lastExit");
+      // Now update the appropriate field based on punch type
+      if (data.time) {
+        const timeDate = new Date(data.time);
+        const timeString = `${timeDate.getHours().toString().padStart(2, '0')}:${timeDate.getMinutes().toString().padStart(2, '0')}`;
+        
+        if (data.punchType === 'firstEntry') {
+          firstEntry = timeString; // Override with punch request time
+        } else if (data.punchType === 'lastExit') {
+          lastExit = timeString; // Override with punch request time
+        }
+      }
+      
+      console.log('Sending payload:', {
+        id: data._id,
+        status: statusToChange,
+        firstEntry,
+        lastExit,
+        date: data.date
+      });
+      
+      const response = await updatePunchStatus(
+        data._id, 
+        statusToChange, 
+        firstEntry, 
+        lastExit, 
+        data.date
+      );
       
       if (response.success) {
         toast.success(`Punch request ${statusToChange.toLowerCase()} successfully`);

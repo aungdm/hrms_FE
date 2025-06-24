@@ -135,15 +135,15 @@ export default function TableRowView(props) {
 
   // Get available punch types based on missing entries
   const getAvailablePunchTypes = () => {
-    const availableTypes = [];
+    const availableTypes = [{ value: "firstEntry", label: "First Entry" }, { value: "lastExit", label: "Last Exit" }];
     
-    if (!data?.firstEntry) {
-      availableTypes.push({ value: "firstEntry", label: "First Entry" });
-    }
+    // if (!data?.firstEntry) {
+    //   availableTypes.push({ value: "firstEntry", label: "First Entry" });
+    // }
     
-    if (!data?.lastExit) {
-      availableTypes.push({ value: "lastExit", label: "Last Exit" });
-    }
+    // if (!data?.lastExit) {
+    //   availableTypes.push({ value: "lastExit", label: "Last Exit" });
+    // }
 
     return availableTypes;
   };

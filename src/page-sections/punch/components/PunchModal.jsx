@@ -369,8 +369,7 @@ export default function PunchModal({ open, handleClose, record, onSuccess, mode 
                 >
                   <MenuItem value="firstEntry">{getPunchTypeLabel("firstEntry")}</MenuItem>
                   <MenuItem value="lastExit">{getPunchTypeLabel("lastExit")}</MenuItem>
-                  <MenuItem value="overtimeStart">{getPunchTypeLabel("overtimeStart")}</MenuItem>
-                  <MenuItem value="overtimeEnd">{getPunchTypeLabel("overtimeEnd")}</MenuItem>
+                  
                 </Select>
               </FormControl>
             </Grid>

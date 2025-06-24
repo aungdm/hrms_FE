@@ -15,23 +15,23 @@ const headCells = [
     label: "Employee",
   },
   {
-    id: "punch_type",
+    id: "date",
     numeric: true,
     disablePadding: false,
-    label: "Punch Type",
+    label: "Date",
   },
   {
-    id: "punch_time",
+    id: "amount",
     numeric: false,
     disablePadding: false,
-    label: "Punch Time",
+    label: "Amount",
   },
 
   {
-    id: "device_id",
+    id: "already_paid",
     numeric: true,
     disablePadding: false,
-    label: "Device ID",
+    label: "Already Paid",
   },
   { 
     id: "actions",
