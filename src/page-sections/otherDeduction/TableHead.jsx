@@ -3,43 +3,54 @@ import TableRow from "@mui/material/TableRow";
 import TableCell from "@mui/material/TableCell";
 import Checkbox from "@mui/material/Checkbox";
 import TableSortLabel from "@mui/material/TableSortLabel";
-import visuallyHidden from "@mui/utils/visuallyHidden";
-import { Span } from "@/components/typography";
-import { isDark } from "@/utils/constants";
+import Box from "@mui/material/Box";
 
 const headCells = [
   {
-    id: "employee_id",
-    numeric: true,
-    disablePadding: false,
+    id: "employeeId",
+    numeric: false,
+    disablePadding: true,
     label: "Employee",
   },
   {
-    id: "date",
+    id: "deductionType",
+    numeric: false,
+    disablePadding: false,
+    label: "Deduction Type",
+  },
+  {
+    id: "amount",
     numeric: true,
+    disablePadding: false,
+    label: "Amount",
+  },
+  {
+    id: "deductionDate",
+    numeric: false,
     disablePadding: false,
     label: "Date",
   },
   {
-    id: "amount",
+    id: "status",
     numeric: false,
     disablePadding: false,
-    label: "Amount",
+    label: "Status",
   },
-
   {
-    id: "already_paid",
-    numeric: true,
+    id: "description",
+    numeric: false,
     disablePadding: false,
-    label: "Already Paid",
+    label: "Description",
   },
-  { 
+  {
     id: "actions",
-    numeric: true,
+    numeric: false,
     disablePadding: false,
     label: "Actions",
+    align: "right",
   },
 ];
+
 export default function TableHeadView(props) {
   const {
     onSelectAllRows,
@@ -55,51 +66,43 @@ export default function TableHeadView(props) {
   };
 
   return (
-    <>
-      <TableHead
-        sx={{
-          backgroundColor: (theme) => (isDark(theme) ? "grey.700" : "grey.100"),
-        }}
-      >
-        <TableRow>
-          {/* <TableCell padding="checkbox">
-            <Checkbox
-              size="small"
-              color="primary"
-              onChange={onSelectAllRows}
-              checked={rowCount > 0 && numSelected === rowCount}
-              indeterminate={numSelected > 0 && numSelected < rowCount}
-            />
-          </TableCell> */}
+    <TableHead
+      sx={{
+        backgroundColor: (theme) => theme.palette.action.hover,
+      }}
+    >
+      <TableRow>
+        <TableCell padding="checkbox">
+          <Checkbox
+            color="primary"
+            indeterminate={numSelected > 0 && numSelected < rowCount}
+            checked={rowCount > 0 && numSelected === rowCount}
+            onChange={onSelectAllRows}
+          />
+        </TableCell>
 
-          {headCells.map((headCell) => (
-            <TableCell
-              key={headCell.id}
-              padding={headCell.disablePadding ? "none" : "normal"}
-              sortDirection={orderBy === headCell.id ? order : false}
-              sx={{
-                color: "text.primary",
-                fontWeight: 600,
-              }}
+        {headCells.map((headCell) => (
+          <TableCell
+            key={headCell.id}
+            align={headCell.align || (headCell.numeric ? "right" : "left")}
+            padding={headCell.disablePadding ? "none" : "normal"}
+            sortDirection={orderBy === headCell.id ? order : false}
+          >
+            <TableSortLabel
+              active={orderBy === headCell.id}
+              direction={orderBy === headCell.id ? order : "asc"}
+              onClick={createSortHandler(headCell.id)}
             >
-              <TableSortLabel
-                active={orderBy === headCell.id}
-                onClick={createSortHandler(headCell.id)}
-                direction={orderBy === headCell.id ? order : "asc"}
-              >
-                {headCell.label}
-                {orderBy === headCell.id ? (
-                  <Span sx={visuallyHidden}>
-                    {order === "desc"
-                      ? "sorted descending"
-                      : "sorted ascending"}
-                  </Span>
-                ) : null}
-              </TableSortLabel>
-            </TableCell>
-          ))}
-        </TableRow>
-      </TableHead>
-    </>
+              {headCell.label}
+              {orderBy === headCell.id ? (
+                <Box component="span" sx={{ border: 0, clip: 'rect(0 0 0 0)', height: 1, margin: -1, overflow: 'hidden', padding: 0, position: 'absolute', whiteSpace: 'nowrap', width: 1 }}>
+                  {order === "desc" ? "sorted descending" : "sorted ascending"}
+                </Box>
+              ) : null}
+            </TableSortLabel>
+          </TableCell>
+        ))}
+      </TableRow>
+    </TableHead>
   );
 }

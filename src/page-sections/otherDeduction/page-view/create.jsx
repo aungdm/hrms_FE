@@ -6,8 +6,11 @@ import {
   TextField,
   Button,
   Grid,
-  Switch,
-  Stack,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+  FormHelperText,
 } from "@mui/material";
 import ShoppingCart from "@/icons/ShoppingCart.jsx";
 import { Paragraph } from "@/components/typography";
@@ -19,24 +22,17 @@ import * as Yup from "yup";
 import {
   create,
   update,
-  // searchEmployees,
   get,
-  // updateSalary,
 } from "../request.js";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import useDebounce from "@/hooks/debounceHook.js";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
+import axios from "axios";
 
 export default function CreateView() {
   const [mode, setMode] = useState(false);
   const [employees, setEmployees] = useState([]);
-  const [employeeData, setEmployeeData] = useState({
-    employee: {},
-    percentCalculateStatus: false,
-  });
-
-  const { employee, percentCalculateStatus } = employeeData;
   const [searchString, setSearchString] = useState("");
   const debouncedSearchString = useDebounce(searchString, 1000);
   const navigate = useNavigate();
@@ -44,27 +40,36 @@ export default function CreateView() {
   const location = useLocation();
   const id = params.id;
 
+  // Deduction types
+  const deductionTypes = [
+    "Fine",
+    "Loan Deduction",
+    "Insurance Premium",
+    "Tax Deduction",
+    "Advance Salary",
+    "Other"
+  ];
+
   // Initial Form Values
   const initialValues = {
-    date: "",
-    previousSalary: "",
-    salary: "",
-    name: "",
-    percentage: "", // Added percentage field
-    employment: null,
+    employeeId: "",
+    deductionType: "",
+    amount: "",
+    deductionDate: "",
     description: "",
+    status: "Pending"
   };
 
   // Form Validation Schema
   const validationSchema = Yup.object().shape({
-    date: Yup.date().required("Effective Date is Required!"),
-    employment: Yup.object()
-      .nullable()
-      .required("Employee selection is required"),
-    salary: Yup.number().required("Salary is Required!"),
-    previousSalary: Yup.number().required("Previous Salary is Required!"),
-    name: Yup.string().required("Name is Required!"),
+    employeeId: Yup.string().required("Employee selection is required"),
+    deductionType: Yup.string().required("Deduction type is required"),
+    amount: Yup.number()
+      .positive("Amount must be positive")
+      .required("Amount is required"),
+    deductionDate: Yup.date().required("Deduction date is required"),
     description: Yup.string(),
+    status: Yup.string().oneOf(["Pending", "Approved", "Rejected"])
   });
 
   // Formik Hook
@@ -76,97 +81,95 @@ export default function CreateView() {
     touched,
     setFieldValue,
     setValues,
+    resetForm,
   } = useFormik({
     initialValues,
     validationSchema,
     onSubmit: async (values) => {
-      // console.log({ values });
-      // const object = { ...values, employment: values.employment?._id };
-      // console.log({ object });
-      // try {
-      //   let responseData;
-      //   // if (!mode) {
-      //   responseData = await create(object);
-      //   const salaryData = await updateSalary(values.employment?._id, {
-      //     after_probation_gross_salary: values.salary,
-      //   });
-      //   console.log({ salaryData });
-      //   if (responseData.success) {
-      //     toast.success("Salary Revision created successfully ");
-      //     resetForm();
-      //     navigate("/salary-revisions-list");
-      //   }
-      //   // } else {
-      //   // responseData = await update(id, values);
-      //   // }
-      //   console.log("Response:", responseData);
-      // } catch (error) {
-      //   console.error(error);
-      //   toast.error("Error Creating Salary Revision");
-      // }
+      console.log({ values });
+      try {
+        let responseData;
+        if (!mode || mode === "create") {
+          responseData = await create({
+            employeeId: values.employeeId,
+            deductionType: values.deductionType,
+            amount: parseFloat(values.amount),
+            deductionDate: values.deductionDate,
+            description: values.description,
+            status: values.status
+          });
+        } else if (mode === "edit") {
+          responseData = await update(id, {
+            employeeId: values.employeeId,
+            deductionType: values.deductionType,
+            amount: parseFloat(values.amount),
+            deductionDate: values.deductionDate,
+            description: values.description,
+            status: values.status
+          });
+        }
+        
+        console.log("Response:", responseData);
+        
+        if (responseData.success) {
+          toast.success(responseData.message || "Deduction saved successfully");
+          resetForm();
+          navigate("/other-deduction-list");
+        } else {
+          toast.error(responseData.message || "Failed to save deduction");
+        }
+      } catch (error) {
+        console.error(error);
+        toast.error("Error saving deduction");
+      }
     },
   });
 
-  // Fetch employee list when user types in the search field
-  const fetchList = useCallback(async () => {
+  // Fetch employee list
+  const fetchEmployees = useCallback(async () => {
     try {
-      const response = await searchEmployees(debouncedSearchString);
-      console.log({ response }, " employee in salary revision");
-
-      if (response?.success) {
-        setEmployees(response.data);
+      const response = await axios.get("employee/get", {
+        params: {
+          search: debouncedSearchString,
+          perPage: 100,
+          page: 1
+        }
+      });
+      
+      if (response?.data?.success) {
+        setEmployees(response.data.data.data || []);
       }
     } catch (error) {
-      console.error(error);
+      console.error("Error fetching employees:", error);
     }
   }, [debouncedSearchString]);
-
-  // Handles percentage input and updates salary dynamically
-  const handlePercentageChange = (e) => {
-    const percent = parseFloat(e.target.value);
-    const baseSalary = Number(employee?.after_probation_gross_salary) || 0;
-
-    if (!isNaN(percent)) {
-      const incrementedSalary = baseSalary + (baseSalary * percent) / 100;
-      setValues({
-        ...values,
-        salary: incrementedSalary,
-        percentage: e.target.value,
-      });
-    } else {
-      setValues({ ...values, salary: baseSalary, percentage: "" });
-    }
-  };
 
   const fetchRecord = async (id) => {
     try {
       const response = await get(id);
       console.log(response?.data);
-      const { date, previousSalary, salary, description, employment, name } =
-        response.data;
+      
       if (response.success) {
+        const data = response.data;
         setValues({
-          date: date ? format(new Date(date), "yyyy-MM-dd") : "",
-          employment: employment || "",
-          previousSalary: previousSalary || "",
-          salary: salary || "",
-          description: description || "",
-          name: name || "",
+          employeeId: data.employeeId?._id || data.employeeId || "",
+          deductionType: data.deductionType || "",
+          amount: data.amount || "",
+          deductionDate: data.deductionDate ? format(new Date(data.deductionDate), "yyyy-MM-dd") : "",
+          description: data.description || "",
+          status: data.status || "Pending"
         });
-        setEmployeeData({ ...employeeData, employee: employment });
       }
     } catch (error) {
       console.error(error);
-      throw error;
+      toast.error("Error fetching deduction details");
     }
   };
 
   // Fetch employee list when search string changes
-  // useEffect(() => {
-  //   if (debouncedSearchString) {
-  //     fetchList();
-  //   }
-  // }, [debouncedSearchString, fetchList]);
+  useEffect(() => {
+    fetchEmployees();
+  }, [fetchEmployees]);
 
   // Determine mode (view/edit) based on the URL
   useEffect(() => {
@@ -177,10 +180,13 @@ export default function CreateView() {
     if (location.pathname.includes("view")) {
       setMode("view");
     } else if (id) {
-      // fetchRecord(id);
       setMode("edit");
+    } else {
+      setMode("create");
     }
   }, [id, location.pathname]);
+
+  const selectedEmployee = employees.find(emp => emp._id === values.employeeId);
 
   return (
     <>
@@ -191,67 +197,66 @@ export default function CreateView() {
             <ShoppingCart sx={{ color: "primary.main" }} />
           </IconWrapper>
           <Paragraph sx={{ fontWeight: 600 }} fontSize={16}>
-            Other Fine Deduction
+            {mode === "view" ? "View" : mode === "edit" ? "Edit" : "Create"} Other Deduction
           </Paragraph>
         </FlexBox>
       </Box>
 
       {/* Form Section */}
       <form onSubmit={handleSubmit}>
-        <Card elevation={22}>
-          <Grid container spacing={2}>
+        <Card elevation={2} sx={{ p: 3 }}>
+          <Grid container spacing={3}>
             {/* Employee Selection */}
-            <Grid p={3} md={6} sm={12} xs={12}>
+            <Grid item md={6} sm={12} xs={12}>
               <Autocomplete
                 fullWidth
-                disablePortal
+                disabled={mode === "view"}
                 options={employees}
-                getOptionLabel={(option) => option?.name || ""}
-                value={values.employment}
+                getOptionLabel={(option) => `${option?.name || ""} (${option?.user_defined_code || ""})`}
+                value={selectedEmployee || null}
                 onChange={(event, newValue) => {
-                  setFieldValue("employment", newValue);
-                  setEmployeeData({ ...employeeData, employee: newValue });
-                  setFieldValue(
-                    "previousSalary",
-                    newValue?.after_probation_gross_salary || ""
-                  );
-                  setFieldValue("name", newValue?.name || "");
+                  setFieldValue("employeeId", newValue?._id || "");
                 }}
                 renderInput={(params) => (
                   <TextField
                     {...params}
                     label="Select Employee"
                     onChange={(e) => setSearchString(e.target.value)}
-                    helperText={touched.employment && errors.employment}
-                    error={Boolean(touched.employment && errors.employment)}
+                    helperText={touched.employeeId && errors.employeeId}
+                    error={Boolean(touched.employeeId && errors.employeeId)}
                   />
                 )}
               />
             </Grid>
 
-            {/* Effective Date */}
-            <Grid p={3} md={6} sm={12} xs={12}>
-              <TextField
-                inputProps={{ readOnly: mode === "view" }}
-                type="date"
-                fullWidth
-                label="Date"
-                name="date"
-                value={values.date}
-                onChange={handleChange}
-                helperText={touched.date && errors.date}
-                error={Boolean(touched.date && errors.date)}
-              />
+            {/* Deduction Type */}
+            <Grid item md={6} sm={12} xs={12}>
+              <FormControl fullWidth error={Boolean(touched.deductionType && errors.deductionType)}>
+                <InputLabel>Deduction Type</InputLabel>
+                <Select
+                  disabled={mode === "view"}
+                  name="deductionType"
+                  value={values.deductionType}
+                  onChange={handleChange}
+                  label="Deduction Type"
+                >
+                  {deductionTypes.map((type) => (
+                    <MenuItem key={type} value={type}>
+                      {type}
+                    </MenuItem>
+                  ))}
+                </Select>
+                {touched.deductionType && errors.deductionType && (
+                  <FormHelperText>{errors.deductionType}</FormHelperText>
+                )}
+              </FormControl>
             </Grid>
-          </Grid>
 
-          <Grid container spacing={2}>
-            {/* Previous Salary */}
-            <Grid p={3} md={6} sm={12} xs={12}>
+            {/* Amount */}
+            <Grid item md={6} sm={12} xs={12}>
               <TextField
-                inputProps={{ readOnly: mode === "view" }}
+                disabled={mode === "view"}
                 type="number"
-                readOnly
                 fullWidth
                 name="amount"
                 label="Amount"
@@ -259,46 +264,48 @@ export default function CreateView() {
                 onChange={handleChange}
                 helperText={touched.amount && errors.amount}
                 error={Boolean(touched.amount && errors.amount)}
+                inputProps={{ min: 0, step: 0.01 }}
               />
             </Grid>
 
-            {/* Salary Type Switch */}
-            {mode !== "view" && (
-              <Grid p={3} sm={6} xs={12}>
-                <Typography fontSize={16}>Aready Paid</Typography>
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <Switch
-                    checked={percentCalculateStatus}
-                    onChange={(e) =>
-                      setEmployeeData({
-                        ...employeeData,
-                        percentCalculateStatus: e.target.checked,
-                      })
-                    }
-                  />
-                </Stack>
-              </Grid>
-            )}
-          </Grid>
-
-          <Grid container spacing={2}>
-            {/* <Grid p={3} md={6} sm={12} xs={12}>
+            {/* Deduction Date */}
+            <Grid item md={6} sm={12} xs={12}>
               <TextField
-                inputProps={{ readOnly: mode === "view" }}
-                type="number"
+                disabled={mode === "view"}
+                type="date"
                 fullWidth
-                name="salary"
-                label="Salary"
-                value={values.salary}
+                label="Deduction Date"
+                name="deductionDate"
+                value={values.deductionDate}
                 onChange={handleChange}
-                helperText={touched.salary && errors.salary}
-                error={Boolean(touched.salary && errors.salary)}
+                helperText={touched.deductionDate && errors.deductionDate}
+                error={Boolean(touched.deductionDate && errors.deductionDate)}
+                InputLabelProps={{ shrink: true }}
               />
-            </Grid> */}
-            <Grid p={3} md={6} sm={12} xs={12}>
+            </Grid>
+
+            {/* Status */}
+            <Grid item md={6} sm={12} xs={12}>
+              <FormControl fullWidth>
+                <InputLabel>Status</InputLabel>
+                <Select
+                  disabled={mode === "view"}
+                  name="status"
+                  value={values.status}
+                  onChange={handleChange}
+                  label="Status"
+                >
+                  <MenuItem value="Pending">Pending</MenuItem>
+                  <MenuItem value="Approved">Approved</MenuItem>
+                  <MenuItem value="Rejected">Rejected</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            {/* Description */}
+            <Grid item md={6} sm={12} xs={12}>
               <TextField
-                inputProps={{ readOnly: mode === "view" ? true : false }}
-                type="text"
+                disabled={mode === "view"}
                 fullWidth
                 name="description"
                 multiline
@@ -311,16 +318,26 @@ export default function CreateView() {
               />
             </Grid>
           </Grid>
-        </Card>
 
-        {/* Submit Button */}
-        {mode !== "view" && (
-          <Grid pt={3} pb={6} xs={12}>
-            <Button type="submit" variant="contained">
-              Submit
-            </Button>
-          </Grid>
-        )}
+          {/* Submit Button */}
+          {mode !== "view" && (
+            <Box mt={3} display="flex" gap={2}>
+              <Button 
+                type="submit" 
+                variant="contained" 
+                color="primary"
+              >
+                {mode === "edit" ? "Update" : "Create"} Deduction
+              </Button>
+              <Button 
+                variant="outlined" 
+                onClick={() => navigate("/dashboard/otherDeduction")}
+              >
+                Cancel
+              </Button>
+            </Box>
+          )}
+        </Card>
       </form>
     </>
   );

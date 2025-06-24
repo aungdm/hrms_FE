@@ -1,104 +1,221 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { format } from "date-fns";
+
+// MUI Components
 import TableRow from "@mui/material/TableRow";
 import TableCell from "@mui/material/TableCell";
 import Checkbox from "@mui/material/Checkbox";
-import Avatar from "@mui/material/Avatar";
-import Edit from "@mui/icons-material/Edit";
-import Visibility from "@mui/icons-material/Visibility";
-import DeleteOutline from "@mui/icons-material/DeleteOutline";
-import FlexBox from "@/components/flexbox/FlexBox";
-import { Paragraph } from "@/components/typography";
-import { TableMoreMenuItem, TableMoreMenu } from "@/components/table";
-import { utils } from "@/utils/functionUtils";
-export default function TableRowView(props) {
-  const { data, isSelected, handleSelectRow, handleDelete } = props;
-  // console.log(data, "table row data");
-  const navigate = useNavigate();
-  const [openMenuEl, setOpenMenuEl] = useState(null);
+import Chip from "@mui/material/Chip";
+import IconButton from "@mui/material/IconButton";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
+import Typography from "@mui/material/Typography";
 
+// Icons
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CancelIcon from "@mui/icons-material/Cancel";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+
+// API functions
+import { deleteDeduction, updateDeductionStatus } from "./request";
+
+export default function TableRowView({ data, isSelected, handleSelectRow, refetchList, handleDelete, isAdmin }) {
+  const navigate = useNavigate();
+  const [openMenu, setOpenMenu] = useState(null);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [statusToChange, setStatusToChange] = useState(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  // Handle menu open/close
   const handleOpenMenu = (event) => {
-    setOpenMenuEl(event.currentTarget);
+    setOpenMenu(event.currentTarget);
   };
-  const handleCloseOpenMenu = () => setOpenMenuEl(null);
+
+  const handleCloseMenu = () => {
+    setOpenMenu(null);
+  };
+
+  // Format date as DD/MM/YYYY
+  const formatDate = (dateString) => {
+    try {
+      return format(new Date(dateString), "dd/MM/yyyy");
+    } catch (error) {
+      return "Invalid date";
+    }
+  };
+
+  // Format currency
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount);
+  };
+
+  // Get color based on status
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "Approved":
+        return "success";
+      case "Rejected":
+        return "error";
+      case "Pending":
+      default:
+        return "warning";
+    }
+  };
+
+  // Handle delete
+  const handleDeleteAction = async () => {
+    try {
+      if (handleDelete) {
+        // Use the passed handleDelete function if available
+        await handleDelete(data._id);
+      } else {
+        // Fallback to direct API call
+        const response = await deleteDeduction(data._id);
+        
+        if (response.success && refetchList) {
+          refetchList();
+        }
+      }
+    } catch (error) {
+      console.error("Error deleting deduction:", error);
+    }
+  };
+
+  // Handle status update
+  const handleUpdateStatus = async (status) => {
+    try {
+      const response = await updateDeductionStatus(data._id, status);
+      
+      if (response.success && refetchList) {
+        refetchList();
+      }
+    } catch (error) {
+      console.error("Error updating deduction status:", error);
+    }
+  };
 
   return (
-    <>
-      <TableRow hover>
-        {/* <TableCell padding="checkbox">
-          <Checkbox
-            size="small"
-            color="primary"
-            checked={isSelected}
-            onClick={(event) => handleSelectRow(event, data.id)}
-          />
-        </TableCell> */}
+    <TableRow hover selected={isSelected}>
+      <TableCell padding="checkbox">
+        <Checkbox
+          size="small"
+          color="primary"
+          checked={isSelected}
+          onClick={(event) => handleSelectRow(event, data._id)}
+        />
+      </TableCell>
 
-        <TableCell padding="normal">
-          <FlexBox alignItems="center" gap={2}>
-            {/* <Avatar src={data.image} alt={data.name} variant="rounded" /> */}
+      <TableCell>
+        <Typography variant="body2" color="text.primary">
+          {data?.employeeId?.name || "N/A"}
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          {data?.employeeId?.user_defined_code || ""}
+        </Typography>
+      </TableCell>
 
-            <div>
-              <Paragraph
-                fontWeight={500}
-                color="text.primary"
-                sx={{
-                  ":hover": {
-                    textDecoration: "underline",
-                    cursor: "pointer",
-                  },
-                }}
-              >
-                {/* {data?.deviceUserId || "-"} */}
-              </Paragraph>
+      <TableCell>
+        <Typography variant="body2">
+          {data?.deductionType || "N/A"}
+        </Typography>
+      </TableCell>
 
-              {/* <Paragraph fontSize={13}>#{data.id || "-"}</Paragraph> */}
-            </div>
-          </FlexBox>
-        </TableCell>
-        {/* <TableCell>{data?.name || "-"}</TableCell> */}
+      <TableCell>
+        <Typography variant="body2">
+          {formatCurrency(data?.amount) || "N/A"}
+        </Typography>
+      </TableCell>
 
-        <TableCell padding="normal">
-          {/* {utils.formatISOtDateTime(data?.recordTime) || "-"} */}
-        </TableCell>
+      <TableCell>
+        <Typography variant="body2">
+          {formatDate(data?.deductionDate) || "N/A"}
+        </Typography>
+      </TableCell>
 
-        <TableCell padding="normal">
-          {/* {data?.deviceId || "-"} */}
-        </TableCell>
-{/* 
-        <TableCell padding="normal">
-          <TableMoreMenu
-            open={openMenuEl}
-            handleOpen={handleOpenMenu}
-            handleClose={handleCloseOpenMenu}
-          >
-            <TableMoreMenuItem
-              Icon={Edit}
-              title="Edit"
-              handleClick={() => {
-                handleCloseOpenMenu();
-                navigate(`/other-deduction-update/${data._id}`);
-              }}
-            />
-            <TableMoreMenuItem
-              Icon={Visibility}
-              title="View"
-              handleClick={() => {
-                handleCloseOpenMenu();
-                navigate(`/other-deduction-view/${data._id}`);
-              }}
-            />
-            <TableMoreMenuItem
-              Icon={DeleteOutline}
-              title="Delete"
-              handleClick={() => {
-                handleCloseOpenMenu();
-                handleDelete(data._id);
-              }}
-            />
-          </TableMoreMenu>
-        </TableCell> */}
-      </TableRow>
-    </>
+      <TableCell>
+        <Chip 
+          label={data?.status || "Pending"}
+          color={getStatusColor(data?.status)}
+          size="small" 
+          variant="outlined" 
+        />
+      </TableCell>
+
+      <TableCell>
+        <Typography variant="body2" noWrap sx={{ maxWidth: 150 }}>
+          {data?.description || "-"}
+        </Typography>
+      </TableCell>
+
+      <TableCell align="right">
+        <IconButton onClick={handleOpenMenu}>
+          <MoreVertIcon fontSize="small" />
+        </IconButton>
+
+        <Menu
+          id="row-actions-menu"
+          anchorEl={openMenu}
+          keepMounted
+          open={Boolean(openMenu)}
+          onClose={handleCloseMenu}
+          anchorOrigin={{
+            vertical: "top",
+            horizontal: "right",
+          }}
+          transformOrigin={{
+            vertical: "top",
+            horizontal: "right",
+          }}
+        >
+          <MenuItem onClick={() => navigate(`/dashboard/otherDeduction/edit/${data._id}`)}>
+            <ListItemIcon>
+              <EditIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Edit</ListItemText>
+          </MenuItem>
+
+          <MenuItem onClick={() => navigate(`/dashboard/otherDeduction/view/${data._id}`)}>
+            <ListItemIcon>
+              <VisibilityIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>View</ListItemText>
+          </MenuItem>
+
+          {isAdmin && data.status === "Pending" && (
+            <>
+              <MenuItem onClick={() => handleUpdateStatus("Approved")}>
+                <ListItemIcon>
+                  <CheckCircleIcon fontSize="small" color="success" />
+                </ListItemIcon>
+                <ListItemText>Approve</ListItemText>
+              </MenuItem>
+
+              <MenuItem onClick={() => handleUpdateStatus("Rejected")}>
+                <ListItemIcon>
+                  <CancelIcon fontSize="small" color="error" />
+                </ListItemIcon>
+                <ListItemText>Reject</ListItemText>
+              </MenuItem>
+            </>
+          )}
+
+          <MenuItem onClick={handleDeleteAction}>
+            <ListItemIcon>
+              <DeleteIcon fontSize="small" color="error" />
+            </ListItemIcon>
+            <ListItemText>Delete</ListItemText>
+          </MenuItem>
+        </Menu>
+      </TableCell>
+    </TableRow>
   );
 }
