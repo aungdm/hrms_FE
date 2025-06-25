@@ -1,35 +1,81 @@
 import axios from "axios";
 
 export const getRecords = async (
-  search,
   perPage,
   page,
-  sortOrder = "Desc",
-  sortField = "created_at"
+  startDate = null,
+  endDate = null,
+  userId = null,
+  processed = null,
+  deviceId = null,
+  search = null
 ) => {
-  console.log({ search }, "getEmployees search ");
   try {
-    const response = await axios.get("attendanceLogs/get", {
-      params: {
-        search,
-        sortOrder,
-        page: page + 1,
-        perPage: perPage,
-        sortField,
-      },
-    });
-    console.log({ response });
+    // Create params object with only defined values
+    const params = {
+      page: page + 1,
+      perPage: perPage
+    };
+    
+    // Only add parameters that have values
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+    if (userId) params.userId = userId;
+    if (processed !== null && processed !== "") params.processed = processed;
+    if (deviceId) params.deviceId = deviceId;
+    if (search) params.search = search;
+    
+    const response = await axios.get("attendanceLogs/get", { params });
+    
     if (response?.data?.success) {
       return {
         data: response?.data?.data?.data,
         success: true,
-        totalRecords: response?.data?.data?.meta?.total,
+        meta: response?.data?.data?.meta
       };
     } else {
       return { success: false };
     }
   } catch (error) {
-    console.error("Error fetching services:", error.message);
+    console.error("Error fetching attendance logs:", error.message);
+    throw error;
+  }
+};
+
+// Get information about configured attendance machines
+export const getMachinesInfo = async () => {
+  try {
+    const response = await axios.get("attendanceLogs/machines");
+    
+    if (response?.data?.success) {
+      return {
+        data: response?.data?.data,
+        success: true
+      };
+    } else {
+      return { success: false };
+    }
+  } catch (error) {
+    console.error("Error fetching machine information:", error.message);
+    throw error;
+  }
+};
+
+// Force sync attendance logs from all machines
+export const forceSyncRecords = async () => {
+  try {
+    const response = await axios.post("attendanceLogs/sync");
+    
+    if (response?.data?.success) {
+      return {
+        data: response?.data?.data,
+        success: true
+      };
+    } else {
+      return { success: false };
+    }
+  } catch (error) {
+    console.error("Error syncing attendance logs:", error.message);
     throw error;
   }
 };
@@ -82,15 +128,18 @@ export const update = async (id, data) => {
 
 export const deleteRecord = async (id) => {
   try {
-    const response = await axios.delete(`/employee/delete/${id}`);
-    console.log({ response });
+    const response = await axios.delete(`/attendanceLogs/delete/${id}`);
+    
     if (response?.data?.success) {
-      return { data: response?.data?.data, success: true };
+      return { 
+        data: response?.data?.data, 
+        success: true 
+      };
     } else {
       return { success: false };
     }
   } catch (error) {
-    console.error("Error fetching services:", error.message);
+    console.error("Error deleting attendance log:", error.message);
     throw error;
   }
 };

@@ -143,3 +143,29 @@ export const deleteMultipleService = async (ids) => {
     throw error;
   }
 };
+
+// Recalculate attendance based on updated employee schedule
+export const recalculateAttendance = async (id) => {
+  try {
+    const response = await axios.post(`/dailyAttendance/recalculate/${id}`);
+    
+    if (response?.data?.success) {
+      return { 
+        data: response?.data?.data, 
+        success: true,
+        message: response?.data?.message || "Attendance recalculated successfully"
+      };
+    } else {
+      return { 
+        success: false,
+        message: response?.data?.message || "Failed to recalculate attendance"
+      };
+    }
+  } catch (error) {
+    console.error("Error recalculating attendance:", error.message);
+    return { 
+      success: false, 
+      message: error?.response?.data?.message || "Error recalculating attendance"
+    };
+  }
+};

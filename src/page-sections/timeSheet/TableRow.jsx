@@ -9,6 +9,7 @@ import Visibility from "@mui/icons-material/Visibility";
 import DeleteOutline from "@mui/icons-material/DeleteOutline";
 import EventNote from "@mui/icons-material/EventNote";
 import AccessTime from "@mui/icons-material/AccessTime";
+import Refresh from "@mui/icons-material/Refresh";
 import FlexBox from "@/components/flexbox/FlexBox";
 import { Paragraph } from "@/components/typography";
 import { TableMoreMenuItem, TableMoreMenu } from "@/components/table";
@@ -33,6 +34,7 @@ import { toast } from "react-toastify";
 // Import the createLeave function and punch API functions
 import { createLeave } from "@/page-sections/leave/request";
 import { getPunches, createPunch } from "@/page-sections/punch/request";
+import { recalculateAttendance } from "@/page-sections/timeSheet/request";
 
 export default function TableRowView(props) {
   const { data, isSelected, handleSelectRow, handleDelete } = props;
@@ -46,6 +48,12 @@ export default function TableRowView(props) {
     punchType: "",
   });
   const [loading, setLoading] = useState(false);
+  const [recalculateDialogOpen, setRecalculateDialogOpen] = useState(false);
+  const [recalculateLoading, setRecalculateLoading] = useState(false);
+  const [recalculateResult, setRecalculateResult] = useState({
+    success: false,
+    message: "",
+  });
 
   const handleOpenMenu = (event) => {
     setOpenMenuEl(event.currentTarget);
@@ -178,6 +186,24 @@ export default function TableRowView(props) {
     });
   };
 
+  // Handle opening recalculate dialog
+  const handleOpenRecalculateDialog = () => {
+    setRecalculateDialogOpen(true);
+    handleCloseOpenMenu();
+  };
+
+  // Handle closing recalculate dialog
+  const handleCloseRecalculateDialog = () => {
+    setRecalculateDialogOpen(false);
+    // Reset result after dialog is closed
+    setTimeout(() => {
+      setRecalculateResult({
+        success: false,
+        message: "",
+      });
+    }, 300);
+  };
+
   // Handle punch request form input changes
   const handlePunchRequestInputChange = (field, value) => {
     setPunchRequestData(prev => ({
@@ -257,6 +283,40 @@ export default function TableRowView(props) {
     }
   };
 
+  // Handle recalculating attendance
+  const handleRecalculateAttendance = async () => {
+    try {
+      setRecalculateLoading(true);
+      
+      const response = await recalculateAttendance(data._id);
+      
+      setRecalculateResult({
+        success: response.success,
+        message: response.message,
+        data: response.data
+      });
+      
+      if (response.success) {
+        toast.success("Attendance recalculated successfully");
+        // Refresh the page to show updated data
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } else {
+        toast.error(response.message || "Failed to recalculate attendance");
+      }
+    } catch (error) {
+      console.error("Error recalculating attendance:", error);
+      setRecalculateResult({
+        success: false,
+        message: "An error occurred while recalculating attendance"
+      });
+      toast.error("An error occurred while recalculating attendance");
+    } finally {
+      setRecalculateLoading(false);
+    }
+  };
+
   // Handle creating a leave request
   const handleCreateLeaveRequest = async () => {
     try {
@@ -330,6 +390,11 @@ export default function TableRowView(props) {
                 handleClick={handleOpenPunchRequestDialog}
               />
             )}
+            <TableMoreMenuItem
+              Icon={Refresh}
+              title="Recalculate"
+              handleClick={handleOpenRecalculateDialog}
+            />
           </TableMoreMenu>
         </TableCell>
         <TableCell
@@ -568,6 +633,95 @@ export default function TableRowView(props) {
           >
             {loading ? "Creating..." : "Create Punch Request"}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Recalculate Attendance Dialog */}
+      <Dialog
+        open={recalculateDialogOpen}
+        onClose={handleCloseRecalculateDialog}
+        aria-labelledby="recalculate-dialog-title"
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle id="recalculate-dialog-title">
+          Recalculate Attendance
+        </DialogTitle>
+        <DialogContent>
+          {!recalculateResult.success && !recalculateLoading && (
+            <DialogContentText>
+              Are you sure you want to recalculate attendance for <strong>{data?.employeeId?.name}</strong> on{" "}
+              <strong>{formatISOtDateTime(data?.date)}</strong>?
+              <br /><br />
+              This will update the attendance record based on the current work schedule and attendance logs.
+              Any manual changes may be overwritten.
+            </DialogContentText>
+          )}
+          
+          {recalculateLoading && (
+            <Box sx={{ textAlign: 'center', py: 3 }}>
+              <Typography variant="body1" sx={{ mb: 2 }}>
+                Recalculating attendance...
+              </Typography>
+            </Box>
+          )}
+          
+          {recalculateResult.success && (
+            <Box sx={{ py: 2 }}>
+              <Typography variant="body1" color="success.main" sx={{ mb: 2, fontWeight: 'bold' }}>
+                {recalculateResult.message}
+              </Typography>
+              
+              <Box sx={{ bgcolor: '#f5f5f5', p: 2, borderRadius: 1 }}>
+                <Typography variant="subtitle2">Updated Attendance Details:</Typography>
+                <Stack spacing={1} mt={1}>
+                  <Box display="flex" justifyContent="space-between">
+                    <Typography variant="body2" color="text.secondary">Status:</Typography>
+                    <Typography variant="body2" fontWeight="medium">{recalculateResult.data?.status || '--'}</Typography>
+                  </Box>
+                  <Box display="flex" justifyContent="space-between">
+                    <Typography variant="body2" color="text.secondary">Check-in:</Typography>
+                    <Typography variant="body2" fontWeight="medium">
+                      {recalculateResult.data?.firstEntry ? formatTime(recalculateResult.data?.firstEntry) : '--'}
+                    </Typography>
+                  </Box>
+                  <Box display="flex" justifyContent="space-between">
+                    <Typography variant="body2" color="text.secondary">Check-out:</Typography>
+                    <Typography variant="body2" fontWeight="medium">
+                      {recalculateResult.data?.lastExit ? formatTime(recalculateResult.data?.lastExit) : '--'}
+                    </Typography>
+                  </Box>
+                  <Box display="flex" justifyContent="space-between">
+                    <Typography variant="body2" color="text.secondary">Work Duration:</Typography>
+                    <Typography variant="body2" fontWeight="medium">
+                      {formatMinutesToHoursMinutes(recalculateResult.data?.workDuration)}
+                    </Typography>
+                  </Box>
+                </Stack>
+              </Box>
+            </Box>
+          )}
+          
+          {!recalculateResult.success && recalculateResult.message && !recalculateLoading && (
+            <Typography variant="body1" color="error" sx={{ mt: 2 }}>
+              {recalculateResult.message}
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseRecalculateDialog} color="primary">
+            {recalculateResult.success ? "Close" : "Cancel"}
+          </Button>
+          {!recalculateResult.success && !recalculateLoading && (
+            <Button
+              onClick={handleRecalculateAttendance}
+              color="primary"
+              variant="contained"
+              disabled={recalculateLoading}
+            >
+              {recalculateLoading ? "Recalculating..." : "Recalculate"}
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
     </>

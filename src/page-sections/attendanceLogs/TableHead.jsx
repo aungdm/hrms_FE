@@ -9,37 +9,43 @@ import { isDark } from "@/utils/constants";
 
 const headCells = [
   {
-    id: "employee_id",
-    numeric: true,
+    id: "employee",
+    numeric: false,
     disablePadding: false,
     label: "Employee",
   },
   {
-    id: "punch_type",
-    numeric: true,
-    disablePadding: false,
-    label: "Punch Type",
-  },
-  {
-    id: "punch_time",
+    id: "recordTime",
     numeric: false,
     disablePadding: false,
-    label: "Punch Time",
+    label: "Record Time",
   },
-
   {
-    id: "device_id",
-    numeric: true,
+    id: "deviceId",
+    numeric: false,
     disablePadding: false,
-    label: "Device ID",
+    label: "Device",
+  },
+  {
+    id: "isProcessed",
+    numeric: false,
+    disablePadding: false,
+    label: "Status",
+  },
+  {
+    id: "syncedAt",
+    numeric: false,
+    disablePadding: false,
+    label: "Synced At",
   },
   { 
     id: "actions",
-    numeric: true,
+    numeric: false,
     disablePadding: false,
     label: "Actions",
   },
 ];
+
 export default function TableHeadView(props) {
   const {
     onSelectAllRows,
