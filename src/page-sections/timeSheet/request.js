@@ -9,10 +9,11 @@ export const getRecords = async (
   employeeId,
   status,
   hasOvertime,
-  overtimeStatus
+  overtimeStatus,
+  search
 ) => {
   try {
-    const response = await axios.get("dailyAttendance/get", {
+    const response = await axios.get("/dailyAttendance/get", {
       params: {
         page: page + 1,
         perPage: perPage || 5,
@@ -21,7 +22,8 @@ export const getRecords = async (
         employeeId,
         status,
         hasOvertime,
-        overtimeStatus
+        overtimeStatus,
+        search
       },
     });
     console.log({ response });
@@ -40,10 +42,41 @@ export const getRecords = async (
   }
 };
 
+// Process attendance for a specific month
+export const processMonthAttendance = async ({ month, year, employeeId, forceReprocess = false }) => {
+  try {
+    const response = await axios.post("/employeeSchedule/process-month-attendance", {
+      month,
+      year,
+      employeeId,
+      forceReprocess
+    });
+    
+    if (response?.data?.success) {
+      return {
+        data: response?.data?.data,
+        success: true,
+        message: response?.data?.message || "Month attendance processed successfully"
+      };
+    } else {
+      return { 
+        success: false,
+        message: response?.data?.message || "Failed to process month attendance"
+      };
+    }
+  } catch (error) {
+    console.error("Error processing month attendance:", error.message);
+    return { 
+      success: false, 
+      message: error?.response?.data?.message || "Error processing month attendance"
+    };
+  }
+};
+
 // Get all employees for filter dropdown
 export const getAllEmployees = async () => {
   try {
-    const response = await axios.get("employee/get", {
+    const response = await axios.get("/employee/get", {
       params: {
         perPage: 1000, // Get all employees for dropdown
       },

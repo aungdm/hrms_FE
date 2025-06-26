@@ -21,6 +21,7 @@ import {
   getRecords,
   deleteMultipleService,
   getAllEmployees,
+  processMonthAttendance
 } from "../request.js";
 import { toast } from "react-toastify";
 import useDebounce from "@/hooks/debounceHook";
@@ -37,12 +38,21 @@ import InputAdornment from "@mui/material/InputAdornment";
 import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
 import Autocomplete from "@mui/material/Autocomplete";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Checkbox from "@mui/material/Checkbox";
+import Typography from "@mui/material/Typography";
 
 // Icons
 import FilterListIcon from "@mui/icons-material/FilterList";
 import SearchIcon from "@mui/icons-material/Search";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import ClearIcon from "@mui/icons-material/Clear";
+import SyncIcon from "@mui/icons-material/Sync";
 
 // Flexbox components
 import FlexBetween from "@/components/flexbox/FlexBetween";
@@ -80,6 +90,12 @@ export default function ListView() {
     endDate: moment().endOf("month").format("YYYY-MM-DD"),
   });
   const [overtimeStatusFilter, setOvertimeStatusFilter] = useState("");
+  
+  // Process month dialog state
+  const [processDialogOpen, setProcessDialogOpen] = useState(false);
+  const [processingMonth, setProcessingMonth] = useState(false);
+  const [forceReprocess, setForceReprocess] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   // Fetch employees for filter dropdown
   const fetchEmployees = async () => {
@@ -120,6 +136,11 @@ export default function ListView() {
   const handleEmployeeFilterChange = (event, newValue) => {
     setEmployeeFilter(newValue ? newValue._id : "");
   };
+  
+  // Selected employee for processing handler
+  const handleSelectedEmployeeChange = (event, newValue) => {
+    setSelectedEmployee(newValue);
+  };
 
   // Status filter handler
   const handleStatusFilterChange = (e) => {
@@ -149,6 +170,55 @@ export default function ListView() {
   const handleRefresh = () => {
     fetchList();
   };
+  
+  // Open process month dialog
+  const handleOpenProcessDialog = () => {
+    setProcessDialogOpen(true);
+    setForceReprocess(false);
+    setSelectedEmployee(null);
+  };
+  
+  // Close process month dialog
+  const handleCloseProcessDialog = () => {
+    setProcessDialogOpen(false);
+  };
+  
+  // Process month attendance
+  const handleProcessMonth = async () => {
+    try {
+      setProcessingMonth(true);
+      
+      const startDate = moment(dateRange.startDate);
+      const month = startDate.month() + 1; // Moment months are 0-indexed
+      const year = startDate.year();
+      
+      const response = await processMonthAttendance({
+        month,
+        year,
+        employeeId: selectedEmployee ? selectedEmployee._id : undefined,
+        forceReprocess
+      });
+      
+      if (response?.success) {
+        toast.success(`Successfully processed attendance for ${month}/${year}`);
+        
+        // Show detailed results
+        const result = response.data;
+        toast.info(`Processed ${result.processed} logs, created ${result.created} records (${result.absentsCreated || 0} absent records), fixed ${result.missingDaysFixed || 0} missing days`);
+        
+        // Refresh the data
+        fetchList();
+      } else {
+        toast.error('Failed to process month attendance');
+      }
+    } catch (error) {
+      console.error('Error processing month attendance:', error);
+      toast.error('Error processing month attendance');
+    } finally {
+      setProcessingMonth(false);
+      setProcessDialogOpen(false);
+    }
+  };
 
   const filteredUsers = stableSort(data, getComparator(order, orderBy)).filter(
     (item) => {
@@ -172,7 +242,8 @@ export default function ListView() {
         employeeFilter || undefined,
         statusFilter || undefined,
         hasOvertimeFilter || undefined,
-        overtimeStatusFilter || undefined
+        overtimeStatusFilter || undefined,
+        debouncedSearchString || undefined
       );
       console.log(response, "fetchList");
       if (response?.success) {
@@ -197,13 +268,128 @@ export default function ListView() {
     overtimeStatusFilter,
   ]);
 
+  // Add the Process Month button to the filter area
+  const renderFilterActions = () => (
+    <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
+      <Button
+        variant="contained"
+        color="primary"
+        startIcon={<SyncIcon />}
+        onClick={handleOpenProcessDialog}
+      >
+        Process Month
+      </Button>
+      <Button
+        variant="outlined"
+        startIcon={<RefreshIcon />}
+        onClick={handleRefresh}
+      >
+        Refresh
+      </Button>
+      <Button
+        variant="outlined"
+        startIcon={<ClearIcon />}
+        onClick={handleResetFilters}
+      >
+        Reset Filters
+      </Button>
+    </Stack>
+  );
+  
+  // Process Month Dialog
+  const renderProcessMonthDialog = () => (
+    <Dialog
+      open={processDialogOpen}
+      onClose={handleCloseProcessDialog}
+      aria-labelledby="process-month-dialog-title"
+      maxWidth="sm"
+      fullWidth
+    >
+      <DialogTitle id="process-month-dialog-title">
+        Process Month Attendance
+      </DialogTitle>
+      <DialogContent>
+        <DialogContentText sx={{ mb: 2 }}>
+          This will process attendance for the selected month and create any missing attendance records.
+        </DialogContentText>
+        
+        <Grid container spacing={2}>
+          <Grid item xs={6}>
+            <TextField
+              label="Month"
+              type="month"
+              fullWidth
+              value={`${moment(dateRange.startDate).format('YYYY-MM')}`}
+              onChange={(e) => {
+                const date = moment(e.target.value);
+                setDateRange({
+                  startDate: date.startOf('month').format('YYYY-MM-DD'),
+                  endDate: date.endOf('month').format('YYYY-MM-DD')
+                });
+              }}
+              InputLabelProps={{
+                shrink: true,
+              }}
+            />
+          </Grid>
+          
+          <Grid item xs={12}>
+            <Autocomplete
+              options={employees}
+              getOptionLabel={(option) => `${option.name} (${option.user_defined_code || option._id})`}
+              renderInput={(params) => <TextField {...params} label="Employee (optional)" />}
+              value={selectedEmployee}
+              onChange={handleSelectedEmployeeChange}
+              fullWidth
+            />
+          </Grid>
+          
+          <Grid item xs={12}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={forceReprocess}
+                  onChange={(e) => setForceReprocess(e.target.checked)}
+                />
+              }
+              label="Force reprocess (will delete existing records and reprocess all logs)"
+            />
+          </Grid>
+          
+          <Grid item xs={12}>
+            <Typography variant="body2" color="text.secondary">
+              {forceReprocess ? 
+                "Warning: This will delete all existing attendance records for the selected month and reprocess them from scratch." :
+                "Only missing or unprocessed records will be created. Existing records will not be modified."
+              }
+            </Typography>
+          </Grid>
+        </Grid>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleCloseProcessDialog}>Cancel</Button>
+        <Button 
+          onClick={handleProcessMonth} 
+          variant="contained" 
+          color="primary"
+          disabled={processingMonth}
+        >
+          {processingMonth ? "Processing..." : "Process"}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+
+  useEffect(() => {
+    fetchList();
+  }, [fetchList]);
+
   const handleDelete = async (id) => {
     try {
       const response = await deleteRecord(id);
-      console.log({ response }, "delete Service");
-      if (response.success) {
-        toast.success("Deleted successfully");
-        await fetchList();
+      if (response?.success) {
+        toast.success("Record deleted successfully");
+        fetchList();
       }
     } catch (error) {
       console.error(error);
@@ -211,9 +397,18 @@ export default function ListView() {
     }
   };
 
-  useEffect(() => {
-    fetchList();
-  }, [fetchList]);
+  const handleDeleteMultiple = async () => {
+    try {
+      const response = await deleteMultipleService(selected);
+      if (response?.success) {
+        toast.success("Records deleted successfully");
+        fetchList();
+      }
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  };
 
   return (
     <>
@@ -224,147 +419,25 @@ export default function ListView() {
           <Card>
             <Box p={2}>
               <HeadingArea />
-
-              <FlexBetween justifyContent="flex-end" mb={2}>
-                <Stack direction="row" spacing={1}>
-                  <Button
-                    startIcon={<FilterListIcon />}
-                    onClick={toggleFilter}
-                    variant={filterOpen ? "contained" : "outlined"}
-                    size="small"
-                  >
-                    {filterOpen ? "Hide Filters" : "Show Filters"}
-                  </Button>
-                  <IconButton onClick={handleRefresh} title="Refresh">
-                    <RefreshIcon />
-                  </IconButton>
-                </Stack>
-              </FlexBetween>
-
-              {filterOpen && (
-                <Box mt={2} p={2} bgcolor="#f5f5f5" borderRadius={1}>
-                  <Grid container spacing={2} alignItems="center">
-                    <Grid item xs={12} sm={3}>
-                      <TextField
-                        label="Start Date"
-                        type="date"
-                        fullWidth
-                        size="small"
-                        value={dateRange.startDate}
-                        onChange={handleDateChange("startDate")}
-                        InputLabelProps={{ shrink: true }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={3}>
-                      <TextField
-                        label="End Date"
-                        type="date"
-                        fullWidth
-                        size="small"
-                        value={dateRange.endDate}
-                        onChange={handleDateChange("endDate")}
-                        InputLabelProps={{ shrink: true }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={2}>
-                      <Autocomplete
-                        fullWidth
-                        size="small"
-                        options={employees}
-                        getOptionLabel={(option) => option.name || ""}
-                        onChange={handleEmployeeFilterChange}
-                        value={employees.find(emp => emp._id === employeeFilter) || null}
-                        filterOptions={(options, { inputValue }) => 
-                          options.filter(option => 
-                            option.name.toLowerCase().includes(inputValue.toLowerCase())
-                          )
-                        }
-                        clearOnEscape
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            label="Employee"
-                            placeholder="Search Employee"
-                          />
-                        )}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={2}>
-                      <TextField
-                        select
-                        label="Status"
-                        fullWidth
-                        size="small"
-                        value={statusFilter}
-                        onChange={handleStatusFilterChange}
-                      >
-                        <MenuItem value="">All Statuses</MenuItem>
-                        <MenuItem value="Present">Present</MenuItem>
-                        <MenuItem value="Absent">Absent</MenuItem>
-                        <MenuItem value="Half Day">Half Day</MenuItem>
-                        <MenuItem value="Day Off">Day Off</MenuItem>
-                        <MenuItem value="Weekend">Weekend</MenuItem>
-                        <MenuItem value="Holiday">Holiday</MenuItem>
-                        <MenuItem value="Leave">Leave</MenuItem>
-                      </TextField>
-                    </Grid>
-
-                    <Grid item xs={12} sm={2}>
-                      <TextField
-                        select
-                        label="Overtime"
-                        fullWidth
-                        size="small"
-                        value={hasOvertimeFilter}
-                        onChange={handleOvertimeFilterChange}
-                      >
-                        <MenuItem value="">All Records</MenuItem>
-                        <MenuItem value="true">With Overtime</MenuItem>
-                        <MenuItem value="false">Without Overtime</MenuItem>
-                      </TextField>
-                    </Grid>
-
-                    <Grid item xs={12} sm={2}>
-                      {hasOvertimeFilter === "true" && (
-                        <TextField
-                          select
-                          label="Overtime Status"
-                          fullWidth
-                          size="small"
-                          value={overtimeStatusFilter || ""}
-                          onChange={(e) =>
-                            setOvertimeStatusFilter(e.target.value)
-                          }
-                        >
-                          <MenuItem value="">All Statuses</MenuItem>
-                          <MenuItem value="Pending">Pending</MenuItem>
-                          <MenuItem value="Approved">Approved</MenuItem>
-                          <MenuItem value="Rejected">Rejected</MenuItem>
-                        </TextField>
-                      )}
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <Button
-                        variant="contained"
-                        onClick={fetchList}
-                        sx={{ mr: 1 }}
-                      >
-                        Apply Filters
-                      </Button>
-                      <Button variant="outlined" onClick={handleResetFilters}>
-                        Reset Filters
-                      </Button>
-                    </Grid>
-                  </Grid>
-                </Box>
-              )}
+              <SearchArea
+                value={searchString}
+                onChange={handleSearch}
+                onFilterClick={toggleFilter}
+                dateRange={dateRange}
+                onDateChange={handleDateChange}
+                employees={employees}
+                employeeFilter={employeeFilter}
+                onEmployeeFilterChange={handleEmployeeFilterChange}
+                statusFilter={statusFilter}
+                onStatusFilterChange={handleStatusFilterChange}
+                hasOvertimeFilter={hasOvertimeFilter}
+                onOvertimeFilterChange={handleOvertimeFilterChange}
+                filterOpen={filterOpen}
+              />
+              
+              {renderFilterActions()}
+              {renderProcessMonthDialog()}
             </Box>
-
-            <Divider />
 
             <TableContainer>
               <Scrollbar autoHide={false}>
@@ -376,36 +449,34 @@ export default function ListView() {
                     rowCount={data.length}
                     onRequestSort={handleRequestSort}
                     onSelectAllRows={handleSelectAllRows(
-                      filteredUsers.map((row) => row.id)
+                      data.map((row) => row._id)
                     )}
                   />
 
                   <TableBody>
-                    {data?.length > 0 ? (
-                      data.map((item) => (
+                    {data?.map((item) => (
                       <TableRowView
-                        key={item.id}
+                        key={item._id}
                         data={item}
-                        isSelected={isSelected(item.id)}
+                        isSelected={isSelected(item._id)}
                         handleSelectRow={handleSelectRow}
                         handleDelete={handleDelete}
                       />
-                      ))
-                    ) : (
-                      <TableDataNotFound colSpan={12} />
-                    )}
+                    ))}
+
+                    {data?.length === 0 && <TableDataNotFound />}
                   </TableBody>
                 </Table>
               </Scrollbar>
             </TableContainer>
-            <Box padding={1}>
+            <Box padding={2}>
               <TablePagination
                 page={page}
                 component="div"
                 rowsPerPage={rowsPerPage}
                 count={totalRecords}
                 onPageChange={handleChangePage}
-                rowsPerPageOptions={[10, 20, 30, 50]}
+                rowsPerPageOptions={[5, 10, 25, 50]}
                 onRowsPerPageChange={handleChangeRowsPerPage}
               />
             </Box>
