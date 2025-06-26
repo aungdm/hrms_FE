@@ -126,6 +126,18 @@ const ArrearsListView = Loadable(
 const ArrearsCreateView = Loadable(
   lazy(() => import("@/pages/dashboard/arrears/create"))
 );
+const LoanListView = Loadable(
+  lazy(() => import("@/pages/dashboard/loan/list"))
+);
+const LoanCreateView = Loadable(
+  lazy(() => import("@/pages/dashboard/loan/create"))
+);
+const AdvancedSalaryListView = Loadable(
+  lazy(() => import("@/pages/dashboard/advancedSalary/list"))
+);
+const AdvancedSalaryCreateView = Loadable(
+  lazy(() => import("@/pages/dashboard/advancedSalary/create"))
+);
 const SalarySheetListView = Loadable(
   lazy(() => import("@/pages/dashboard/salarySheet/list"))
 );
@@ -134,7 +146,7 @@ const SalarySheetCreateView = Loadable(
 );
 const PayRollsListView = Loadable(
   lazy(() => import("@/pages/dashboard/payRolls/list"))
-);
+);  
 const PayRollsCreateView = Loadable(
   lazy(() => import("@/pages/dashboard/payRolls/create"))
 );
@@ -467,6 +479,25 @@ export const DashboardRoutes = [
         path: "arrears-view/:id",
         element: <ArrearsCreateView />,
       },
+      {
+        path: "loan-list",
+        element: <LoanListView />,
+      },
+      {
+        path: "loan-create",
+        element: <LoanCreateView />,
+      },
+      {
+        path: "advanced-salary-list",
+        element: <AdvancedSalaryListView />,
+      },
+      {
+        path: "advanced-salary-create",
+        element: <AdvancedSalaryCreateView />,
+      },
+      
+        
+
       {
         path: "salary-sheet-list",
         element: <SalarySheetListView />,

@@ -9,49 +9,36 @@ import { isDark } from "@/utils/constants";
 
 const headCells = [
   {
-    id: "employeeId",
-    numeric: false,
+    id: "employee_id",
+    numeric: true,
     disablePadding: false,
     label: "Employee",
   },
   {
-    id: "deductionType",
-    numeric: false,
+    id: "date",
+    numeric: true,
     disablePadding: false,
-    label: "Deduction Type",
+    label: "Date",
   },
   {
     id: "amount",
-    numeric: true,
+    numeric: false,
     disablePadding: false,
     label: "Amount",
   },
   {
-    id: "deductionDate",
-    numeric: false,
+    id: "already_paid",
+    numeric: true,
     disablePadding: false,
-    label: "Deduction Date",
-  },
-  {
-    id: "status",
-    numeric: false,
-    disablePadding: false,
-    label: "Status",
-  },
-  {
-    id: "processed",
-    numeric: false,
-    disablePadding: false,
-    label: "Processed",
+    label: "Already Paid",
   },
   {
     id: "actions",
-    numeric: false,
+    numeric: true,
     disablePadding: false,
     label: "Actions",
   },
 ];
-
 export default function TableHeadView(props) {
   const {
     onSelectAllRows,
@@ -60,7 +47,6 @@ export default function TableHeadView(props) {
     numSelected,
     rowCount,
     onRequestSort,
-    showCheckbox = true
   } = props;
   
   const createSortHandler = (property) => (event) => {
@@ -75,17 +61,15 @@ export default function TableHeadView(props) {
         }}
       >
         <TableRow>
-          {showCheckbox && (
-            <TableCell padding="checkbox">
-              <Checkbox
-                size="small"
-                color="primary"
-                onChange={onSelectAllRows}
-                checked={rowCount > 0 && numSelected === rowCount}
-                indeterminate={numSelected > 0 && numSelected < rowCount}
-              />
-            </TableCell>
-          )}
+          {/* <TableCell padding="checkbox">
+            <Checkbox
+              size="small"
+              color="primary"
+              onChange={onSelectAllRows}
+              checked={rowCount > 0 && numSelected === rowCount}
+              indeterminate={numSelected > 0 && numSelected < rowCount}
+            />
+          </TableCell> */}
 
           {headCells.map((headCell) => (
             <TableCell

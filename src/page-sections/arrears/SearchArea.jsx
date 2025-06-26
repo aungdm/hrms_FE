@@ -1,52 +1,191 @@
-import { useLocation, useNavigate } from "react-router-dom"; // MUI
-
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
-import IconButton from "@mui/material/IconButton";
-import Search from "@mui/icons-material/Search";
+import InputAdornment from "@mui/material/InputAdornment";
+import SearchIcon from "@mui/icons-material/Search";
 import FlexBetween from "@/components/flexbox/FlexBetween";
-import { Button } from "@mui/material";
-import Apps from "@/icons/Apps";
-import FormatBullets from "@/icons/FormatBullets";
+import { 
+  Button, 
+  Card, 
+  Collapse, 
+  FormControl, 
+  Grid, 
+  IconButton, 
+  InputLabel, 
+  MenuItem, 
+  Select, 
+  Stack 
+} from "@mui/material";
+import FilterListIcon from "@mui/icons-material/FilterList";
+import { DatePicker } from "@mui/x-date-pickers";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import Autocomplete from "@mui/material/Autocomplete";
 
 export default function SearchArea(props) {
-  const { value = "", onChange, gridRoute, listRoute } = props;
+  const { 
+    value = "", 
+    onChange, 
+    onFilterChange,
+    filters = {},
+    employees = [],
+    createRoute = "/arrears-create" 
+  } = props;
+  
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const [showFilters, setShowFilters] = useState(false);
 
-  const activeColor = (path) =>
-    pathname === path ? "primary.main" : "grey.400";
+  const handleFilterChange = (field, value) => {
+    if (onFilterChange) {
+      onFilterChange({ ...filters, [field]: value });
+    }
+  };
+
+  const handleResetFilters = () => {
+    if (onFilterChange) {
+      onFilterChange({
+        startDate: null,
+        endDate: null,
+        status: "",
+        employeeId: null,
+        processed: ""
+      });
+    }
+  };
+
   return (
     <Box mt={3} mb={3}>
-      <TextField
-        value={value}
-        onChange={onChange}
-        placeholder="Search..."
-        slotProps={{
-          input: {
-            startAdornment: <Search />,
-          },
-        }}
-        sx={{
-          maxWidth: 400,
-          width: "100%",
-        }}
-      />
-      {/* <Button sx={{height:"44px" ,marginLeft:"12px"}}>Search</Button> */}
+      <Card sx={{ p: 2, mb: 2 }}>
+        <FlexBetween gap={2} flexWrap="wrap">
+          <TextField
+            value={value}
+            onChange={onChange}
+            placeholder="Search arrears..."
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: "text.disabled" }} />
+                </InputAdornment>
+              )
+            }}
+            sx={{
+              maxWidth: 400,
+              width: "100%"
+            }}
+          />
 
-      {/* <Box flexShrink={0} className="actions">
-            <IconButton onClick={() => navigate(listRoute)}>
-                <FormatBullets sx={{
-                    color: activeColor(listRoute)
-                }} />
-            </IconButton>
+          <Stack direction="row" spacing={1}>
+            <Button 
+              variant="contained" 
+              color="primary" 
+              onClick={() => navigate(createRoute)}
+            >
+              Create Arrears
+            </Button>
+            
+            <Button
+              variant="outlined"
+              startIcon={<FilterListIcon />}
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              Filters
+            </Button>
+          </Stack>
+        </FlexBetween>
 
-            <IconButton onClick={() => navigate(gridRoute)}>
-                <Apps sx={{
-                    color: activeColor(gridRoute)
-                }} />
-            </IconButton>
-        </Box> */}
+        <Collapse in={showFilters}>
+          <Box mt={3}>
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6} lg={3}>
+                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                  <DatePicker
+                    label="Start Date"
+                    value={filters.startDate}
+                    onChange={(date) => handleFilterChange("startDate", date)}
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        size: "small"
+                      }
+                    }}
+                  />
+                </LocalizationProvider>
+              </Grid>
+
+              <Grid item xs={12} md={6} lg={3}>
+                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                  <DatePicker
+                    label="End Date"
+                    value={filters.endDate}
+                    onChange={(date) => handleFilterChange("endDate", date)}
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        size: "small"
+                      }
+                    }}
+                  />
+                </LocalizationProvider>
+              </Grid>
+
+              <Grid item xs={12} md={6} lg={2}>
+                <FormControl fullWidth size="small">
+                  <InputLabel>Status</InputLabel>
+                  <Select
+                    value={filters.status || ""}
+                    label="Status"
+                    onChange={(e) => handleFilterChange("status", e.target.value)}
+                  >
+                    <MenuItem value="">All</MenuItem>
+                    <MenuItem value="Pending">Pending</MenuItem>
+                    <MenuItem value="Approved">Approved</MenuItem>
+                    <MenuItem value="Rejected">Rejected</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid item xs={12} md={6} lg={2}>
+                <FormControl fullWidth size="small">
+                  <InputLabel>Processed</InputLabel>
+                  <Select
+                    value={filters.processed || ""}
+                    label="Processed"
+                    onChange={(e) => handleFilterChange("processed", e.target.value)}
+                  >
+                    <MenuItem value="">All</MenuItem>
+                    <MenuItem value="true">Processed</MenuItem>
+                    <MenuItem value="false">Not Processed</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid item xs={12} md={6} lg={2}>
+                <Autocomplete
+                  size="small"
+                  options={employees}
+                  getOptionLabel={(option) => option?.name || ""}
+                  value={filters.employeeId}
+                  onChange={(_, newValue) => handleFilterChange("employeeId", newValue)}
+                  renderInput={(params) => (
+                    <TextField {...params} label="Employee" fullWidth />
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <Button 
+                  variant="outlined" 
+                  color="secondary" 
+                  onClick={handleResetFilters}
+                >
+                  Reset Filters
+                </Button>
+              </Grid>
+            </Grid>
+          </Box>
+        </Collapse>
+      </Card>
     </Box>
   );
 }

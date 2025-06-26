@@ -14,6 +14,7 @@ import GroupSenior from "@/icons/GroupSenior";
 import ShoppingCart from "@/icons/ShoppingCart.jsx";
 import Add from "@/icons/Add"; // STYLED COMPONENT
 import duotone from "@/icons/duotone";
+import MoneyOffIcon from '@mui/icons-material/MoneyOff';
 
 export default function HeadingArea() {
   const TodoList = duotone.TodoList;
@@ -22,20 +23,20 @@ export default function HeadingArea() {
     <FlexBetween flexWrap="wrap" gap={1}>
       <FlexBox alignItems="center">
         <IconWrapper>
-          <TodoList
+          <MoneyOffIcon
             sx={{
-              color: "primary.main",
+              color: "error.main",
             }}
           />
         </IconWrapper>
-        <Paragraph fontSize={16}>Arrears</Paragraph>
+        <Paragraph fontSize={16} fontWeight={600}>Arrears & Deductions</Paragraph>
       </FlexBox>
-        <Button 
-          variant="contained"
+      <Button 
+        variant="contained"
         startIcon={<Add />}
-          onClick={() => navigate("/arrears-create")}
+        onClick={() => navigate("/arrears-create")}
       >
-        Create
+        Create Deduction
       </Button>
     </FlexBetween>
   );

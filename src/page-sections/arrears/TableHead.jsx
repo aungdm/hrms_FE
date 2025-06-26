@@ -9,33 +9,44 @@ import { isDark } from "@/utils/constants";
 
 const headCells = [
   {
-    id: "employee_id",
-    numeric: true,
+    id: "employeeId",
+    numeric: false,
     disablePadding: false,
     label: "Employee",
   },
   {
-    id: "punch_type",
-    numeric: true,
-    disablePadding: false,
-    label: "Punch Type",
-  },
-  {
-    id: "punch_time",
+    id: "deductionType",
     numeric: false,
     disablePadding: false,
-    label: "Punch Time",
+    label: "Deduction Type",
   },
-
   {
-    id: "device_id",
+    id: "amount",
     numeric: true,
     disablePadding: false,
-    label: "Device ID",
+    label: "Amount",
+  },
+  {
+    id: "deductionDate",
+    numeric: false,
+    disablePadding: false,
+    label: "Deduction Date",
+  },
+  {
+    id: "status",
+    numeric: false,
+    disablePadding: false,
+    label: "Status",
+  },
+  {
+    id: "processed",
+    numeric: false,
+    disablePadding: false,
+    label: "Processed",
   },
   { 
     id: "actions",
-    numeric: true,
+    numeric: false,
     disablePadding: false,
     label: "Actions",
   },
@@ -62,7 +73,7 @@ export default function TableHeadView(props) {
         }}
       >
         <TableRow>
-          {/* <TableCell padding="checkbox">
+          <TableCell padding="checkbox">
             <Checkbox
               size="small"
               color="primary"
@@ -70,7 +81,7 @@ export default function TableHeadView(props) {
               checked={rowCount > 0 && numSelected === rowCount}
               indeterminate={numSelected > 0 && numSelected < rowCount}
             />
-          </TableCell> */}
+          </TableCell>
 
           {headCells.map((headCell) => (
             <TableCell

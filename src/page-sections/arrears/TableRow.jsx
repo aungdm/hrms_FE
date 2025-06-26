@@ -8,12 +8,13 @@ import Edit from "@mui/icons-material/Edit";
 import Visibility from "@mui/icons-material/Visibility";
 import DeleteOutline from "@mui/icons-material/DeleteOutline";
 import FlexBox from "@/components/flexbox/FlexBox";
-import { Paragraph } from "@/components/typography";
+import { Paragraph, Small } from "@/components/typography";
 import { TableMoreMenuItem, TableMoreMenu } from "@/components/table";
-import { utils } from "@/utils/functionUtils";
+import { Chip } from "@mui/material";
+import { format } from "date-fns";
+
 export default function TableRowView(props) {
   const { data, isSelected, handleSelectRow, handleDelete } = props;
-  // console.log(data, "table row data");
   const navigate = useNavigate();
   const [openMenuEl, setOpenMenuEl] = useState(null);
 
@@ -22,51 +23,91 @@ export default function TableRowView(props) {
   };
   const handleCloseOpenMenu = () => setOpenMenuEl(null);
 
+  // Format date
+  const formatDate = (dateString) => {
+    if (!dateString) return "-";
+    try {
+      return format(new Date(dateString), "dd MMM yyyy");
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return dateString;
+    }
+  };
+
+  // Get status chip color
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "Approved":
+        return "success";
+      case "Rejected":
+        return "error";
+      case "Pending":
+      default:
+        return "warning";
+    }
+  };
+
   return (
     <>
-      <TableRow hover>
-        {/* <TableCell padding="checkbox">
+      <TableRow hover selected={isSelected}>
+        <TableCell padding="checkbox">
           <Checkbox
             size="small"
             color="primary"
             checked={isSelected}
-            onClick={(event) => handleSelectRow(event, data.id)}
+            onClick={(event) => handleSelectRow(event, data._id)}
           />
-        </TableCell> */}
+        </TableCell>
 
         <TableCell padding="normal">
-          <FlexBox alignItems="center" gap={2}>
-            {/* <Avatar src={data.image} alt={data.name} variant="rounded" /> */}
-
-            <div>
-              <Paragraph
-                fontWeight={500}
-                color="text.primary"
-                sx={{
-                  ":hover": {
-                    textDecoration: "underline",
-                    cursor: "pointer",
-                  },
-                }}
-              >
-                {/* {data?.deviceUserId || "-"} */}
-              </Paragraph>
-
-              {/* <Paragraph fontSize={13}>#{data.id || "-"}</Paragraph> */}
-            </div>
+          <FlexBox alignItems="center" gap={1.5}>
+            {data?.employeeId?.name ? (
+              <>
+                <Avatar 
+                  src={data?.employeeId?.avatar} 
+                  alt={data?.employeeId?.name} 
+                  sx={{ width: 30, height: 30 }}
+                />
+                <div>
+                  <Paragraph fontWeight={500} color="text.primary">
+                    {data?.employeeId?.name}
+                  </Paragraph>
+                  <Small color="text.secondary">
+                    {data?.employeeId?.user_defined_code || "-"}
+                  </Small>
+                </div>
+              </>
+            ) : (
+              "-"
+            )}
           </FlexBox>
         </TableCell>
-        {/* <TableCell>{data?.name || "-"}</TableCell> */}
 
-        <TableCell padding="normal">
-          {/* {utils.formatISOtDateTime(data?.recordTime) || "-"} */}
+        <TableCell>{data?.deductionType || "-"}</TableCell>
+
+        <TableCell>{data?.amount ? `$${data.amount.toFixed(2)}` : "-"}</TableCell>
+
+        <TableCell>{formatDate(data?.deductionDate)}</TableCell>
+
+        <TableCell>
+          <Chip 
+            label={data?.status || "Pending"} 
+            size="small" 
+            color={getStatusColor(data?.status)}
+            variant="outlined"
+          />
+        </TableCell>
+
+        <TableCell>
+          <Chip 
+            label={data?.processed ? "Processed" : "Not Processed"} 
+            size="small" 
+            color={data?.processed ? "success" : "default"}
+            variant="outlined"
+          />
         </TableCell>
 
         <TableCell padding="normal">
-          {/* {data?.deviceId || "-"} */}
-        </TableCell>
-
-        {/* <TableCell padding="normal">
           <TableMoreMenu
             open={openMenuEl}
             handleOpen={handleOpenMenu}
@@ -97,7 +138,7 @@ export default function TableRowView(props) {
               }}
             />
           </TableMoreMenu>
-        </TableCell> */}
+        </TableCell>
       </TableRow>
     </>
   );

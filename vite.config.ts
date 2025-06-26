@@ -26,6 +26,11 @@ export default defineConfig({
         target: 'http://localhost:5000/api/v1',
         changeOrigin: true,
         secure: false,
+      },
+      '/arrears': {
+        target: 'http://localhost:5000/api/v1',
+        changeOrigin: true,
+        secure: false,
       }
     }
   },

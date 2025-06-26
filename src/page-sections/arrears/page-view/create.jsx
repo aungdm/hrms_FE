@@ -8,8 +8,13 @@ import {
   Grid,
   Switch,
   Stack,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormHelperText,
 } from "@mui/material";
-import ShoppingCart from "@/icons/ShoppingCart.jsx";
+import MoneyOffIcon from "@mui/icons-material/MoneyOff";
 import { Paragraph } from "@/components/typography";
 import IconWrapper from "@/components/icon-wrapper/IconWrapper.jsx";
 import FlexBox from "@/components/flexbox/FlexBox.jsx";
@@ -19,26 +24,33 @@ import * as Yup from "yup";
 import {
   create,
   update,
-  // searchEmployees,
   get,
-  // updateSalary,
+  getAllEmployees,
 } from "../request.js";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import useDebounce from "@/hooks/debounceHook.js";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
+import { DatePicker } from "@mui/x-date-pickers";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+
+// Deduction types
+const deductionTypes = [
+  "Late Arrival",
+  "Early Departure",
+  "Absence",
+  "Damage to Property",
+  "Performance Issue",
+  "Advance Payment",
+  "Loan Installment",
+  "Other"
+];
 
 export default function CreateView() {
   const [mode, setMode] = useState(false);
   const [employees, setEmployees] = useState([]);
-  const [employeeData, setEmployeeData] = useState({
-    employee: {},
-    percentCalculateStatus: false,
-  });
-
-  const { employee, percentCalculateStatus } = employeeData;
-  const [searchString, setSearchString] = useState("");
-  const debouncedSearchString = useDebounce(searchString, 1000);
+  const [loading, setLoading] = useState(false);
+  
   const navigate = useNavigate();
   const params = useParams();
   const location = useLocation();
@@ -46,25 +58,22 @@ export default function CreateView() {
 
   // Initial Form Values
   const initialValues = {
-    date: "",
-    previousSalary: "",
-    salary: "",
-    name: "",
-    percentage: "", // Added percentage field
-    employment: null,
+    employeeId: null,
+    deductionType: "",
+    amount: "",
+    deductionDate: null,
     description: "",
+    processed: false
   };
 
   // Form Validation Schema
   const validationSchema = Yup.object().shape({
-    date: Yup.date().required("Effective Date is Required!"),
-    employment: Yup.object()
-      .nullable()
-      .required("Employee selection is required"),
-    salary: Yup.number().required("Salary is Required!"),
-    previousSalary: Yup.number().required("Previous Salary is Required!"),
-    name: Yup.string().required("Name is Required!"),
+    employeeId: Yup.object().nullable().required("Employee selection is required"),
+    deductionType: Yup.string().required("Deduction type is required"),
+    amount: Yup.number().positive("Amount must be positive").required("Amount is required"),
+    deductionDate: Yup.date().required("Deduction date is required"),
     description: Yup.string(),
+    processed: Yup.boolean()
   });
 
   // Formik Hook
@@ -76,109 +85,124 @@ export default function CreateView() {
     touched,
     setFieldValue,
     setValues,
+    resetForm
   } = useFormik({
     initialValues,
     validationSchema,
     onSubmit: async (values) => {
-      // console.log({ values });
-      // const object = { ...values, employment: values.employment?._id };
-      // console.log({ object });
-      // try {
-      //   let responseData;
-      //   // if (!mode) {
-      //   responseData = await create(object);
-      //   const salaryData = await updateSalary(values.employment?._id, {
-      //     after_probation_gross_salary: values.salary,
-      //   });
-      //   console.log({ salaryData });
-      //   if (responseData.success) {
-      //     toast.success("Salary Revision created successfully ");
-      //     resetForm();
-      //     navigate("/salary-revisions-list");
-      //   }
-      //   // } else {
-      //   // responseData = await update(id, values);
-      //   // }
-      //   console.log("Response:", responseData);
-      // } catch (error) {
-      //   console.error(error);
-      //   toast.error("Error Creating Salary Revision");
-      // }
+      try {
+        setLoading(true);
+        
+        // Prepare data for API
+        const formData = {
+          employeeId: values.employeeId?._id,
+          deductionType: values.deductionType,
+          amount: parseFloat(values.amount),
+          deductionDate: values.deductionDate,
+          description: values.description || "",
+          processed: values.processed
+        };
+        
+        console.log("Submitting form data:", formData);
+        
+        let response;
+        
+        if (!mode) {
+          // Create new deduction
+          response = await create(formData);
+          console.log("Create response:", response);
+          if (response.success) {
+            toast.success(response.message || "Deduction created successfully");
+            resetForm();
+            navigate("/arrears-list");
+          } else {
+            toast.error(response.message || "Failed to create deduction");
+          }
+        } else if (mode === "edit") {
+          // Update existing deduction
+          response = await update(id, formData);
+          if (response.success) {
+            toast.success(response.message || "Deduction updated successfully");
+            navigate("/arrears-list");
+          } else {
+            toast.error(response.message || "Failed to update deduction");
+          }
+        }
+      } catch (error) {
+        console.error("Error submitting deduction:", error);
+        toast.error("Error submitting deduction");
+      } finally {
+        setLoading(false);
+      }
     },
   });
 
-  // Fetch employee list when user types in the search field
-  const fetchList = useCallback(async () => {
+  // Fetch employees for dropdown
+  const fetchEmployees = useCallback(async () => {
     try {
-      const response = await searchEmployees(debouncedSearchString);
-      console.log({ response }, " employee in salary revision");
-
+      setLoading(true);
+      const response = await getAllEmployees();
+      console.log("Employee response:", response);
       if (response?.success) {
-        setEmployees(response.data);
+        console.log("Setting employees:", response.data);
+        setEmployees(Array.isArray(response.data) ? response.data : []);
+      } else {
+        console.error("Failed to fetch employees:", response.message);
       }
     } catch (error) {
-      console.error(error);
+      console.error("Error fetching employees:", error);
+      toast.error("Failed to load employees");
+    } finally {
+      setLoading(false);
     }
-  }, [debouncedSearchString]);
+  }, []);
 
-  // Handles percentage input and updates salary dynamically
-  const handlePercentageChange = (e) => {
-    const percent = parseFloat(e.target.value);
-    const baseSalary = Number(employee?.after_probation_gross_salary) || 0;
-
-    if (!isNaN(percent)) {
-      const incrementedSalary = baseSalary + (baseSalary * percent) / 100;
-      setValues({
-        ...values,
-        salary: incrementedSalary,
-        percentage: e.target.value,
-      });
-    } else {
-      setValues({ ...values, salary: baseSalary, percentage: "" });
-    }
-  };
-
+  // Fetch record for edit/view mode
   const fetchRecord = async (id) => {
     try {
+      setLoading(true);
       const response = await get(id);
-      console.log(response?.data);
-      const { date, previousSalary, salary, description, employment, name } =
-        response.data;
+      
       if (response.success) {
+        const { employeeId, deductionType, amount, deductionDate, description, processed } = response.data;
+        
+        // Find the employee object from the employees array
+        const employeeObj = employees.find(emp => emp._id === employeeId._id) || employeeId;
+        
         setValues({
-          date: date ? format(new Date(date), "yyyy-MM-dd") : "",
-          employment: employment || "",
-          previousSalary: previousSalary || "",
-          salary: salary || "",
+          employeeId: employeeObj,
+          deductionType: deductionType || "",
+          amount: amount || "",
+          deductionDate: deductionDate ? new Date(deductionDate) : null,
           description: description || "",
-          name: name || "",
+          processed: processed || false
         });
-        setEmployeeData({ ...employeeData, employee: employment });
+      } else {
+        toast.error("Failed to load deduction details");
+        navigate("/arrears-list");
       }
     } catch (error) {
-      console.error(error);
-      throw error;
+      console.error("Error fetching deduction:", error);
+      toast.error("Error loading deduction details");
+      navigate("/arrears-list");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Fetch employee list when search string changes
-  // useEffect(() => {
-  //   if (debouncedSearchString) {
-  //     fetchList();
-  //   }
-  // }, [debouncedSearchString, fetchList]);
-
-  // Determine mode (view/edit) based on the URL
+  // Load employees on component mount
   useEffect(() => {
-    if (id) {
-      fetchRecord(id);
-    }
+    fetchEmployees();
+  }, [fetchEmployees]);
 
+  // Determine mode (view/edit) based on the URL and fetch record if needed
+  useEffect(() => {
     if (location.pathname.includes("view")) {
       setMode("view");
-    } else if (id) {
-      // fetchRecord(id);
+      if (id) fetchRecord(id);
+    } else if (location.pathname.includes("update")) {
       setMode("edit");
+      if (id) fetchRecord(id);
     }
   }, [id, location.pathname]);
 
@@ -188,139 +212,165 @@ export default function CreateView() {
       <Box mb={4} p={2}>
         <FlexBox alignItems="center">
           <IconWrapper>
-            <ShoppingCart sx={{ color: "primary.main" }} />
+            <MoneyOffIcon sx={{ color: "error.main" }} />
           </IconWrapper>
           <Paragraph sx={{ fontWeight: 600 }} fontSize={16}>
-            Arrears
+            {mode === "view" ? "View Deduction" : 
+             mode === "edit" ? "Edit Deduction" : 
+             "Create Deduction"}
           </Paragraph>
         </FlexBox>
       </Box>
 
       {/* Form Section */}
       <form onSubmit={handleSubmit}>
-        <Card elevation={22}>
-          <Grid container spacing={2}>
+        <Card sx={{ p: 3 }}>
+          <Grid container spacing={3}>
             {/* Employee Selection */}
-            <Grid p={3} md={6} sm={12} xs={12}>
+            <Grid item md={6} xs={12}>
               <Autocomplete
                 fullWidth
                 disablePortal
                 options={employees}
                 getOptionLabel={(option) => option?.name || ""}
-                value={values.employment}
+                value={values.employeeId}
+                disabled={mode === "view"}
                 onChange={(event, newValue) => {
-                  setFieldValue("employment", newValue);
-                  setEmployeeData({ ...employeeData, employee: newValue });
-                  setFieldValue(
-                    "previousSalary",
-                    newValue?.after_probation_gross_salary || ""
-                  );
-                  setFieldValue("name", newValue?.name || "");
+                  setFieldValue("employeeId", newValue);
                 }}
                 renderInput={(params) => (
                   <TextField
                     {...params}
                     label="Select Employee"
-                    onChange={(e) => setSearchString(e.target.value)}
-                    helperText={touched.employment && errors.employment}
-                    error={Boolean(touched.employment && errors.employment)}
+                    helperText={touched.employeeId && errors.employeeId}
+                    error={Boolean(touched.employeeId && errors.employeeId)}
                   />
                 )}
               />
             </Grid>
 
-            {/* Effective Date */}
-            <Grid p={3} md={6} sm={12} xs={12}>
-              <TextField
-                inputProps={{ readOnly: mode === "view" }}
-                type="date"
-                fullWidth
-                label="Date"
-                name="date"
-                value={values.date}
-                onChange={handleChange}
-                helperText={touched.date && errors.date}
-                error={Boolean(touched.date && errors.date)}
-              />
+            {/* Deduction Type */}
+            <Grid item md={6} xs={12}>
+              <FormControl fullWidth error={Boolean(touched.deductionType && errors.deductionType)}>
+                <InputLabel>Deduction Type</InputLabel>
+                <Select
+                  name="deductionType"
+                  value={values.deductionType}
+                  onChange={handleChange}
+                  label="Deduction Type"
+                  disabled={mode === "view"}
+                >
+                  {deductionTypes.map((type) => (
+                    <MenuItem key={type} value={type}>
+                      {type}
+                    </MenuItem>
+                  ))}
+                </Select>
+                {touched.deductionType && errors.deductionType && (
+                  <FormHelperText>{errors.deductionType}</FormHelperText>
+                )}
+              </FormControl>
             </Grid>
-          </Grid>
 
-          <Grid container spacing={2}>
-            {/* Previous Salary */}
-            <Grid p={3} md={6} sm={12} xs={12}>
+            {/* Amount */}
+            <Grid item md={6} xs={12}>
               <TextField
-                inputProps={{ readOnly: mode === "view" }}
-                type="number"
-                readOnly
                 fullWidth
+                type="number"
                 name="amount"
                 label="Amount"
                 value={values.amount}
                 onChange={handleChange}
+                disabled={mode === "view"}
                 helperText={touched.amount && errors.amount}
                 error={Boolean(touched.amount && errors.amount)}
+                InputProps={{
+                  inputProps: { min: 0, step: "0.01" }
+                }}
               />
             </Grid>
 
-            {/* Salary Type Switch */}
-            {mode !== "view" && (
-              <Grid p={3} sm={6} xs={12}>
-                <Typography fontSize={16}>Aready Paid</Typography>
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <Switch
-                    checked={percentCalculateStatus}
-                    onChange={(e) =>
-                      setEmployeeData({
-                        ...employeeData,
-                        percentCalculateStatus: e.target.checked,
-                      })
+            {/* Deduction Date */}
+            <Grid item md={6} xs={12}>
+              <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <DatePicker
+                  label="Deduction Date"
+                  value={values.deductionDate}
+                  onChange={(newValue) => {
+                    setFieldValue("deductionDate", newValue);
+                  }}
+                  disabled={mode === "view"}
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      error: Boolean(touched.deductionDate && errors.deductionDate),
+                      helperText: touched.deductionDate && errors.deductionDate
                     }
-                  />
-                </Stack>
-              </Grid>
-            )}
-          </Grid>
+                  }}
+                />
+              </LocalizationProvider>
+            </Grid>
 
-          <Grid container spacing={2}>
-            {/* <Grid p={3} md={6} sm={12} xs={12}>
+            {/* Description */}
+            <Grid item xs={12}>
               <TextField
-                inputProps={{ readOnly: mode === "view" }}
-                type="number"
                 fullWidth
-                name="salary"
-                label="Salary"
-                value={values.salary}
-                onChange={handleChange}
-                helperText={touched.salary && errors.salary}
-                error={Boolean(touched.salary && errors.salary)}
-              />
-            </Grid> */}
-            <Grid p={3} md={6} sm={12} xs={12}>
-              <TextField
-                inputProps={{ readOnly: mode === "view" ? true : false }}
-                type="text"
-                fullWidth
-                name="description"
                 multiline
                 rows={4}
+                name="description"
                 label="Description"
                 value={values.description}
                 onChange={handleChange}
+                disabled={mode === "view"}
                 helperText={touched.description && errors.description}
                 error={Boolean(touched.description && errors.description)}
               />
             </Grid>
-          </Grid>
-        </Card>
 
-        {/* Submit Button */}
-        {mode !== "view" && (
-          <Grid pt={3} pb={6} xs={12}>
-            <Button type="submit" variant="contained">
-              Submit
-            </Button>
+            {/* Processed Status */}
+            <Grid item xs={12}>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Typography>Already Processed</Typography>
+                <Switch
+                  checked={values.processed}
+                  onChange={(e) => setFieldValue("processed", e.target.checked)}
+                  disabled={mode === "view"}
+                />
+              </Stack>
+            </Grid>
           </Grid>
-        )}
+
+          {/* Submit Button */}
+          {mode !== "view" && (
+            <Box mt={3}>
+              <Button 
+                type="submit" 
+                variant="contained" 
+                disabled={loading}
+              >
+                {loading ? "Submitting..." : mode === "edit" ? "Update" : "Submit"}
+              </Button>
+              <Button
+                variant="outlined"
+                sx={{ ml: 2 }}
+                onClick={() => navigate("/arrears-list")}
+              >
+                Cancel
+              </Button>
+            </Box>
+          )}
+          
+          {mode === "view" && (
+            <Box mt={3}>
+              <Button
+                variant="outlined"
+                onClick={() => navigate("/arrears-list")}
+              >
+                Back to List
+              </Button>
+            </Box>
+          )}
+        </Card>
       </form>
     </>
   );

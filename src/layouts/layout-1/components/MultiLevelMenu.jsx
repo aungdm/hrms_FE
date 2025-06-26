@@ -115,7 +115,11 @@ export default function MultiLevelMenu({ sidebarCompact }) {
         },
         {
           name: "Loan",
-          path: "/attendance-logs-list",
+          path: "/loan-list",
+        },
+        {
+          name: "Advanced Salary",
+          path: "/advanced-salary-list",
         },
       ],
     },

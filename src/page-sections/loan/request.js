@@ -4,8 +4,8 @@ export const getRecords = async (
   search,
   perPage,
   page,
-  sortOrder = "Desc",
-  sortField = "deductionDate",
+  sortOrder = "desc",
+  sortField = "createdAt",
   startDate,
   endDate,
   status,
@@ -13,7 +13,7 @@ export const getRecords = async (
   processed
 ) => {
   try {
-    const response = await axios.get("/arrears", {
+    const response = await axios.get("/loan", {
       params: {
         search,
         sortOrder,
@@ -28,8 +28,6 @@ export const getRecords = async (
       },
     });
     
-    console.log("API response:", response);
-    
     if (response?.data?.success) {
       return {
         data: response?.data?.data?.data || [],
@@ -39,15 +37,15 @@ export const getRecords = async (
     } else {
       return { 
         success: false, 
-        message: response?.data?.message || "Failed to fetch arrears",
+        message: response?.data?.message || "Failed to fetch loans",
         error: response?.data?.error 
       };
     }
   } catch (error) {
-    console.error("Error fetching arrears:", error);
+    console.error("Error fetching loans:", error);
     return { 
       success: false, 
-      message: error.response?.data?.message || error.message || "Error fetching arrears",
+      message: error.response?.data?.message || error.message || "Error fetching loans",
       error: error.response?.data?.error || error
     };
   }
@@ -55,26 +53,22 @@ export const getRecords = async (
 
 export const create = async (data) => {
   try {
-    console.log("Creating arrears with data:", data);
-    
-    const response = await axios.post("/arrears", data);
-    
-    console.log("Create response:", response);
+    const response = await axios.post("/loan", data);
     
     if (response.data.success) {
       return { data: response.data.data, success: true, message: response.data.message };
     } else {
       return { 
         success: false, 
-        message: response.data.message || "Failed to create arrears",
+        message: response.data.message || "Failed to create loan request",
         error: response.data.error 
       };
     }
   } catch (error) {
-    console.error("Error creating arrears:", error);
+    console.error("Error creating loan request:", error);
     return { 
       success: false, 
-      message: error.response?.data?.message || error.message || "Failed to create arrears",
+      message: error.response?.data?.message || error.message || "Failed to create loan request",
       error: error.response?.data?.error || error
     };
   }
@@ -82,26 +76,22 @@ export const create = async (data) => {
 
 export const get = async (id) => {
   try {
-    console.log("Fetching arrears with id:", id);
-    
-    const response = await axios.get(`/arrears/${id}`);
-    
-    console.log("Get response:", response);
+    const response = await axios.get(`/loan/${id}`);
     
     if (response.data.success) {
       return { data: response.data.data, success: true };
     } else {
       return { 
         success: false, 
-        message: response.data.message || "Failed to fetch arrears",
+        message: response.data.message || "Failed to fetch loan",
         error: response.data.error 
       };
     }
   } catch (error) {
-    console.error("Error fetching arrears:", error);
+    console.error("Error fetching loan:", error);
     return { 
       success: false, 
-      message: error.response?.data?.message || error.message || "Failed to fetch arrears",
+      message: error.response?.data?.message || error.message || "Failed to fetch loan",
       error: error.response?.data?.error || error
     };
   }
@@ -109,26 +99,22 @@ export const get = async (id) => {
 
 export const update = async (id, data) => {
   try {
-    console.log("Updating arrears with id:", id, "and data:", data);
-    
-    const response = await axios.put(`/arrears/${id}`, data);
-    
-    console.log("Update response:", response);
+    const response = await axios.put(`/loan/${id}`, data);
     
     if (response.data.success) {
       return { data: response.data.data, success: true, message: response.data.message };
     } else {
       return { 
         success: false, 
-        message: response.data.message || "Failed to update arrears",
+        message: response.data.message || "Failed to update loan",
         error: response.data.error 
       };
     }
   } catch (error) {
-    console.error("Error updating arrears:", error);
+    console.error("Error updating loan:", error);
     return { 
       success: false, 
-      message: error.response?.data?.message || error.message || "Failed to update arrears",
+      message: error.response?.data?.message || error.message || "Failed to update loan",
       error: error.response?.data?.error || error
     };
   }
@@ -136,66 +122,54 @@ export const update = async (id, data) => {
 
 export const deleteRecord = async (id) => {
   try {
-    console.log("Deleting arrears with id:", id);
-    
-    const response = await axios.delete(`/arrears/${id}`);
-    
-    console.log("Delete response:", response);
+    const response = await axios.delete(`/loan/${id}`);
     
     if (response?.data?.success) {
       return { data: response?.data?.data, success: true, message: response.data.message };
     } else {
       return { 
         success: false, 
-        message: response.data.message || "Failed to delete arrears",
+        message: response.data.message || "Failed to delete loan",
         error: response.data.error 
       };
     }
   } catch (error) {
-    console.error("Error deleting arrears:", error);
+    console.error("Error deleting loan:", error);
     return { 
       success: false, 
-      message: error.response?.data?.message || error.message || "Failed to delete arrears",
+      message: error.response?.data?.message || error.message || "Failed to delete loan",
       error: error.response?.data?.error || error
     };
   }
 };
 
-export const deleteMultipleRecords = async (ids) => {
+export const deleteMultipleLoans = async (ids) => {
   const data = { ids };
   try {
-    console.log("Deleting multiple arrears with ids:", ids);
-    
-    const response = await axios.post(`/arrears/delete-multiple`, data);
-    
-    console.log("Delete multiple response:", response);
+    const response = await axios.post(`/loan/delete-multiple`, data);
     
     if (response.data.success) {
       return { data: response.data.data, success: true, message: response.data.message };
     } else {
       return { 
         success: false, 
-        message: response.data.message || "Failed to delete arrears",
+        message: response.data.message || "Failed to delete loans",
         error: response.data.error 
       };
     }
   } catch (error) {
-    console.error("Error deleting multiple arrears:", error);
+    console.error("Error deleting multiple loans:", error);
     return { 
       success: false, 
-      message: error.response?.data?.message || error.message || "Failed to delete arrears",
+      message: error.response?.data?.message || error.message || "Failed to delete loans",
       error: error.response?.data?.error || error
     };
   }
 };
 
-export const updateStatus = async (id, status) => {
+export const updateStatus = async (id, status, approvedAmount) => {
   try {
-    console.log("Updating arrears status with id:", id, "and status:", status);
-    
-    const response = await axios.patch(`/arrears/${id}/status`, { status });
-    
-    console.log("Update status response:", response);
+    const response = await axios.patch(`/loan/${id}/status`, { status, approvedAmount });
     
     if (response.data.success) {
       return { data: response.data.data, success: true, message: response.data.message };
@@ -207,7 +181,7 @@ export const updateStatus = async (id, status) => {
       };
     }
   } catch (error) {
-    console.error("Error updating arrears status:", error);
+    console.error("Error updating loan status:", error);
     return { 
       success: false, 
       message: error.response?.data?.message || error.message || "Failed to update status",
@@ -216,13 +190,32 @@ export const updateStatus = async (id, status) => {
   }
 };
 
+export const payInstallment = async (id, installmentId) => {
+  try {
+    const response = await axios.patch(`/loan/${id}/pay-installment`, { installmentId });
+    
+    if (response.data.success) {
+      return { data: response.data.data, success: true, message: response.data.message };
+    } else {
+      return { 
+        success: false, 
+        message: response.data.message || "Failed to pay installment",
+        error: response.data.error 
+      };
+    }
+  } catch (error) {
+    console.error("Error paying installment:", error);
+    return { 
+      success: false, 
+      message: error.response?.data?.message || error.message || "Failed to pay installment",
+      error: error.response?.data?.error || error
+    };
+  }
+};
+
 export const getAllEmployees = async () => {
   try {
-    console.log("Fetching all employees");
-    
     const response = await axios.get("/employee/get?perPage=10000");
-    
-    console.log("Get all employees response:", response);
     
     if (response.data.success) {
       return { data: response.data.data.data || response.data.data, success: true };
@@ -244,4 +237,4 @@ export const getAllEmployees = async () => {
 };
 
 // For backward compatibility
-export const deleteMultipleService = deleteMultipleRecords;
+export const deleteMultipleService = deleteMultipleLoans;
