@@ -9,7 +9,6 @@ import Scrollbar from "@/components/scrollbar";
 import { TableDataNotFound, TableToolbar } from "@/components/table"; // CUSTOM PAGE SECTION COMPONENTS
 
 import useMuiTable, { getComparator, stableSort } from "@/hooks/useMuiTable"; // CUSTOM DUMMY DATA
-import { USER_LIST } from "@/__fakeData__/users";
 import Table from "@mui/material/Table";
 import TableHeadView from "../TableHead.jsx";
 import TableBody from "@mui/material/TableBody";
@@ -19,7 +18,8 @@ import TableSkeleton from "@/components/loader/TableSkeleton.jsx";
 import {
   deleteRecord,
   getRecords,
-  deleteMultipleService,
+  deleteMultipleDeductions,
+  updateStatus,
 } from "../request.js";
 import { toast } from "react-toastify";
 import useDebounce from "@/hooks/debounceHook";
@@ -37,96 +37,93 @@ export default function ListView() {
     selected,
     isSelected,
     handleChangePage,
-  } = useMuiTable({ defaultOrderBy: "name" });
+  } = useMuiTable({ defaultOrderBy: "deductionDate" });
 
   const [data, setData] = useState([]);
-  const [userFilter, setUserFilter] = useState({ role: "", search: "" });
   const [loading, setLoading] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
-  const [searchString, setSearchString] = useState("");
-  const debouncedSearchString = useDebounce(searchString, 2000);
-  console.log({ debouncedSearchString });
-  const handleSearch = (key, value) => {
-    console.log({ key }, { value });
-    setSearchString(value);
-    // setUserFilter((state) => ({
-    //   ...state,
-    //   [key]: value,
-    // }));
-  };
-
-  const filteredUsers = stableSort(data, getComparator(order, orderBy)).filter(
-    (item) => {
-      if (userFilter.role) return item.role.toLowerCase() === userFilter.role;
-      else if (userFilter.search)
-        return item.name
-          .toLowerCase()
-          .includes(userFilter.search.toLowerCase());
-      else return true;
-    }
-  );
-
-  // const handleDeleteUser = (id) => {
-
-  //   // setData((state) => state.filter((item) => item.id !== id));
-  // };
-
-  // const handleAllUserDelete = () => {
-  //   setData((state) => state.filter((item) => !selected.includes(item.id)));
-  //   handleSelectAllRows([])();
-  // };
+  
+  // Filter states
+  const [search, setSearch] = useState("");
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
+  const [employeeId, setEmployeeId] = useState("");
+  const [status, setStatus] = useState("");
+  
+  const debouncedSearch = useDebounce(search, 500);
 
   const fetchList = useCallback(async () => {
     try {
       setLoading(true);
       const response = await getRecords(
-        debouncedSearchString,
         rowsPerPage,
-        page
+        page,
+        startDate ? startDate.toISOString().split('T')[0] : null,
+        endDate ? endDate.toISOString().split('T')[0] : null,
+        employeeId,
+        status,
+        order,
+        orderBy,
+        debouncedSearch
       );
-      console.log(response, "fetchList");
+      
       if (response?.success) {
         setData(response?.data);
         setTotalRecords(response?.totalRecords);
       }
     } catch (error) {
       console.error(error);
-      throw error;
+      toast.error("Failed to fetch fine deductions");
     } finally {
       setLoading(false);
     }
-  }, [rowsPerPage, page, debouncedSearchString]);
+  }, [rowsPerPage, page, startDate, endDate, employeeId, status, order, orderBy, debouncedSearch]);
 
   const handleDelete = async (id) => {
     try {
       const response = await deleteRecord(id);
-      console.log({ response }, "delete Service");
       if (response.success) {
-        toast.success("Deleted successfully");
+        toast.success(response.message || "Fine deduction deleted successfully");
         await fetchList();
+      } else {
+        toast.error(response.message || "Failed to delete fine deduction");
       }
     } catch (error) {
       console.error(error);
-      throw error;
+      toast.error("Error deleting fine deduction");
     }
   };
 
-  // const handleMultipleDeleteService = async () => {
-  //   try {
-  //     const response = await deleteMultipleService(selected);
-  //     console.log({ response }, "delete Service");
-  //     if (response.success) {
-  //       console.log({ response }, "inner delete Service");
-
-  //       toast.success("Services deleted successfully");
-  //       fetchList();
-  //       console.log({ response }, "inner second delete Service");
-  //     }
-  //   } catch (error) {
-  //     console.error(error);
-  //     throw error;
-  //   }
-  // };
+  const handleMultipleDelete = async () => {
+    try {
+      const response = await deleteMultipleDeductions(selected);
+      if (response.success) {
+        toast.success(response.message || "Fine deductions deleted successfully");
+        await fetchList();
+        handleSelectAllRows([])();
+      } else {
+        toast.error(response.message || "Failed to delete fine deductions");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Error deleting fine deductions");
+    }
+  };
+  
+  const handleStatusChange = async (id, newStatus) => {
+    try {
+      const response = await updateStatus(id, newStatus);
+      if (response.success) {
+        toast.success(response.message || `Status updated to ${newStatus}`);
+        await fetchList();
+      } else {
+        toast.error(response.message || "Failed to update status");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Error updating status");
+    }
+  };
 
   useEffect(() => {
     fetchList();
@@ -140,21 +137,31 @@ export default function ListView() {
         <>
           <Card>
             <Box p={2}>
-              <HeadingArea />
+              <HeadingArea 
+                selectedIds={selected}
+                handleBulkDelete={handleMultipleDelete}
+              />
               <SearchArea
-                value={searchString}
-                gridRoute="/dashboard/user-grid"
-                listRoute="/dashboard/services-list"
-                onChange={(e) => handleSearch("search", e.target.value)}
+                search={search}
+                onSearchChange={setSearch}
+                startDate={startDate}
+                endDate={endDate}
+                onStartDateChange={setStartDate}
+                onEndDateChange={setEndDate}
+                employeeId={employeeId}
+                onEmployeeChange={setEmployeeId}
+                status={status}
+                onStatusChange={setStatus}
+                onFilterApply={fetchList}
               />
             </Box>
 
-            {/* {selected.length > 0 && (
+            {selected.length > 0 && (
               <TableToolbar
                 selected={selected.length}
-                handleDeleteRows={handleMultipleDeleteService}
+                handleDeleteRows={handleMultipleDelete}
               />
-            )} */}
+            )}
 
             <TableContainer>
               <Scrollbar autoHide={false}>
@@ -166,18 +173,21 @@ export default function ListView() {
                     rowCount={data.length}
                     onRequestSort={handleRequestSort}
                     onSelectAllRows={handleSelectAllRows(
-                      filteredUsers.map((row) => row.id)
+                      data.map((row) => row._id)
                     )}
+                    showCheckbox={true}
                   />
 
                   <TableBody>
                     {data?.map((item) => (
                       <TableRowView
-                        key={item.id}
+                        key={item._id}
                         data={item}
-                        isSelected={isSelected(item.id)}
+                        isSelected={isSelected(item._id)}
                         handleSelectRow={handleSelectRow}
                         handleDelete={handleDelete}
+                        handleStatusChange={handleStatusChange}
+                        showCheckbox={true}
                       />
                     ))}
 

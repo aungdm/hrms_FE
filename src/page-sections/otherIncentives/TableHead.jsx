@@ -9,37 +9,55 @@ import { isDark } from "@/utils/constants";
 
 const headCells = [
   {
-    id: "employee_id",
-    numeric: true,
+    id: "select",
+    numeric: false,
+    disablePadding: true,
+    label: "",
+  },
+  {
+    id: "employeeId",
+    numeric: false,
     disablePadding: false,
     label: "Employee",
   },
   {
-    id: "punch_type",
-    numeric: true,
-    disablePadding: false,
-    label: "Punch Type",
-  },
-  {
-    id: "punch_time",
+    id: "incentiveType",
     numeric: false,
     disablePadding: false,
-    label: "Punch Time",
+    label: "Incentive Type",
   },
-
   {
-    id: "device_id",
+    id: "amount",
     numeric: true,
     disablePadding: false,
-    label: "Device ID",
+    label: "Amount",
+  },
+  {
+    id: "incentiveDate",
+    numeric: false,
+    disablePadding: false,
+    label: "Date",
+  },
+  {
+    id: "status",
+    numeric: false,
+    disablePadding: false,
+    label: "Status",
+  },
+  {
+    id: "processed",
+    numeric: false,
+    disablePadding: false,
+    label: "Payment Status",
   },
   { 
     id: "actions",
-    numeric: true,
+    numeric: false,
     disablePadding: false,
     label: "Actions",
   },
 ];
+
 export default function TableHeadView(props) {
   const {
     onSelectAllRows,
@@ -55,51 +73,49 @@ export default function TableHeadView(props) {
   };
 
   return (
-    <>
-      <TableHead
-        sx={{
-          backgroundColor: (theme) => (isDark(theme) ? "grey.700" : "grey.100"),
-        }}
-      >
-        <TableRow>
-          {/* <TableCell padding="checkbox">
-            <Checkbox
-              size="small"
-              color="primary"
-              onChange={onSelectAllRows}
-              checked={rowCount > 0 && numSelected === rowCount}
-              indeterminate={numSelected > 0 && numSelected < rowCount}
-            />
-          </TableCell> */}
+    <TableHead
+      sx={{
+        backgroundColor: (theme) => (isDark(theme) ? "grey.700" : "grey.100"),
+      }}
+    >
+      <TableRow>
+        <TableCell padding="checkbox">
+          <Checkbox
+            size="small"
+            color="primary"
+            onChange={onSelectAllRows}
+            checked={rowCount > 0 && numSelected === rowCount}
+            indeterminate={numSelected > 0 && numSelected < rowCount}
+          />
+        </TableCell>
 
-          {headCells.map((headCell) => (
-            <TableCell
-              key={headCell.id}
-              padding={headCell.disablePadding ? "none" : "normal"}
-              sortDirection={orderBy === headCell.id ? order : false}
-              sx={{
-                color: "text.primary",
-                fontWeight: 600,
-              }}
+        {headCells.slice(1).map((headCell) => (
+          <TableCell
+            key={headCell.id}
+            padding={headCell.disablePadding ? "none" : "normal"}
+            sortDirection={orderBy === headCell.id ? order : false}
+            sx={{
+              color: "text.primary",
+              fontWeight: 600,
+            }}
+          >
+            <TableSortLabel
+              active={orderBy === headCell.id}
+              onClick={createSortHandler(headCell.id)}
+              direction={orderBy === headCell.id ? order : "asc"}
             >
-              <TableSortLabel
-                active={orderBy === headCell.id}
-                onClick={createSortHandler(headCell.id)}
-                direction={orderBy === headCell.id ? order : "asc"}
-              >
-                {headCell.label}
-                {orderBy === headCell.id ? (
-                  <Span sx={visuallyHidden}>
-                    {order === "desc"
-                      ? "sorted descending"
-                      : "sorted ascending"}
-                  </Span>
-                ) : null}
-              </TableSortLabel>
-            </TableCell>
-          ))}
-        </TableRow>
-      </TableHead>
-    </>
+              {headCell.label}
+              {orderBy === headCell.id ? (
+                <Span sx={visuallyHidden}>
+                  {order === "desc"
+                    ? "sorted descending"
+                    : "sorted ascending"}
+                </Span>
+              ) : null}
+            </TableSortLabel>
+          </TableCell>
+        ))}
+      </TableRow>
+    </TableHead>
   );
 }

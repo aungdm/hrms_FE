@@ -1,28 +1,26 @@
-import HeadingArea from "../HeadingArea.jsx";
+import { useCallback, useEffect, useState } from "react";
 import Card from "@mui/material/Card";
 import Box from "@mui/material/Box";
-import SearchArea from "../SearchArea.jsx";
-import { useCallback, useState } from "react";
 import TableContainer from "@mui/material/TableContainer";
-import TablePagination from "@mui/material/TablePagination"; // CUSTOM COMPONENTS
+import TablePagination from "@mui/material/TablePagination";
 import Scrollbar from "@/components/scrollbar";
-import { TableDataNotFound, TableToolbar } from "@/components/table"; // CUSTOM PAGE SECTION COMPONENTS
-
-import useMuiTable, { getComparator, stableSort } from "@/hooks/useMuiTable"; // CUSTOM DUMMY DATA
-import { USER_LIST } from "@/__fakeData__/users";
+import { TableDataNotFound, TableToolbar } from "@/components/table";
+import useMuiTable from "@/hooks/useMuiTable";
 import Table from "@mui/material/Table";
-import TableHeadView from "../TableHead.jsx";
 import TableBody from "@mui/material/TableBody";
 import TableRowView from "../TableRow.jsx";
-import { useEffect } from "react";
+import TableHeadView from "../TableHead.jsx";
+import HeadingArea from "../HeadingArea.jsx";
+import SearchArea from "../SearchArea.jsx";
 import TableSkeleton from "@/components/loader/TableSkeleton.jsx";
 import {
   deleteRecord,
   getRecords,
-  deleteMultipleService,
+  deleteMultipleIncentives,
 } from "../request.js";
 import { toast } from "react-toastify";
 import useDebounce from "@/hooks/debounceHook";
+import { Typography, Alert } from "@mui/material";
 
 export default function ListView() {
   const {
@@ -37,96 +35,88 @@ export default function ListView() {
     selected,
     isSelected,
     handleChangePage,
-  } = useMuiTable({ defaultOrderBy: "name" });
+  } = useMuiTable({ defaultOrderBy: "incentiveDate" });
 
   const [data, setData] = useState([]);
-  const [userFilter, setUserFilter] = useState({ role: "", search: "" });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [totalRecords, setTotalRecords] = useState(0);
   const [searchString, setSearchString] = useState("");
-  const debouncedSearchString = useDebounce(searchString, 2000);
-  console.log({ debouncedSearchString });
-  const handleSearch = (key, value) => {
-    console.log({ key }, { value });
+  const debouncedSearchString = useDebounce(searchString, 1000);
+
+  const handleSearch = (value) => {
     setSearchString(value);
-    // setUserFilter((state) => ({
-    //   ...state,
-    //   [key]: value,
-    // }));
   };
-
-  const filteredUsers = stableSort(data, getComparator(order, orderBy)).filter(
-    (item) => {
-      if (userFilter.role) return item.role.toLowerCase() === userFilter.role;
-      else if (userFilter.search)
-        return item.name
-          .toLowerCase()
-          .includes(userFilter.search.toLowerCase());
-      else return true;
-    }
-  );
-
-  // const handleDeleteUser = (id) => {
-
-  //   // setData((state) => state.filter((item) => item.id !== id));
-  // };
-
-  // const handleAllUserDelete = () => {
-  //   setData((state) => state.filter((item) => !selected.includes(item.id)));
-  //   handleSelectAllRows([])();
-  // };
 
   const fetchList = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
+      
+      console.log("Fetching incentives with params:", {
+        search: debouncedSearchString,
+        perPage: rowsPerPage,
+        page,
+        order,
+        orderBy
+      });
+      
       const response = await getRecords(
         debouncedSearchString,
         rowsPerPage,
-        page
+        page,
+        order,
+        orderBy
       );
-      console.log(response, "fetchList");
+      
+      console.log("API response:", response);
+      
       if (response?.success) {
-        setData(response?.data);
-        setTotalRecords(response?.totalRecords);
+        setData(response?.data || []);
+        setTotalRecords(response?.totalRecords || 0);
+      } else {
+        setError(response?.message || "Failed to fetch incentives");
+        toast.error(response?.message || "Failed to fetch incentives");
       }
     } catch (error) {
-      console.error(error);
-      throw error;
+      console.error("Error fetching incentives:", error);
+      setError(error?.message || "Error loading incentives");
+      toast.error("Error loading incentives");
     } finally {
       setLoading(false);
     }
-  }, [rowsPerPage, page, debouncedSearchString]);
+  }, [rowsPerPage, page, debouncedSearchString, order, orderBy]);
 
   const handleDelete = async (id) => {
     try {
       const response = await deleteRecord(id);
-      console.log({ response }, "delete Service");
       if (response.success) {
-        toast.success("Deleted successfully");
+        toast.success(response.message || "Incentive deleted successfully");
         await fetchList();
+      } else {
+        toast.error(response.message || "Failed to delete incentive");
       }
     } catch (error) {
-      console.error(error);
-      throw error;
+      console.error("Error deleting incentive:", error);
+      toast.error("Error deleting incentive");
     }
   };
 
-  // const handleMultipleDeleteService = async () => {
-  //   try {
-  //     const response = await deleteMultipleService(selected);
-  //     console.log({ response }, "delete Service");
-  //     if (response.success) {
-  //       console.log({ response }, "inner delete Service");
-
-  //       toast.success("Services deleted successfully");
-  //       fetchList();
-  //       console.log({ response }, "inner second delete Service");
-  //     }
-  //   } catch (error) {
-  //     console.error(error);
-  //     throw error;
-  //   }
-  // };
+  const handleMultipleDelete = async () => {
+    try {
+      const response = await deleteMultipleIncentives(selected);
+      if (response.success) {
+        toast.success(response.message || "Incentives deleted successfully");
+        await fetchList();
+        handleSelectAllRows([])();
+      } else {
+        toast.error(response.message || "Failed to delete incentives");
+      }
+    } catch (error) {
+      console.error("Error deleting multiple incentives:", error);
+      toast.error("Error deleting incentives");
+    }
+  };
 
   useEffect(() => {
     fetchList();
@@ -143,18 +133,25 @@ export default function ListView() {
               <HeadingArea />
               <SearchArea
                 value={searchString}
-                gridRoute="/dashboard/user-grid"
-                listRoute="/dashboard/services-list"
-                onChange={(e) => handleSearch("search", e.target.value)}
+                onChange={(e) => handleSearch(e.target.value)}
+                createRoute="/create-other-incentive"
               />
             </Box>
 
-            {/* {selected.length > 0 && (
+            {error && (
+              <Box px={2} mb={2}>
+                <Alert severity="error" onClose={() => setError(null)}>
+                  {error}
+                </Alert>
+              </Box>
+            )}
+
+            {selected.length > 0 && (
               <TableToolbar
                 selected={selected.length}
-                handleDeleteRows={handleMultipleDeleteService}
+                handleDeleteRows={handleMultipleDelete}
               />
-            )} */}
+            )}
 
             <TableContainer>
               <Scrollbar autoHide={false}>
@@ -166,22 +163,24 @@ export default function ListView() {
                     rowCount={data.length}
                     onRequestSort={handleRequestSort}
                     onSelectAllRows={handleSelectAllRows(
-                      filteredUsers.map((row) => row.id)
+                      data.map((row) => row._id)
                     )}
                   />
 
                   <TableBody>
-                    {data?.map((item) => (
-                      <TableRowView
-                        key={item.id}
-                        data={item}
-                        isSelected={isSelected(item.id)}
-                        handleSelectRow={handleSelectRow}
-                        handleDelete={handleDelete}
-                      />
-                    ))}
-
-                    {data?.length === 0 && <TableDataNotFound />}
+                    {data.length > 0 ? (
+                      data.map((item) => (
+                        <TableRowView
+                          key={item._id}
+                          data={item}
+                          isSelected={isSelected(item._id)}
+                          handleSelectRow={handleSelectRow}
+                          handleDelete={handleDelete}
+                        />
+                      ))
+                    ) : (
+                      <TableDataNotFound />
+                    )}
                   </TableBody>
                 </Table>
               </Scrollbar>

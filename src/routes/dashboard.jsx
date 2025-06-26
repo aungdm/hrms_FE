@@ -440,7 +440,7 @@ export const DashboardRoutes = [
         element: <OtherIncentivesListView />,
       },
       {
-        path: "other-incentives-create",
+        path: "create-other-incentive",
         element: <OtherIncentivesCreateView />,
       },
       {

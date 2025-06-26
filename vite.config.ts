@@ -10,6 +10,25 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    proxy: {
+      '/otherIncentives': {
+        target: 'http://localhost:5000/api/v1',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/employee': {
+        target: 'http://localhost:5000/api/v1',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/employees': {
+        target: 'http://localhost:5000/api/v1',
+        changeOrigin: true,
+        secure: false,
+      }
+    }
+  },
   build: {
     chunkSizeWarningLimit: 1500,
     rollupOptions: {

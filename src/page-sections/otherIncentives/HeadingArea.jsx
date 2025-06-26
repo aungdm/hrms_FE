@@ -10,9 +10,8 @@ import IconWrapper from "@/components/icon-wrapper";
 import { Paragraph } from "@/components/typography";
 import { FlexBetween, FlexBox } from "@/components/flexbox"; // CUSTOM ICON COMPONENTS
 
-import GroupSenior from "@/icons/GroupSenior";
-import ShoppingCart from "@/icons/ShoppingCart.jsx";
-import Add from "@/icons/Add"; // STYLED COMPONENT
+import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
+import AddIcon from "@mui/icons-material/Add"; // STYLED COMPONENT
 import duotone from "@/icons/duotone";
 
 export default function HeadingArea() {
@@ -22,20 +21,21 @@ export default function HeadingArea() {
     <FlexBetween flexWrap="wrap" gap={1}>
       <FlexBox alignItems="center">
         <IconWrapper>
-          <TodoList
+          <MonetizationOnIcon
             sx={{
               color: "primary.main",
             }}
           />
         </IconWrapper>
-        <Paragraph fontSize={16}>Other Incentives</Paragraph>
+        <Paragraph fontSize={16} fontWeight={600}>Other Incentives</Paragraph>
       </FlexBox>
-        <Button 
-          variant="contained"
-        startIcon={<Add />}
-          onClick={() => navigate("/other-incentives-create")}
+      
+      <Button 
+        variant="contained"
+        startIcon={<AddIcon />}
+        onClick={() => navigate("/create-other-incentive")}
       >
-        Create
+        Add Incentive
       </Button>
     </FlexBetween>
   );

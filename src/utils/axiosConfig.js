@@ -1,38 +1,28 @@
 import axios from 'axios';
 
-// Set the base URL for all axios requests
-axios.defaults.baseURL = 'http://localhost:5000/api/v1';
+// Set default base URL for all axios requests
+axios.defaults.baseURL = ''; // Empty base URL to use the proxy configured in vite.config.ts
 
-// Optional: Add request interceptor for authentication
+// Add request interceptor for debugging
 axios.interceptors.request.use(
   (config) => {
-    // You can add auth tokens here if needed
-    // const token = localStorage.getItem('token');
-    // if (token) {
-    //   config.headers['Authorization'] = `Bearer ${token}`;
-    // }
+    console.log(`[API Request] ${config.method.toUpperCase()} ${config.url}`, config);
     return config;
   },
   (error) => {
+    console.error('[API Request Error]', error);
     return Promise.reject(error);
   }
 );
 
-// Optional: Add response interceptor for error handling
+// Add response interceptor for debugging
 axios.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log(`[API Response] ${response.config.method.toUpperCase()} ${response.config.url}`, response);
+    return response;
+  },
   (error) => {
-    // Handle common errors here
-    if (error.response) {
-      // Server responded with an error status code
-      console.error('API Error:', error.response.status, error.response.data);
-    } else if (error.request) {
-      // Request was made but no response received
-      console.error('No response received:', error.request);
-    } else {
-      // Something else happened
-      console.error('Error:', error.message);
-    }
+    console.error('[API Response Error]', error.response || error);
     return Promise.reject(error);
   }
 );

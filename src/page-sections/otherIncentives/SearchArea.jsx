@@ -1,52 +1,34 @@
-import { useLocation, useNavigate } from "react-router-dom"; // MUI
-
+import { useNavigate } from "react-router-dom";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
-import IconButton from "@mui/material/IconButton";
-import Search from "@mui/icons-material/Search";
+import InputAdornment from "@mui/material/InputAdornment";
+import SearchIcon from "@mui/icons-material/Search";
 import FlexBetween from "@/components/flexbox/FlexBetween";
-import { Button } from "@mui/material";
-import Apps from "@/icons/Apps";
-import FormatBullets from "@/icons/FormatBullets";
 
 export default function SearchArea(props) {
-  const { value = "", onChange, gridRoute, listRoute } = props;
+  const { value = "", onChange, createRoute = "/create-other-incentive" } = props;
   const navigate = useNavigate();
-  const { pathname } = useLocation();
 
-  const activeColor = (path) =>
-    pathname === path ? "primary.main" : "grey.400";
   return (
     <Box mt={3} mb={3}>
-      <TextField
-        value={value}
-        onChange={onChange}
-        placeholder="Search..."
-        slotProps={{
-          input: {
-            startAdornment: <Search />,
-          },
-        }}
-        sx={{
-          maxWidth: 400,
-          width: "100%",
-        }}
-      />
-      {/* <Button sx={{height:"44px" ,marginLeft:"12px"}}>Search</Button> */}
-
-      {/* <Box flexShrink={0} className="actions">
-            <IconButton onClick={() => navigate(listRoute)}>
-                <FormatBullets sx={{
-                    color: activeColor(listRoute)
-                }} />
-            </IconButton>
-
-            <IconButton onClick={() => navigate(gridRoute)}>
-                <Apps sx={{
-                    color: activeColor(gridRoute)
-                }} />
-            </IconButton>
-        </Box> */}
+      <FlexBetween gap={2} flexWrap="wrap">
+        <TextField
+          value={value}
+          onChange={onChange}
+          placeholder="Search incentives..."
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon sx={{ color: "text.disabled" }} />
+              </InputAdornment>
+            )
+          }}
+          sx={{
+            maxWidth: 400,
+            width: "100%"
+          }}
+        />
+      </FlexBetween>
     </Box>
   );
 }

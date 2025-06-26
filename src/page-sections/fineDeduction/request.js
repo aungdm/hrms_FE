@@ -1,24 +1,31 @@
 import axios from "axios";
 
 export const getRecords = async (
-  search,
   perPage,
   page,
+  startDate,
+  endDate,
+  employeeId,
+  status,
   sortOrder = "Desc",
-  sortField = "created_at"
+  sortField = "deductionDate",
+  search = ""
 ) => {
-  console.log({ search }, "getEmployees search ");
   try {
-    const response = await axios.get("attendanceLogs/get", {
+    const response = await axios.get("/fineDeduction", {
       params: {
-        search,
-        sortOrder,
         page: page + 1,
-        perPage: perPage,
+        perPage,
+        startDate,
+        endDate,
+        employeeId,
+        status,
+        sortOrder,
         sortField,
+        search
       },
     });
-    console.log({ response });
+    
     if (response?.data?.success) {
       return {
         data: response?.data?.data?.data,
@@ -29,87 +36,175 @@ export const getRecords = async (
       return { success: false };
     }
   } catch (error) {
-    console.error("Error fetching services:", error.message);
+    console.error("Error fetching fine deductions:", error.message);
     throw error;
   }
 };
 
 export const create = async (data) => {
-  console.log({ data });
   try {
-    const response = await axios.post("employee/create", data);
-    console.log({ response });
-    // if (response.data.success) {
-    //   return { data: response.data.data, success: true };
-    // } else {
-    //   return { success: false };
-    // }
+    const response = await axios.post("/fineDeduction", data);
+    
+    if (response.data.success) {
+      return { 
+        data: response.data.data, 
+        success: true,
+        message: response.data.message || "Fine deduction created successfully"
+      };
+    } else {
+      return { 
+        success: false,
+        message: response.data.message || "Failed to create fine deduction"
+      };
+    }
   } catch (error) {
-    console.error("Error creating Employee", error.message);
-    throw error;
+    console.error("Error creating fine deduction:", error.message);
+    return {
+      success: false,
+      message: error.response?.data?.message || "Error creating fine deduction"
+    };
   }
 };
 
 export const get = async (id) => {
   try {
-    const response = await axios.get(`/employee/get/${id}`);
-    console.log({ response });
+    const response = await axios.get(`/fineDeduction/${id}`);
+    
     if (response.data.success) {
-      return { data: response?.data?.data?.data, success: true };
+      return { 
+        data: response.data.data, 
+        success: true 
+      };
     } else {
       return { success: false };
     }
   } catch (error) {
-    console.error("Error fetching employee", error.message);
+    console.error("Error fetching fine deduction:", error.message);
     throw error;
   }
 };
 
 export const update = async (id, data) => {
   try {
-    const response = await axios.put(`/employee/update/${id}`, data);
-    console.log({ response });
+    const response = await axios.put(`/fineDeduction/${id}`, data);
+    
     if (response.data.success) {
-      return { data: response?.data?.data?.data, success: true };
+      return { 
+        data: response.data.data, 
+        success: true,
+        message: response.data.message || "Fine deduction updated successfully"
+      };
     } else {
-      return { success: false };
+      return { 
+        success: false,
+        message: response.data.message || "Failed to update fine deduction"
+      };
     }
   } catch (error) {
-    console.error("Error updating services:", error.message);
-    throw error;
+    console.error("Error updating fine deduction:", error.message);
+    return {
+      success: false,
+      message: error.response?.data?.message || "Error updating fine deduction"
+    };
+  }
+};
+
+export const updateStatus = async (id, status) => {
+  try {
+    const response = await axios.patch(`/fineDeduction/${id}/status`, { status });
+    
+    if (response.data.success) {
+      return { 
+        data: response.data.data, 
+        success: true,
+        message: response.data.message || `Fine deduction ${status.toLowerCase()} successfully`
+      };
+    } else {
+      return { 
+        success: false,
+        message: response.data.message || "Failed to update fine deduction status"
+      };
+    }
+  } catch (error) {
+    console.error("Error updating fine deduction status:", error.message);
+    return {
+      success: false,
+      message: error.response?.data?.message || "Error updating fine deduction status"
+    };
   }
 };
 
 export const deleteRecord = async (id) => {
   try {
-    const response = await axios.delete(`/employee/delete/${id}`);
-    console.log({ response });
-    if (response?.data?.success) {
-      return { data: response?.data?.data, success: true };
+    const response = await axios.delete(`/fineDeduction/${id}`);
+    
+    if (response.data.success) {
+      return { 
+        data: response.data.data, 
+        success: true,
+        message: response.data.message || "Fine deduction deleted successfully"
+      };
     } else {
-      return { success: false };
+      return { 
+        success: false,
+        message: response.data.message || "Failed to delete fine deduction"
+      };
     }
   } catch (error) {
-    console.error("Error fetching services:", error.message);
-    throw error;
+    console.error("Error deleting fine deduction:", error.message);
+    return {
+      success: false,
+      message: error.response?.data?.message || "Error deleting fine deduction"
+    };
   }
 };
 
-export const deleteMultipleService = async (ids) => {
-  console.log({ ids });
-  const data = {
-    service_ids: ids,
-  };
+export const deleteMultipleDeductions = async (ids) => {
   try {
-    const response = await axios.post(`/delete-multiple-services`, data);
-    console.log({ response });
+    const response = await axios.post(`/fineDeduction/delete-multiple`, { ids });
+    
     if (response.data.success) {
-      return { data: response.data.data, success: true };
+      return { 
+        data: response.data.data, 
+        success: true,
+        message: response.data.message || "Fine deductions deleted successfully"
+      };
+    } else {
+      return { 
+        success: false,
+        message: response.data.message || "Failed to delete fine deductions"
+      };
+    }
+  } catch (error) {
+    console.error("Error deleting multiple fine deductions:", error.message);
+    return {
+      success: false,
+      message: error.response?.data?.message || "Error deleting multiple fine deductions"
+    };
+  }
+};
+
+// Get all employees for dropdown
+export const getAllEmployees = async () => {
+  try {
+    const response = await axios.get("/employee/get", {
+      params: {
+        perPage: 1000, // Get all employees for dropdown
+      },
+    });
+    
+    if (response?.data?.success) {
+      return {
+        data: response?.data?.data?.data || [],
+        success: true,
+      };
     } else {
       return { success: false };
     }
   } catch (error) {
-    console.error("Error fetching services:", error.message);
-    throw error;
+    console.error("Error fetching employees:", error);
+    return { success: false };
   }
 };
+
+export const deleteMultipleService = deleteMultipleDeductions;
