@@ -584,3 +584,35 @@ const createPayslipPDF = (data) => {
   
   return pdf;
 };
+
+export const getUnprocessedIncentives = async (employeeId, startDate, endDate) => {
+  try {
+    const response = await axios.get("/payroll/unprocessed-incentives", {
+      params: {
+        employeeId,
+        startDate,
+        endDate
+      }
+    });
+    
+    if (response?.data?.success) {
+      return {
+        data: response?.data?.data,
+        success: true,
+        message: response?.data?.message
+      };
+    } else {
+      return { 
+        success: false, 
+        message: response?.data?.message || "Failed to fetch unprocessed incentives" 
+      };
+    }
+  } catch (error) {
+    console.error("Error fetching unprocessed incentives:", error);
+    return { 
+      success: false, 
+      error: error.message,
+      message: "Error fetching unprocessed incentives"
+    };
+  }
+};
