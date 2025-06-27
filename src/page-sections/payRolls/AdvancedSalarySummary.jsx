@@ -4,10 +4,9 @@ import { format } from "date-fns";
 import React, { useEffect, useState } from "react";
 import { numberWithCommas } from "utils/numberWithCommas";
 import { FlexBetween } from "components/flexbox";
-import axios from "axios";
 import toast from "react-hot-toast";
 import LoadingScreen from "components/LoadingScreen";
-import { getUnprocessedFineDeductions } from "./request";
+import { getUnprocessedAdvancedSalaries } from "./request";
 
 // styled components
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -26,43 +25,43 @@ const StyledStatus = styled(Span)(({ theme, status }) => ({
   padding: "3px 8px"
 }));
 
-const FineDeductionSummary = ({ employeeId, startDate, endDate, onApplyFineDeductions }) => {
+const AdvancedSalarySummary = ({ employeeId, startDate, endDate, onApplyAdvancedSalaries }) => {
   const [loading, setLoading] = useState(true);
-  const [fineDeductions, setFineDeductions] = useState([]);
-  const [approvedFineDeductions, setApprovedFineDeductions] = useState([]);
+  const [advancedSalaries, setAdvancedSalaries] = useState([]);
+  const [approvedAdvancedSalaries, setApprovedAdvancedSalaries] = useState([]);
   const [totalAmount, setTotalAmount] = useState(0);
 
   useEffect(() => {
     if (employeeId && startDate && endDate) {
-      fetchFineDeductions();
+      fetchAdvancedSalaries();
     } else {
       setLoading(false);
     }
   }, [employeeId, startDate, endDate]);
 
-  const fetchFineDeductions = async () => {
+  const fetchAdvancedSalaries = async () => {
     try {
       setLoading(true);
-      const response = await getUnprocessedFineDeductions(employeeId, startDate, endDate);
+      const response = await getUnprocessedAdvancedSalaries(employeeId, startDate, endDate);
 
       if (response.success) {
-        setFineDeductions(response.data.fineDeductions || []);
-        setApprovedFineDeductions(response.data.approvedFineDeductions || []);
+        setAdvancedSalaries(response.data.advancedSalaries || []);
+        setApprovedAdvancedSalaries(response.data.approvedAdvancedSalaries || []);
         setTotalAmount(response.data.totalAmount || 0);
       } else {
-        toast.error(response.error || "Failed to fetch fine deductions");
+        toast.error(response.error || "Failed to fetch advanced salaries");
       }
     } catch (error) {
-      console.error("Error fetching fine deductions:", error);
-      toast.error("Error fetching fine deductions");
+      console.error("Error fetching advanced salaries:", error);
+      toast.error("Error fetching advanced salaries");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleApplyFineDeductions = () => {
-    if (typeof onApplyFineDeductions === "function") {
-      onApplyFineDeductions(approvedFineDeductions, totalAmount);
+  const handleApplyAdvancedSalaries = () => {
+    if (typeof onApplyAdvancedSalaries === "function") {
+      onApplyAdvancedSalaries(approvedAdvancedSalaries, totalAmount);
     }
   };
 
@@ -71,24 +70,24 @@ const FineDeductionSummary = ({ employeeId, startDate, endDate, onApplyFineDeduc
   return (
     <Card sx={{ padding: 3, mb: 3 }}>
       <FlexBetween mb={3}>
-        <H5>Fine Deductions</H5>
-        {approvedFineDeductions.length > 0 && (
-          <Button variant="contained" color="primary" onClick={handleApplyFineDeductions}>
-            Apply Fine Deductions
+        <H5>Advanced Salary</H5>
+        {approvedAdvancedSalaries.length > 0 && (
+          <Button variant="contained" color="primary" onClick={handleApplyAdvancedSalaries}>
+            Apply Advanced Salary
           </Button>
         )}
       </FlexBetween>
 
-      {fineDeductions.length === 0 ? (
-        <Paragraph>No unprocessed fine deductions found for this period.</Paragraph>
+      {advancedSalaries.length === 0 ? (
+        <Paragraph>No unprocessed advanced salaries found for this period.</Paragraph>
       ) : (
         <>
           <TableContainer>
             <Table>
               <TableHead>
                 <TableRow>
-                  <StyledTableCell>Type</StyledTableCell>
                   <StyledTableCell>Date</StyledTableCell>
+                  <StyledTableCell>Request Date</StyledTableCell>
                   <StyledTableCell>Description</StyledTableCell>
                   <StyledTableCell>Status</StyledTableCell>
                   <StyledTableCell align="right">Amount</StyledTableCell>
@@ -96,17 +95,17 @@ const FineDeductionSummary = ({ employeeId, startDate, endDate, onApplyFineDeduc
               </TableHead>
 
               <TableBody>
-                {fineDeductions.map((item) => (
+                {advancedSalaries.map((item) => (
                   <TableRow key={item._id}>
                     <TableCell sx={{ padding: 0 }}>
                       <Paragraph color="text.primary" fontWeight={500}>
-                        {item.deductionType}
+                        {item.approvalDate ? format(new Date(item.approvalDate), "dd MMM yyyy") : "N/A"}
                       </Paragraph>
                     </TableCell>
 
                     <TableCell>
                       <Paragraph>
-                        {item.deductionDate ? format(new Date(item.deductionDate), "dd MMM yyyy") : "N/A"}
+                        {item.requestDate ? format(new Date(item.requestDate), "dd MMM yyyy") : "N/A"}
                       </Paragraph>
                     </TableCell>
 
@@ -120,7 +119,7 @@ const FineDeductionSummary = ({ employeeId, startDate, endDate, onApplyFineDeduc
 
                     <TableCell align="right">
                       <Paragraph fontWeight={500} color="text.primary">
-                        ₹{numberWithCommas(item.amount)}
+                        ₹{numberWithCommas(item.approvedAmount)}
                       </Paragraph>
                     </TableCell>
                   </TableRow>
@@ -134,13 +133,13 @@ const FineDeductionSummary = ({ employeeId, startDate, endDate, onApplyFineDeduc
               <Grid item xs={12} md={6}>
                 <H6 mb={1}>Summary</H6>
                 <Paragraph>
-                  Total Fine Deductions: <Span fontWeight={600}>₹{numberWithCommas(totalAmount)}</Span>
+                  Total Advanced Salary: <Span fontWeight={600}>₹{numberWithCommas(totalAmount)}</Span>
                 </Paragraph>
                 <Paragraph>
-                  Approved Items: <Span fontWeight={600}>{approvedFineDeductions.length}</Span>
+                  Approved Items: <Span fontWeight={600}>{approvedAdvancedSalaries.length}</Span>
                 </Paragraph>
                 <Paragraph>
-                  Pending Items: <Span fontWeight={600}>{fineDeductions.length - approvedFineDeductions.length}</Span>
+                  Pending Items: <Span fontWeight={600}>{advancedSalaries.length - approvedAdvancedSalaries.length}</Span>
                 </Paragraph>
               </Grid>
             </Grid>
@@ -151,4 +150,4 @@ const FineDeductionSummary = ({ employeeId, startDate, endDate, onApplyFineDeduc
   );
 };
 
-export default FineDeductionSummary; 
+export default AdvancedSalarySummary; 

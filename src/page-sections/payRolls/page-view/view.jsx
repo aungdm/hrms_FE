@@ -39,6 +39,7 @@ import * as XLSX from 'xlsx';
 import IncentivesDetail from "../IncentivesDetail";
 import ArrearsDetail from "../ArrearsDetail";
 import FineDeductionDetail from "../FineDeductionDetail";
+import AdvancedSalaryDetail from "../AdvancedSalaryDetail";
 
 // Format currency values
 const formatCurrency = (amount) => {
@@ -149,6 +150,7 @@ export default function PayrollView() {
           ['Other Incentives', formatCurrency(payrollData.otherIncentives || 0)],
           ['Arrears', formatCurrency(payrollData.arrears || 0)],
           ['Fine Deductions', formatCurrency(payrollData.fineDeductions || 0)],
+          ['Advanced Salary', formatCurrency(payrollData.advancedSalary || 0)],
           ['Net Salary', formatCurrency(payrollData.netSalary || 0)],
           [''],
           ['Note: First three late days are not charged with fines.'],
@@ -165,6 +167,7 @@ export default function PayrollView() {
           ['Other Incentives', formatCurrency(payrollData.otherIncentives || 0)],
           ['Arrears', formatCurrency(payrollData.arrears || 0)],
           ['Fine Deductions', formatCurrency(payrollData.fineDeductions || 0)],
+          ['Advanced Salary', formatCurrency(payrollData.advancedSalary || 0)],
           ['Net Salary', formatCurrency(payrollData.netSalary || 0)]
         ];
       }
@@ -266,6 +269,36 @@ export default function PayrollView() {
         
         // Add worksheet to workbook
         XLSX.utils.book_append_sheet(wb, wsFineDeductions, 'Fine Deductions');
+      }
+      
+      // Add advanced salary sheet if available
+      if (payrollData.advancedSalaryDetails && payrollData.advancedSalaryDetails.length > 0) {
+        // Create headers for advanced salary
+        const advancedSalaryHeaders = [
+          ['Date', 'Request Date', 'Description', 'Amount']
+        ];
+        
+        // Map advanced salary to array format
+        const advancedSalaryData = payrollData.advancedSalaryDetails.map(advSalary => {
+          return [
+            advSalary.date ? format(new Date(advSalary.date), 'dd/MM/yyyy') : '-',
+            advSalary.requestDate ? format(new Date(advSalary.requestDate), 'dd/MM/yyyy') : '-',
+            advSalary.description || '-',
+            advSalary.amount || 0
+          ];
+        });
+        
+        // Add total row
+        advancedSalaryData.push(['', '', 'Total', payrollData.advancedSalary || 0]);
+        
+        // Combine headers and data
+        const advancedSalarySheet = [...advancedSalaryHeaders, ...advancedSalaryData];
+        
+        // Create worksheet for advanced salary
+        const wsAdvancedSalary = XLSX.utils.aoa_to_sheet(advancedSalarySheet);
+        
+        // Add worksheet to workbook
+        XLSX.utils.book_append_sheet(wb, wsAdvancedSalary, 'Advanced Salary');
       }
       
       // For hourly employees, add a second sheet with daily calculations
@@ -560,6 +593,12 @@ export default function PayrollView() {
                               <TableCell sx={{ color: 'error.main' }}>{formatCurrency(payrollData.fineDeductions || 0)}</TableCell>
                             </TableRow>
                           )}
+                          {payrollData.advancedSalary > 0 && (
+                            <TableRow>
+                              <TableCell component="th">Advanced Salary</TableCell>
+                              <TableCell sx={{ color: 'error.main' }}>{formatCurrency(payrollData.advancedSalary || 0)}</TableCell>
+                            </TableRow>
+                          )}
                         </>
                       ) : (
                         // Monthly employee specific fields
@@ -588,6 +627,12 @@ export default function PayrollView() {
                             <TableRow>
                               <TableCell component="th">Fine Deductions</TableCell>
                               <TableCell sx={{ color: 'error.main' }}>{formatCurrency(payrollData.fineDeductions || 0)}</TableCell>
+                            </TableRow>
+                          )}
+                          {payrollData.advancedSalary > 0 && (
+                            <TableRow>
+                              <TableCell component="th">Advanced Salary</TableCell>
+                              <TableCell sx={{ color: 'error.main' }}>{formatCurrency(payrollData.advancedSalary || 0)}</TableCell>
                             </TableRow>
                           )}
                         </>
@@ -628,6 +673,16 @@ export default function PayrollView() {
                   <FineDeductionDetail 
                     fineDeductionDetails={payrollData.fineDeductionDetails} 
                     totalAmount={payrollData.fineDeductions || 0} 
+                  />
+                </Grid>
+              )}
+
+              {/* Add Advanced Salary Detail Section if advanced salary exists */}
+              {payrollData.advancedSalaryDetails && payrollData.advancedSalaryDetails.length > 0 && (
+                <Grid item xs={12} mt={2}>
+                  <AdvancedSalaryDetail 
+                    advancedSalaryDetails={payrollData.advancedSalaryDetails} 
+                    totalAmount={payrollData.advancedSalary || 0} 
                   />
                 </Grid>
               )}

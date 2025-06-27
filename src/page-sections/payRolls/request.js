@@ -505,6 +505,12 @@ const createPayslipPDF = (data) => {
     yPosition += 8;
   }
   
+  // Add advanced salary section
+  if (salaryDetails.advancedSalary !== undefined) {
+    pdf.text(`Advanced Salary: Rs. ${(salaryDetails.advancedSalary || 0).toLocaleString()}`, 20, yPosition);
+    yPosition += 8;
+  }
+  
   // Net salary with emphasis
   pdf.setFontSize(12);
   pdf.setTextColor(40, 40, 40);
@@ -651,6 +657,55 @@ const createPayslipPDF = (data) => {
       pdf.setFontSize(8);
       pdf.setTextColor(100, 100, 100);
       pdf.text(`... and ${fineDeductionDetails.length - maxFineDeductions} more fine deductions`, 20, yPosition + 5);
+      yPosition += 10;
+    }
+  }
+  
+  // Advanced Salary Details (if available)
+  const advancedSalaryDetails = salaryDetails.advancedSalaryDetails || [];
+  if (advancedSalaryDetails.length > 0 && yPosition < 200) {
+    pdf.setFontSize(14);
+    pdf.setTextColor(60, 60, 60);
+    pdf.text('Advanced Salary Breakdown', 20, yPosition);
+    yPosition += 10;
+    
+    pdf.setFontSize(8);
+    pdf.setTextColor(80, 80, 80);
+    
+    // Header for advanced salary
+    pdf.text('Date', 20, yPosition);
+    pdf.text('Request Date', 70, yPosition);
+    pdf.text('Description', 110, yPosition);
+    pdf.text('Amount', 170, yPosition);
+    yPosition += 8;
+    
+    // Draw a line
+    pdf.line(20, yPosition - 2, 200, yPosition - 2);
+    
+    // Show advanced salary (limit to fit on page)
+    const maxAdvancedSalary = Math.min(advancedSalaryDetails.length, Math.floor((240 - yPosition) / 8));
+    
+    for (let i = 0; i < maxAdvancedSalary; i++) {
+      const advancedSalary = advancedSalaryDetails[i];
+      const date = advancedSalary.date ? new Date(advancedSalary.date).toLocaleDateString('en-GB') : 'N/A';
+      const requestDate = advancedSalary.requestDate ? new Date(advancedSalary.requestDate).toLocaleDateString('en-GB') : 'N/A';
+      
+      pdf.text(date, 20, yPosition);
+      pdf.text(requestDate, 70, yPosition);
+      
+      // Truncate description if too long
+      const desc = advancedSalary.description || 'N/A';
+      const truncatedDesc = desc.length > 30 ? desc.substring(0, 27) + '...' : desc;
+      pdf.text(truncatedDesc, 110, yPosition);
+      
+      pdf.text(`Rs. ${(advancedSalary.amount || 0).toLocaleString()}`, 170, yPosition);
+      yPosition += 8;
+    }
+    
+    if (advancedSalaryDetails.length > maxAdvancedSalary) {
+      pdf.setFontSize(8);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text(`... and ${advancedSalaryDetails.length - maxAdvancedSalary} more advanced salary entries`, 20, yPosition + 5);
       yPosition += 10;
     }
   }
@@ -822,22 +877,57 @@ export const getUnprocessedFineDeductions = async (employeeId, startDate, endDat
       }
     });
     
-    if (response.data.success) {
+    if (response?.data?.success) {
       return {
+        data: response?.data?.data,
         success: true,
-        data: response.data.data
+        message: response?.data?.message
       };
     } else {
-      return {
-        success: false,
-        error: response.data.message || "Failed to fetch unprocessed fine deductions"
+      return { 
+        success: false, 
+        message: response?.data?.message || "Failed to fetch unprocessed fine deductions" 
       };
     }
   } catch (error) {
     console.error("Error fetching unprocessed fine deductions:", error);
-    return {
-      success: false,
-      error: error.response?.data?.message || error.message || "Error fetching unprocessed fine deductions"
+    return { 
+      success: false, 
+      error: error.message,
+      message: "Error fetching unprocessed fine deductions"
+    };
+  }
+};
+
+// Get unprocessed advanced salaries for an employee
+export const getUnprocessedAdvancedSalaries = async (employeeId, startDate, endDate) => {
+  try {
+    const response = await axios.get("/payroll/unprocessed-advanced-salaries", {
+      params: {
+        employeeId,
+        startDate,
+        endDate
+      }
+    });
+    
+    if (response?.data?.success) {
+      return {
+        data: response?.data?.data,
+        success: true,
+        message: response?.data?.message
+      };
+    } else {
+      return { 
+        success: false, 
+        message: response?.data?.message || "Failed to fetch unprocessed advanced salaries" 
+      };
+    }
+  } catch (error) {
+    console.error("Error fetching unprocessed advanced salaries:", error);
+    return { 
+      success: false, 
+      error: error.message,
+      message: "Error fetching unprocessed advanced salaries"
     };
   }
 };
