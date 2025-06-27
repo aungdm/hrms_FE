@@ -467,8 +467,17 @@ const createPayslipPDF = (data) => {
     yPosition += 8;
   }
   
+  // Add late fines section if applicable (hourly employees)
   if (salaryDetails.lateFines !== undefined) {
     pdf.text(`Late Fines: Rs. ${(salaryDetails.lateFines || 0).toLocaleString()}`, 20, yPosition);
+    yPosition += 8;
+    
+    // Add note about first three late arrivals
+    pdf.setFontSize(7);
+    pdf.setTextColor(100, 100, 100);
+    pdf.text('Note: First three late arrivals are not charged with fines.', 30, yPosition);
+    pdf.setFontSize(10);
+    pdf.setTextColor(60, 60, 60);
     yPosition += 8;
   }
   
@@ -657,6 +666,54 @@ const createPayslipPDF = (data) => {
       pdf.setFontSize(8);
       pdf.setTextColor(100, 100, 100);
       pdf.text(`... and ${fineDeductionDetails.length - maxFineDeductions} more fine deductions`, 20, yPosition + 5);
+      yPosition += 10;
+    }
+  }
+  
+  // Other Deduction Details (if available)
+  const otherDeductionDetails = salaryDetails.otherDeductionDetails || [];
+  if (otherDeductionDetails.length > 0 && yPosition < 200) {
+    pdf.setFontSize(14);
+    pdf.setTextColor(60, 60, 60);
+    pdf.text('Other Deductions Breakdown', 20, yPosition);
+    yPosition += 10;
+    
+    pdf.setFontSize(8);
+    pdf.setTextColor(80, 80, 80);
+    
+    // Header for other deductions
+    pdf.text('Type', 20, yPosition);
+    pdf.text('Date', 70, yPosition);
+    pdf.text('Description', 110, yPosition);
+    pdf.text('Amount', 170, yPosition);
+    yPosition += 8;
+    
+    // Draw a line
+    pdf.line(20, yPosition - 2, 200, yPosition - 2);
+    
+    // Show other deductions (limit to fit on page)
+    const maxOtherDeductions = Math.min(otherDeductionDetails.length, Math.floor((240 - yPosition) / 8));
+    
+    for (let i = 0; i < maxOtherDeductions; i++) {
+      const otherDeduction = otherDeductionDetails[i];
+      const date = otherDeduction.date ? new Date(otherDeduction.date).toLocaleDateString('en-GB') : 'N/A';
+      
+      pdf.text(otherDeduction.type || 'N/A', 20, yPosition);
+      pdf.text(date, 70, yPosition);
+      
+      // Truncate description if too long
+      const desc = otherDeduction.description || 'N/A';
+      const truncatedDesc = desc.length > 30 ? desc.substring(0, 27) + '...' : desc;
+      pdf.text(truncatedDesc, 110, yPosition);
+      
+      pdf.text(`Rs. ${(otherDeduction.amount || 0).toLocaleString()}`, 170, yPosition);
+      yPosition += 8;
+    }
+    
+    if (otherDeductionDetails.length > maxOtherDeductions) {
+      pdf.setFontSize(8);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text(`... and ${otherDeductionDetails.length - maxOtherDeductions} more other deductions`, 20, yPosition + 5);
       yPosition += 10;
     }
   }
@@ -928,6 +985,39 @@ export const getUnprocessedAdvancedSalaries = async (employeeId, startDate, endD
       success: false, 
       error: error.message,
       message: "Error fetching unprocessed advanced salaries"
+    };
+  }
+};
+
+// Get unprocessed other deductions for an employee
+export const getUnprocessedOtherDeductions = async (employeeId, startDate, endDate) => {
+  try {
+    const response = await axios.get("/payroll/unprocessed-other-deductions", {
+      params: {
+        employeeId,
+        startDate,
+        endDate
+      }
+    });
+    
+    if (response?.data?.success) {
+      return {
+        data: response?.data?.data,
+        success: true,
+        message: response?.data?.message
+      };
+    } else {
+      return { 
+        success: false, 
+        message: response?.data?.message || "Failed to fetch unprocessed other deductions" 
+      };
+    }
+  } catch (error) {
+    console.error("Error fetching unprocessed other deductions:", error);
+    return { 
+      success: false, 
+      error: error.message,
+      message: "Error fetching unprocessed other deductions"
     };
   }
 };

@@ -40,6 +40,7 @@ import IncentivesDetail from "../IncentivesDetail";
 import ArrearsDetail from "../ArrearsDetail";
 import FineDeductionDetail from "../FineDeductionDetail";
 import AdvancedSalaryDetail from "../AdvancedSalaryDetail";
+import OtherDeductionDetail from "../OtherDeductionDetail";
 
 // Format currency values
 const formatCurrency = (amount) => {
@@ -269,6 +270,36 @@ export default function PayrollView() {
         
         // Add worksheet to workbook
         XLSX.utils.book_append_sheet(wb, wsFineDeductions, 'Fine Deductions');
+      }
+      
+      // Add other deduction sheet if available
+      if (payrollData.otherDeductionDetails && payrollData.otherDeductionDetails.length > 0) {
+        // Create headers for other deductions
+        const otherDeductionHeaders = [
+          ['Type', 'Date', 'Description', 'Amount']
+        ];
+        
+        // Map other deductions to array format
+        const otherDeductionData = payrollData.otherDeductionDetails.map(deduction => {
+          return [
+            deduction.type || '-',
+            deduction.date ? format(new Date(deduction.date), 'dd/MM/yyyy') : '-',
+            deduction.description || '-',
+            deduction.amount || 0
+          ];
+        });
+        
+        // Add total row
+        otherDeductionData.push(['', '', 'Total', payrollData.otherDeductions || 0]);
+        
+        // Combine headers and data
+        const otherDeductionSheet = [...otherDeductionHeaders, ...otherDeductionData];
+        
+        // Create worksheet for other deductions
+        const wsOtherDeductions = XLSX.utils.aoa_to_sheet(otherDeductionSheet);
+        
+        // Add worksheet to workbook
+        XLSX.utils.book_append_sheet(wb, wsOtherDeductions, 'Other Deductions');
       }
       
       // Add advanced salary sheet if available
@@ -569,7 +600,7 @@ export default function PayrollView() {
                           </TableRow>
                           <TableRow>
                             <TableCell component="th">Other Deductions</TableCell>
-                            <TableCell>{formatCurrency(payrollData.otherDeductions || 0)}</TableCell>
+                            <TableCell sx={{ color: 'error.main' }}>{formatCurrency((payrollData.otherDeductions || 0) + (payrollData.fineDeductions || 0))}</TableCell>
                           </TableRow>
                           <TableRow>
                             <TableCell component="th">Overtime Pay</TableCell>
@@ -609,7 +640,7 @@ export default function PayrollView() {
                           </TableRow>
                           <TableRow>
                             <TableCell component="th">Other Deductions</TableCell>
-                            <TableCell>{formatCurrency(payrollData.otherDeductions || 0)}</TableCell>
+                            <TableCell sx={{ color: 'error.main' }}>{formatCurrency((payrollData.otherDeductions || 0) + (payrollData.fineDeductions || 0))}</TableCell>
                           </TableRow>
                           {payrollData.otherIncentives > 0 && (
                             <TableRow>
@@ -645,6 +676,14 @@ export default function PayrollView() {
                     </TableBody>
                   </Table>
                 </TableContainer>
+                
+                {isHourly && (
+                  <Box sx={{ mt: 1, pl: 1 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Note: First three late arrivals are not charged with fines.
+                    </Typography>
+                  </Box>
+                )}
               </Grid>
 
               {/* Add Incentives Detail Section if incentives exist */}
@@ -683,6 +722,16 @@ export default function PayrollView() {
                   <AdvancedSalaryDetail 
                     advancedSalaryDetails={payrollData.advancedSalaryDetails} 
                     totalAmount={payrollData.advancedSalary || 0} 
+                  />
+                </Grid>
+              )}
+
+              {/* Add Other Deduction Detail Section if other deductions exist */}
+              {payrollData.otherDeductionDetails && payrollData.otherDeductionDetails.length > 0 && (
+                <Grid item xs={12} mt={2}>
+                  <OtherDeductionDetail 
+                    otherDeductionDetails={payrollData.otherDeductionDetails} 
+                    totalAmount={(payrollData.otherDeductions || 0) + (payrollData.fineDeductions || 0)} 
                   />
                 </Grid>
               )}
