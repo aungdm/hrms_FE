@@ -756,3 +756,34 @@ export const getUnprocessedArrears = async (employeeId, startDate, endDate) => {
     };
   }
 };
+
+// Get unprocessed fine deductions for an employee
+export const getUnprocessedFineDeductions = async (employeeId, startDate, endDate) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/api/payroll/unprocessed-fine-deductions`, {
+      params: {
+        employeeId,
+        startDate,
+        endDate
+      }
+    });
+    
+    if (response.data.success) {
+      return {
+        success: true,
+        data: response.data.data
+      };
+    } else {
+      return {
+        success: false,
+        error: response.data.message || "Failed to fetch unprocessed fine deductions"
+      };
+    }
+  } catch (error) {
+    console.error("Error fetching unprocessed fine deductions:", error);
+    return {
+      success: false,
+      error: error.response?.data?.message || error.message || "Error fetching unprocessed fine deductions"
+    };
+  }
+};

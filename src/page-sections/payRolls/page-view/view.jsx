@@ -38,6 +38,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import * as XLSX from 'xlsx';
 import IncentivesDetail from "../IncentivesDetail";
 import ArrearsDetail from "../ArrearsDetail";
+import FineDeductionDetail from "../FineDeductionDetail";
 
 // Format currency values
 const formatCurrency = (amount) => {
@@ -147,6 +148,7 @@ export default function PayrollView() {
           ['Overtime Pay', formatCurrency(payrollData.overtimePay || 0)],
           ['Other Incentives', formatCurrency(payrollData.otherIncentives || 0)],
           ['Arrears', formatCurrency(payrollData.arrears || 0)],
+          ['Fine Deductions', formatCurrency(payrollData.fineDeductions || 0)],
           ['Net Salary', formatCurrency(payrollData.netSalary || 0)],
           [''],
           ['Note: First three late days are not charged with fines.'],
@@ -162,6 +164,7 @@ export default function PayrollView() {
           ['Other Deductions', formatCurrency(payrollData.otherDeductions || 0)],
           ['Other Incentives', formatCurrency(payrollData.otherIncentives || 0)],
           ['Arrears', formatCurrency(payrollData.arrears || 0)],
+          ['Fine Deductions', formatCurrency(payrollData.fineDeductions || 0)],
           ['Net Salary', formatCurrency(payrollData.netSalary || 0)]
         ];
       }
@@ -233,6 +236,36 @@ export default function PayrollView() {
         
         // Add worksheet to workbook
         XLSX.utils.book_append_sheet(wb, wsArrears, 'Arrears');
+      }
+      
+      // Add fine deductions sheet if available
+      if (payrollData.fineDeductionDetails && payrollData.fineDeductionDetails.length > 0) {
+        // Create headers for fine deductions
+        const fineDeductionHeaders = [
+          ['Type', 'Date', 'Description', 'Amount']
+        ];
+        
+        // Map fine deductions to array format
+        const fineDeductionData = payrollData.fineDeductionDetails.map(fine => {
+          return [
+            fine.type || '-',
+            fine.date ? format(new Date(fine.date), 'dd/MM/yyyy') : '-',
+            fine.description || '-',
+            fine.amount || 0
+          ];
+        });
+        
+        // Add total row
+        fineDeductionData.push(['', '', 'Total', payrollData.fineDeductions || 0]);
+        
+        // Combine headers and data
+        const fineDeductionSheet = [...fineDeductionHeaders, ...fineDeductionData];
+        
+        // Create worksheet for fine deductions
+        const wsFineDeductions = XLSX.utils.aoa_to_sheet(fineDeductionSheet);
+        
+        // Add worksheet to workbook
+        XLSX.utils.book_append_sheet(wb, wsFineDeductions, 'Fine Deductions');
       }
       
       // For hourly employees, add a second sheet with daily calculations
@@ -521,6 +554,12 @@ export default function PayrollView() {
                               <TableCell sx={{ color: 'success.main' }}>{formatCurrency(payrollData.arrears || 0)}</TableCell>
                             </TableRow>
                           )}
+                          {payrollData.fineDeductions > 0 && (
+                            <TableRow>
+                              <TableCell component="th">Fine Deductions</TableCell>
+                              <TableCell sx={{ color: 'error.main' }}>{formatCurrency(payrollData.fineDeductions || 0)}</TableCell>
+                            </TableRow>
+                          )}
                         </>
                       ) : (
                         // Monthly employee specific fields
@@ -543,6 +582,12 @@ export default function PayrollView() {
                             <TableRow>
                               <TableCell component="th">Arrears</TableCell>
                               <TableCell sx={{ color: 'success.main' }}>{formatCurrency(payrollData.arrears || 0)}</TableCell>
+                            </TableRow>
+                          )}
+                          {payrollData.fineDeductions > 0 && (
+                            <TableRow>
+                              <TableCell component="th">Fine Deductions</TableCell>
+                              <TableCell sx={{ color: 'error.main' }}>{formatCurrency(payrollData.fineDeductions || 0)}</TableCell>
                             </TableRow>
                           )}
                         </>
@@ -573,6 +618,16 @@ export default function PayrollView() {
                   <ArrearsDetail 
                     arrears={payrollData.arrearsDetails} 
                     totalAmount={payrollData.arrears || 0} 
+                  />
+                </Grid>
+              )}
+
+              {/* Add Fine Deduction Detail Section if fine deductions exist */}
+              {payrollData.fineDeductionDetails && payrollData.fineDeductionDetails.length > 0 && (
+                <Grid item xs={12} mt={2}>
+                  <FineDeductionDetail 
+                    fineDeductions={payrollData.fineDeductionDetails} 
+                    totalAmount={payrollData.fineDeductions || 0} 
                   />
                 </Grid>
               )}
