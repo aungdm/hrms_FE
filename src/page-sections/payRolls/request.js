@@ -499,6 +499,12 @@ const createPayslipPDF = (data) => {
     yPosition += 8;
   }
   
+  // Add fine deductions section
+  if (salaryDetails.fineDeductions !== undefined) {
+    pdf.text(`Fine Deductions: Rs. ${(salaryDetails.fineDeductions || 0).toLocaleString()}`, 20, yPosition);
+    yPosition += 8;
+  }
+  
   // Net salary with emphasis
   pdf.setFontSize(12);
   pdf.setTextColor(40, 40, 40);
@@ -597,6 +603,54 @@ const createPayslipPDF = (data) => {
       pdf.setFontSize(8);
       pdf.setTextColor(100, 100, 100);
       pdf.text(`... and ${arrearsDetails.length - maxArrears} more arrears`, 20, yPosition + 5);
+      yPosition += 10;
+    }
+  }
+  
+  // Fine Deduction Details (if available)
+  const fineDeductionDetails = salaryDetails.fineDeductionDetails || [];
+  if (fineDeductionDetails.length > 0 && yPosition < 200) {
+    pdf.setFontSize(14);
+    pdf.setTextColor(60, 60, 60);
+    pdf.text('Fine Deductions Breakdown', 20, yPosition);
+    yPosition += 10;
+    
+    pdf.setFontSize(8);
+    pdf.setTextColor(80, 80, 80);
+    
+    // Header for fine deductions
+    pdf.text('Type', 20, yPosition);
+    pdf.text('Date', 70, yPosition);
+    pdf.text('Description', 110, yPosition);
+    pdf.text('Amount', 170, yPosition);
+    yPosition += 8;
+    
+    // Draw a line
+    pdf.line(20, yPosition - 2, 200, yPosition - 2);
+    
+    // Show fine deductions (limit to fit on page)
+    const maxFineDeductions = Math.min(fineDeductionDetails.length, Math.floor((240 - yPosition) / 8));
+    
+    for (let i = 0; i < maxFineDeductions; i++) {
+      const fineDeduction = fineDeductionDetails[i];
+      const date = fineDeduction.date ? new Date(fineDeduction.date).toLocaleDateString('en-GB') : 'N/A';
+      
+      pdf.text(fineDeduction.type || 'N/A', 20, yPosition);
+      pdf.text(date, 70, yPosition);
+      
+      // Truncate description if too long
+      const desc = fineDeduction.description || 'N/A';
+      const truncatedDesc = desc.length > 30 ? desc.substring(0, 27) + '...' : desc;
+      pdf.text(truncatedDesc, 110, yPosition);
+      
+      pdf.text(`Rs. ${(fineDeduction.amount || 0).toLocaleString()}`, 170, yPosition);
+      yPosition += 8;
+    }
+    
+    if (fineDeductionDetails.length > maxFineDeductions) {
+      pdf.setFontSize(8);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text(`... and ${fineDeductionDetails.length - maxFineDeductions} more fine deductions`, 20, yPosition + 5);
       yPosition += 10;
     }
   }
@@ -760,7 +814,7 @@ export const getUnprocessedArrears = async (employeeId, startDate, endDate) => {
 // Get unprocessed fine deductions for an employee
 export const getUnprocessedFineDeductions = async (employeeId, startDate, endDate) => {
   try {
-    const response = await axios.get(`${BASE_URL}/api/payroll/unprocessed-fine-deductions`, {
+    const response = await axios.get("/payroll/unprocessed-fine-deductions", {
       params: {
         employeeId,
         startDate,

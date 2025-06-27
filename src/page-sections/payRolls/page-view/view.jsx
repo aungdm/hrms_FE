@@ -626,7 +626,7 @@ export default function PayrollView() {
               {payrollData.fineDeductionDetails && payrollData.fineDeductionDetails.length > 0 && (
                 <Grid item xs={12} mt={2}>
                   <FineDeductionDetail 
-                    fineDeductions={payrollData.fineDeductionDetails} 
+                    fineDeductionDetails={payrollData.fineDeductionDetails} 
                     totalAmount={payrollData.fineDeductions || 0} 
                   />
                 </Grid>

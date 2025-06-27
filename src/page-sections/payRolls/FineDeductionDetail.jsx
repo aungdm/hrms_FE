@@ -1,59 +1,81 @@
-import { Box, Card, Table, TableBody, TableCell, TableContainer, TableRow } from "@mui/material";
-import { H5, Paragraph, Span } from "components/Typography";
-import { format } from "date-fns";
-import React from "react";
-import { numberWithCommas } from "utils/numberWithCommas";
-import { FlexBetween } from "components/flexbox";
+import {
+  Box,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Chip,
+  Divider
+} from '@mui/material';
+import { format } from 'date-fns';
 
-const FineDeductionDetail = ({ fineDeductionDetails, fineDeductions }) => {
+export default function FineDeductionDetail({ fineDeductionDetails = [], totalAmount = 0 }) {
+  const formatDate = (date) => {
+    if (!date) return 'N/A';
+    return format(new Date(date), 'dd MMM yyyy');
+  };
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(amount || 0);
+  };
+
   if (!fineDeductionDetails || fineDeductionDetails.length === 0) {
     return (
-      <Card sx={{ padding: 3, mb: 3 }}>
-        <H5 mb={2}>Fine Deduction Details</H5>
-        <Paragraph>No fine deduction records found for this payroll.</Paragraph>
-      </Card>
+      <Box sx={{ mt: 2, mb: 2 }}>
+        <Typography variant="subtitle1" gutterBottom>
+          Fine Deductions
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          No fine deductions included in this payroll.
+        </Typography>
+      </Box>
     );
   }
 
   return (
-    <Card sx={{ padding: 3, mb: 3 }}>
-      <FlexBetween mb={3}>
-        <H5>Fine Deduction Details</H5>
-        <Paragraph>
-          Total: <Span fontWeight={600}>₹{numberWithCommas(fineDeductions || 0)}</Span>
-        </Paragraph>
-      </FlexBetween>
-
-      <TableContainer>
-        <Table>
+    <Box sx={{ mt: 2, mb: 2 }}>
+      <Typography variant="subtitle1" gutterBottom>
+        Fine Deductions
+      </Typography>
+      
+      <Box sx={{ mb: 2 }}>
+        <Chip 
+          label={`Total: ${formatCurrency(totalAmount)}`} 
+          color="error" 
+          variant="outlined" 
+        />
+      </Box>
+      
+      <TableContainer component={Paper} variant="outlined">
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell>Type</TableCell>
+              <TableCell>Date</TableCell>
+              <TableCell>Description</TableCell>
+              <TableCell align="right">Amount</TableCell>
+            </TableRow>
+          </TableHead>
           <TableBody>
             {fineDeductionDetails.map((detail, index) => (
               <TableRow key={detail.id || index}>
-                <TableCell>
-                  <Paragraph fontWeight={500} color="text.primary">
-                    {detail.type}
-                  </Paragraph>
-                  <Paragraph color="text.secondary">
-                    {detail.date ? format(new Date(detail.date), "dd MMM yyyy") : "N/A"}
-                  </Paragraph>
-                </TableCell>
-
-                <TableCell>
-                  <Paragraph color="text.secondary">{detail.description || "No description"}</Paragraph>
-                </TableCell>
-
-                <TableCell align="right">
-                  <Paragraph fontWeight={500} color="text.primary">
-                    ₹{numberWithCommas(detail.amount)}
-                  </Paragraph>
-                </TableCell>
+                <TableCell>{detail.type}</TableCell>
+                <TableCell>{formatDate(detail.date)}</TableCell>
+                <TableCell>{detail.description || 'N/A'}</TableCell>
+                <TableCell align="right">{formatCurrency(detail.amount)}</TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </TableContainer>
-    </Card>
+      <Divider sx={{ mt: 2 }} />
+    </Box>
   );
-};
-
-export default FineDeductionDetail; 
+} 
