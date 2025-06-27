@@ -13,7 +13,7 @@ export const getRecords = async (
   processed
 ) => {
   try {
-    const response = await axios.get("/loan", {
+    const response = await axios.get("/advanced-salary", {
       params: {
         search,
         sortOrder,
@@ -37,15 +37,15 @@ export const getRecords = async (
     } else {
       return { 
         success: false, 
-        message: response?.data?.message || "Failed to fetch loans",
+        message: response?.data?.message || "Failed to fetch advanced salaries",
         error: response?.data?.error 
       };
     }
   } catch (error) {
-    console.error("Error fetching loans:", error);
+    console.error("Error fetching advanced salaries:", error);
     return { 
       success: false, 
-      message: error.response?.data?.message || error.message || "Error fetching loans",
+      message: error.response?.data?.message || error.message || "Error fetching advanced salaries",
       error: error.response?.data?.error || error
     };
   }
@@ -53,22 +53,22 @@ export const getRecords = async (
 
 export const create = async (data) => {
   try {
-    const response = await axios.post("/loan", data);
+    const response = await axios.post("/advanced-salary", data);
     
     if (response.data.success) {
       return { data: response.data.data, success: true, message: response.data.message };
     } else {
       return { 
         success: false, 
-        message: response.data.message || "Failed to create loan request",
+        message: response.data.message || "Failed to create advanced salary request",
         error: response.data.error 
       };
     }
   } catch (error) {
-    console.error("Error creating loan request:", error);
+    console.error("Error creating advanced salary request:", error);
     return { 
       success: false, 
-      message: error.response?.data?.message || error.message || "Failed to create loan request",
+      message: error.response?.data?.message || error.message || "Failed to create advanced salary request",
       error: error.response?.data?.error || error
     };
   }
@@ -76,22 +76,22 @@ export const create = async (data) => {
 
 export const get = async (id) => {
   try {
-    const response = await axios.get(`/loan/${id}`);
+    const response = await axios.get(`/advanced-salary/${id}`);
     
     if (response.data.success) {
       return { data: response.data.data, success: true };
     } else {
       return { 
         success: false, 
-        message: response.data.message || "Failed to fetch loan",
+        message: response.data.message || "Failed to fetch advanced salary",
         error: response.data.error 
       };
     }
   } catch (error) {
-    console.error("Error fetching loan:", error);
+    console.error("Error fetching advanced salary:", error);
     return { 
       success: false, 
-      message: error.response?.data?.message || error.message || "Failed to fetch loan",
+      message: error.response?.data?.message || error.message || "Failed to fetch advanced salary",
       error: error.response?.data?.error || error
     };
   }
@@ -99,22 +99,22 @@ export const get = async (id) => {
 
 export const update = async (id, data) => {
   try {
-    const response = await axios.put(`/loan/${id}`, data);
+    const response = await axios.put(`/advanced-salary/${id}`, data);
     
     if (response.data.success) {
       return { data: response.data.data, success: true, message: response.data.message };
     } else {
       return { 
         success: false, 
-        message: response.data.message || "Failed to update loan",
+        message: response.data.message || "Failed to update advanced salary",
         error: response.data.error 
       };
     }
   } catch (error) {
-    console.error("Error updating loan:", error);
+    console.error("Error updating advanced salary:", error);
     return { 
       success: false, 
-      message: error.response?.data?.message || error.message || "Failed to update loan",
+      message: error.response?.data?.message || error.message || "Failed to update advanced salary",
       error: error.response?.data?.error || error
     };
   }
@@ -122,46 +122,46 @@ export const update = async (id, data) => {
 
 export const deleteRecord = async (id) => {
   try {
-    const response = await axios.delete(`/loan/${id}`);
+    const response = await axios.delete(`/advanced-salary/${id}`);
     
     if (response?.data?.success) {
       return { data: response?.data?.data, success: true, message: response.data.message };
     } else {
       return { 
         success: false, 
-        message: response.data.message || "Failed to delete loan",
+        message: response.data.message || "Failed to delete advanced salary",
         error: response.data.error 
       };
     }
   } catch (error) {
-    console.error("Error deleting loan:", error);
+    console.error("Error deleting advanced salary:", error);
     return { 
       success: false, 
-      message: error.response?.data?.message || error.message || "Failed to delete loan",
+      message: error.response?.data?.message || error.message || "Failed to delete advanced salary",
       error: error.response?.data?.error || error
     };
   }
 };
 
-export const deleteMultipleLoans = async (ids) => {
+export const deleteMultipleAdvancedSalaries = async (ids) => {
   const data = { ids };
   try {
-    const response = await axios.post(`/loan/delete-multiple`, data);
+    const response = await axios.post(`/advanced-salary/delete-multiple`, data);
     
     if (response.data.success) {
       return { data: response.data.data, success: true, message: response.data.message };
     } else {
       return { 
         success: false, 
-        message: response.data.message || "Failed to delete loans",
+        message: response.data.message || "Failed to delete advanced salaries",
         error: response.data.error 
       };
     }
   } catch (error) {
-    console.error("Error deleting multiple loans:", error);
+    console.error("Error deleting multiple advanced salaries:", error);
     return { 
       success: false, 
-      message: error.response?.data?.message || error.message || "Failed to delete loans",
+      message: error.response?.data?.message || error.message || "Failed to delete advanced salaries",
       error: error.response?.data?.error || error
     };
   }
@@ -169,7 +169,31 @@ export const deleteMultipleLoans = async (ids) => {
 
 export const updateStatus = async (id, status, approvedAmount) => {
   try {
-    const response = await axios.patch(`/loan/${id}/status`, { status, approvedAmount });
+    // Validate ID
+    if (!id) {
+      console.error("Invalid ID provided to updateStatus:", id);
+      return { 
+        success: false, 
+        message: "Invalid ID. Cannot update status."
+      };
+    }
+    
+    // Ensure approvedAmount is a valid number if provided
+    const payload = { status };
+    if (status === "Approved" && approvedAmount !== undefined) {
+      payload.approvedAmount = parseFloat(approvedAmount);
+      
+      if (isNaN(payload.approvedAmount) || payload.approvedAmount <= 0) {
+        return { 
+          success: false, 
+          message: "Invalid approved amount. Please enter a valid positive number."
+        };
+      }
+    }
+    
+    console.log(`Sending status update for ID: ${id} with payload:`, payload);
+    
+    const response = await axios.patch(`/advanced-salary/${id}/status`, payload);
     
     if (response.data.success) {
       return { data: response.data.data, success: true, message: response.data.message };
@@ -181,33 +205,10 @@ export const updateStatus = async (id, status, approvedAmount) => {
       };
     }
   } catch (error) {
-    console.error("Error updating loan status:", error);
+    console.error("Error updating advanced salary status:", error);
     return { 
       success: false, 
       message: error.response?.data?.message || error.message || "Failed to update status",
-      error: error.response?.data?.error || error
-    };
-  }
-};
-
-export const payInstallment = async (id, installmentId) => {
-  try {
-    const response = await axios.patch(`/loan/${id}/pay-installment`, { installmentId });
-    
-    if (response.data.success) {
-      return { data: response.data.data, success: true, message: response.data.message };
-    } else {
-      return { 
-        success: false, 
-        message: response.data.message || "Failed to pay installment",
-        error: response.data.error 
-      };
-    }
-  } catch (error) {
-    console.error("Error paying installment:", error);
-    return { 
-      success: false, 
-      message: error.response?.data?.message || error.message || "Failed to pay installment",
       error: error.response?.data?.error || error
     };
   }
@@ -237,4 +238,4 @@ export const getAllEmployees = async () => {
 };
 
 // For backward compatibility
-export const deleteMultipleService = deleteMultipleLoans;
+export const deleteMultipleLoans = deleteMultipleAdvancedSalaries;

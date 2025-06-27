@@ -16,13 +16,16 @@ import TableSkeleton from "@/components/loader/TableSkeleton.jsx";
 import {
   deleteRecord,
   getRecords,
-  deleteMultipleLoans,
+  deleteMultipleAdvancedSalaries,
+  get,
 } from "../request.js";
 import { toast } from "react-toastify";
 import useDebounce from "@/hooks/debounceHook";
 import { Alert, Dialog, DialogContent, IconButton } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import LoanForm from "../LoanForm.jsx";
+import AdvancedSalaryForm from "../AdvancedSalaryForm.jsx";
+import ApprovalForm from "../ApprovalForm.jsx";
+import RejectionForm from "../RejectionForm.jsx";
 
 export default function ListView() {
   const {
@@ -51,7 +54,9 @@ export default function ListView() {
   const [openCreateModal, setOpenCreateModal] = useState(false);
   const [openEditModal, setOpenEditModal] = useState(false);
   const [openViewModal, setOpenViewModal] = useState(false);
-  const [selectedLoan, setSelectedLoan] = useState(null);
+  const [openApproveModal, setOpenApproveModal] = useState(false);
+  const [openRejectModal, setOpenRejectModal] = useState(false);
+  const [selectedAdvancedSalary, setSelectedAdvancedSalary] = useState(null);
 
   const handleSearch = (value) => {
     setSearchString(value);
@@ -83,13 +88,13 @@ export default function ListView() {
         setData(response?.data || []);
         setTotalRecords(response?.totalRecords || 0);
       } else {
-        setError(response?.message || "Failed to fetch loans");
-        toast.error(response?.message || "Failed to fetch loans");
+        setError(response?.message || "Failed to fetch advanced salaries");
+        toast.error(response?.message || "Failed to fetch advanced salaries");
       }
     } catch (error) {
-      console.error("Error fetching loans:", error);
-      setError(error?.message || "Error loading loans");
-      toast.error("Error loading loans");
+      console.error("Error fetching advanced salaries:", error);
+      setError(error?.message || "Error loading advanced salaries");
+      toast.error("Error loading advanced salaries");
     } finally {
       setLoading(false);
     }
@@ -99,30 +104,30 @@ export default function ListView() {
     try {
       const response = await deleteRecord(id);
       if (response.success) {
-        toast.success(response.message || "Loan deleted successfully");
+        toast.success(response.message || "Advanced salary deleted successfully");
         await fetchList();
       } else {
-        toast.error(response.message || "Failed to delete loan");
+        toast.error(response.message || "Failed to delete advanced salary");
       }
     } catch (error) {
-      console.error("Error deleting loan:", error);
-      toast.error("Error deleting loan");
+      console.error("Error deleting advanced salary:", error);
+      toast.error("Error deleting advanced salary");
     }
   };
 
   const handleMultipleDelete = async () => {
     try {
-      const response = await deleteMultipleLoans(selected);
+      const response = await deleteMultipleAdvancedSalaries(selected);
       if (response.success) {
-        toast.success(response.message || "Loans deleted successfully");
+        toast.success(response.message || "Advanced salaries deleted successfully");
         await fetchList();
         handleSelectAllRows([])();
       } else {
-        toast.error(response.message || "Failed to delete loans");
+        toast.error(response.message || "Failed to delete advanced salaries");
       }
     } catch (error) {
-      console.error("Error deleting multiple loans:", error);
-      toast.error("Error deleting loans");
+      console.error("Error deleting multiple advanced salaries:", error);
+      toast.error("Error deleting advanced salaries");
     }
   };
   
@@ -135,30 +140,74 @@ export default function ListView() {
     setOpenCreateModal(false);
   };
   
-  const handleOpenEditModal = (loan) => {
-    setSelectedLoan(loan);
+  const handleOpenEditModal = (advancedSalary) => {
+    setSelectedAdvancedSalary(advancedSalary);
     setOpenEditModal(true);
   };
   
   const handleCloseEditModal = () => {
     setOpenEditModal(false);
-    setSelectedLoan(null);
+    setSelectedAdvancedSalary(null);
   };
   
-  const handleOpenViewModal = (loan) => {
-    setSelectedLoan(loan);
+  const handleOpenViewModal = (advancedSalary) => {
+    setSelectedAdvancedSalary(advancedSalary);
     setOpenViewModal(true);
   };
   
   const handleCloseViewModal = () => {
     setOpenViewModal(false);
-    setSelectedLoan(null);
+    setSelectedAdvancedSalary(null);
+  };
+  
+  const handleOpenApproveModal = async (advancedSalary) => {
+    try {
+      // Fetch complete data for the advanced salary to ensure we have all details
+      const response = await get(advancedSalary._id);
+      if (response.success) {
+        setSelectedAdvancedSalary(response.data);
+        setOpenApproveModal(true);
+      } else {
+        toast.error("Failed to load advanced salary details");
+      }
+    } catch (error) {
+      console.error("Error fetching advanced salary details:", error);
+      toast.error("Error loading advanced salary details");
+    }
+  };
+  
+  const handleCloseApproveModal = () => {
+    setOpenApproveModal(false);
+    setSelectedAdvancedSalary(null);
+  };
+  
+  const handleOpenRejectModal = async (advancedSalary) => {
+    try {
+      // Fetch complete data for the advanced salary to ensure we have all details
+      const response = await get(advancedSalary._id);
+      if (response.success) {
+        setSelectedAdvancedSalary(response.data);
+        setOpenRejectModal(true);
+      } else {
+        toast.error("Failed to load advanced salary details");
+      }
+    } catch (error) {
+      console.error("Error fetching advanced salary details:", error);
+      toast.error("Error loading advanced salary details");
+    }
+  };
+  
+  const handleCloseRejectModal = () => {
+    setOpenRejectModal(false);
+    setSelectedAdvancedSalary(null);
   };
   
   const handleFormSubmitSuccess = () => {
     fetchList();
     handleCloseCreateModal();
     handleCloseEditModal();
+    handleCloseApproveModal();
+    handleCloseRejectModal();
   };
 
   useEffect(() => {
@@ -222,6 +271,8 @@ export default function ListView() {
                           handleDelete={handleDelete}
                           onEdit={() => handleOpenEditModal(item)}
                           onView={() => handleOpenViewModal(item)}
+                          onApprove={() => handleOpenApproveModal(item)}
+                          onReject={() => handleOpenRejectModal(item)}
                         />
                       ))
                     ) : (
@@ -257,7 +308,7 @@ export default function ListView() {
                   <CloseIcon />
                 </IconButton>
               </Box>
-              <LoanForm 
+              <AdvancedSalaryForm 
                 mode="create" 
                 onSuccess={handleFormSubmitSuccess} 
                 onCancel={handleCloseCreateModal} 
@@ -278,10 +329,10 @@ export default function ListView() {
                   <CloseIcon />
                 </IconButton>
               </Box>
-              {selectedLoan && (
-                <LoanForm 
+              {selectedAdvancedSalary && (
+                <AdvancedSalaryForm 
                   mode="edit" 
-                  loanId={selectedLoan._id}
+                  loanId={selectedAdvancedSalary._id}
                   onSuccess={handleFormSubmitSuccess} 
                   onCancel={handleCloseEditModal} 
                 />
@@ -302,11 +353,57 @@ export default function ListView() {
                   <CloseIcon />
                 </IconButton>
               </Box>
-              {selectedLoan && (
-                <LoanForm 
+              {selectedAdvancedSalary && (
+                <AdvancedSalaryForm 
                   mode="view" 
-                  loanId={selectedLoan._id}
+                  loanId={selectedAdvancedSalary._id}
                   onCancel={handleCloseViewModal} 
+                />
+              )}
+            </DialogContent>
+          </Dialog>
+          
+          {/* Approve Modal */}
+          <Dialog
+            open={openApproveModal}
+            onClose={handleCloseApproveModal}
+            maxWidth="sm"
+            fullWidth
+          >
+            <DialogContent sx={{ p: 0 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 1 }}>
+                <IconButton onClick={handleCloseApproveModal}>
+                  <CloseIcon />
+                </IconButton>
+              </Box>
+              {selectedAdvancedSalary && (
+                <ApprovalForm 
+                  advancedSalaryData={selectedAdvancedSalary}
+                  onSuccess={handleFormSubmitSuccess} 
+                  onCancel={handleCloseApproveModal} 
+                />
+              )}
+            </DialogContent>
+          </Dialog>
+          
+          {/* Reject Modal */}
+          <Dialog
+            open={openRejectModal}
+            onClose={handleCloseRejectModal}
+            maxWidth="sm"
+            fullWidth
+          >
+            <DialogContent sx={{ p: 0 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 1 }}>
+                <IconButton onClick={handleCloseRejectModal}>
+                  <CloseIcon />
+                </IconButton>
+              </Box>
+              {selectedAdvancedSalary && (
+                <RejectionForm 
+                  advancedSalaryData={selectedAdvancedSalary}
+                  onSuccess={handleFormSubmitSuccess} 
+                  onCancel={handleCloseRejectModal} 
                 />
               )}
             </DialogContent>

@@ -35,24 +35,6 @@ export default function TableHeadView({
       label: "Approved Amount",
     },
     {
-      id: "totalInstallments",
-      align: "left",
-      disablePadding: false,
-      label: "Total Installments",
-    },
-    {
-      id: "leftInstallments",
-      align: "left",
-      disablePadding: false,
-      label: "Left Installments",
-    },
-    {
-      id: "leftAmount",
-      align: "left",
-      disablePadding: false,
-      label: "Left Amount",
-    },
-    {
       id: "requiredDate",
       align: "left",
       disablePadding: false,
@@ -63,6 +45,12 @@ export default function TableHeadView({
       align: "left",
       disablePadding: false,
       label: "Request Date",
+    },
+    {
+      id: "approvalDate",
+      align: "left",
+      disablePadding: false,
+      label: "Approval Date",
     },
     {
       id: "status",

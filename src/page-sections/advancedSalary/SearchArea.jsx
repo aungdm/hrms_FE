@@ -12,7 +12,7 @@ export default function SearchArea({ value = "", onChange, processed, onProcesse
         <TextField
           value={value}
           onChange={onChange}
-          placeholder="Search loans..."
+          placeholder="Search advanced salaries..."
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">

@@ -6,7 +6,7 @@ export default function View() {
   
   useEffect(() => {
     // Redirect to the list page since we're using modals now
-    navigate("/loan");
+    navigate("/advanced-salary");
   }, [navigate]);
   
   return null;

@@ -16,7 +16,7 @@ export default function HeadingArea({ onCreateClick }) {
             }}
           />
         </IconWrapper>
-        <Paragraph fontSize={16} fontWeight={600}>Loan Management</Paragraph>
+        <Paragraph fontSize={16} fontWeight={600}>Advanced Salary Management</Paragraph>
       </FlexBox>
       
       <Button 
@@ -24,7 +24,7 @@ export default function HeadingArea({ onCreateClick }) {
         startIcon={<AddIcon />}
         onClick={onCreateClick}
       >
-        Create Loan
+        Create Advanced Salary Request
       </Button>
     </FlexBetween>
   );
