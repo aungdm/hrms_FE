@@ -15,10 +15,10 @@ const headCells = [
     label: "Employee",
   },
   {
-    id: "deductionType",
+    id: "arrearsType",
     numeric: false,
     disablePadding: false,
-    label: "Deduction Type",
+    label: "Arrears Type",
   },
   {
     id: "amount",
@@ -27,13 +27,13 @@ const headCells = [
     label: "Amount",
   },
   {
-    id: "deductionDate",
+    id: "arrearsDate",
     numeric: false,
     disablePadding: false,
-    label: "Deduction Date",
+    label: "Arrears Date",
   },
   {
-    id: "status",
+      id: "status",
     numeric: false,
     disablePadding: false,
     label: "Status",

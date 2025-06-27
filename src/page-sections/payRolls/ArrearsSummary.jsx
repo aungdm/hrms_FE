@@ -16,47 +16,47 @@ import {
   Stack
 } from '@mui/material';
 import { format } from 'date-fns';
-import { getUnprocessedIncentives } from './request';
+import { getUnprocessedArrears } from './request';
 
-export default function IncentivesSummary({ employeeId, startDate, endDate, onIncentivesLoaded }) {
-  const [incentives, setIncentives] = useState([]);
-  const [approvedIncentives, setApprovedIncentives] = useState([]);
+export default function ArrearsSummary({ employeeId, startDate, endDate, onArrearsLoaded }) {
+  const [arrears, setArrears] = useState([]);
+  const [approvedArrears, setApprovedArrears] = useState([]);
   const [totalAmount, setTotalAmount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchIncentives = async () => {
+    const fetchArrears = async () => {
       if (!employeeId) return;
       
       try {
         setLoading(true);
         setError(null);
         
-        const response = await getUnprocessedIncentives(employeeId, startDate, endDate);
+        const response = await getUnprocessedArrears(employeeId, startDate, endDate);
         
         if (response.success) {
-          setIncentives(response.data.incentives || []);
-          setApprovedIncentives(response.data.approvedIncentives || []);
+          setArrears(response.data.arrears || []);
+          setApprovedArrears(response.data.approvedArrears || []);
           setTotalAmount(response.data.totalAmount || 0);
           
-          // Notify parent component about the loaded incentives
-          if (onIncentivesLoaded) {
-            onIncentivesLoaded(response.data.totalAmount || 0, response.data.approvedIncentives || []);
+          // Notify parent component about the loaded arrears
+          if (onArrearsLoaded) {
+            onArrearsLoaded(response.data.totalAmount || 0, response.data.approvedArrears || []);
           }
         } else {
-          setError(response.message || 'Failed to fetch incentives');
+          setError(response.message || 'Failed to fetch arrears');
         }
       } catch (err) {
-        console.error('Error fetching incentives:', err);
-        setError('Error loading incentives data');
+        console.error('Error fetching arrears:', err);
+        setError('Error loading arrears data');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchIncentives();
-  }, [employeeId, startDate, endDate, onIncentivesLoaded]);
+    fetchArrears();
+  }, [employeeId, startDate, endDate, onArrearsLoaded]);
 
   const formatDate = (date) => {
     if (!date) return 'N/A';
@@ -86,10 +86,10 @@ export default function IncentivesSummary({ employeeId, startDate, endDate, onIn
     );
   }
 
-  if (incentives.length === 0) {
+  if (arrears.length === 0) {
     return (
       <Card sx={{ p: 2, mb: 2 }}>
-        <Typography variant="body1">No unprocessed incentives found for this period.</Typography>
+        <Typography variant="body1">No unprocessed arrears found for this period.</Typography>
       </Card>
     );
   }
@@ -97,7 +97,7 @@ export default function IncentivesSummary({ employeeId, startDate, endDate, onIn
   return (
     <Card sx={{ p: 2, mb: 2 }}>
       <Typography variant="h6" gutterBottom>
-        Unprocessed Incentives
+        Unprocessed Arrears
       </Typography>
       
       <Box sx={{ mb: 2 }}>
@@ -108,7 +108,7 @@ export default function IncentivesSummary({ employeeId, startDate, endDate, onIn
             variant="outlined" 
           />
           <Typography variant="body2" color="text.secondary">
-            Only approved incentives will be added to payroll
+            Only approved arrears will be added to payroll
           </Typography>
         </Stack>
       </Box>
@@ -125,39 +125,39 @@ export default function IncentivesSummary({ employeeId, startDate, endDate, onIn
             </TableRow>
           </TableHead>
           <TableBody>
-            {incentives.map((incentive) => {
-              const isApproved = incentive.status === 'Approved';
+            {arrears.map((arrear) => {
+              const isApproved = arrear.status === 'Approved';
               return (
                 <TableRow 
-                  key={incentive._id}
+                  key={arrear._id}
                   sx={isApproved ? { backgroundColor: 'rgba(76, 175, 80, 0.08)' } : {}}
                 >
-                  <TableCell>{incentive.incentiveType}</TableCell>
-                  <TableCell>{formatDate(incentive.incentiveDate)}</TableCell>
+                  <TableCell>{arrear.deductionType}</TableCell>
+                  <TableCell>{formatDate(arrear.deductionDate)}</TableCell>
                   <TableCell>
                     <Chip 
-                      label={incentive.status} 
+                      label={arrear.status} 
                       color={
-                        incentive.status === 'Approved' ? 'success' :
-                        incentive.status === 'Rejected' ? 'error' : 'warning'
+                        arrear.status === 'Approved' ? 'success' :
+                        arrear.status === 'Rejected' ? 'error' : 'warning'
                       }
                       size="small"
                     />
                   </TableCell>
-                  <TableCell>{incentive.description || 'N/A'}</TableCell>
+                  <TableCell>{arrear.description || 'N/A'}</TableCell>
                   <TableCell 
                     align="right" 
                     sx={isApproved ? { fontWeight: 'bold', color: 'success.main' } : {}}
                   >
-                    {formatCurrency(incentive.amount)}
+                    {formatCurrency(arrear.amount)}
                   </TableCell>
                 </TableRow>
               );
             })}
-            {approvedIncentives.length > 0 && (
+            {approvedArrears.length > 0 && (
               <TableRow sx={{ backgroundColor: 'rgba(76, 175, 80, 0.12)' }}>
                 <TableCell colSpan={4} align="right" sx={{ fontWeight: 'bold' }}>
-                  Total Approved Incentives:
+                  Total Approved Arrears:
                 </TableCell>
                 <TableCell align="right" sx={{ fontWeight: 'bold', color: 'success.main' }}>
                   {formatCurrency(totalAmount)}

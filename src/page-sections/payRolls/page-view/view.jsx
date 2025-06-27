@@ -36,6 +36,8 @@ import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import CloseIcon from "@mui/icons-material/Close";
 import * as XLSX from 'xlsx';
+import IncentivesDetail from "../IncentivesDetail";
+import ArrearsDetail from "../ArrearsDetail";
 
 // Format currency values
 const formatCurrency = (amount) => {
@@ -143,6 +145,8 @@ export default function PayrollView() {
           ['Late Fines', formatCurrency(payrollData.lateFines || 0)],
           ['Other Deductions', formatCurrency(payrollData.otherDeductions || 0)],
           ['Overtime Pay', formatCurrency(payrollData.overtimePay || 0)],
+          ['Other Incentives', formatCurrency(payrollData.otherIncentives || 0)],
+          ['Arrears', formatCurrency(payrollData.arrears || 0)],
           ['Net Salary', formatCurrency(payrollData.netSalary || 0)],
           [''],
           ['Note: First three late days are not charged with fines.'],
@@ -156,6 +160,8 @@ export default function PayrollView() {
           ['Actual Gross Salary (Based on Hours)', formatCurrency(payrollData.actualGrossSalary || 0)],
           ['Absent Deductions', formatCurrency(payrollData.absentDeductions || 0)],
           ['Other Deductions', formatCurrency(payrollData.otherDeductions || 0)],
+          ['Other Incentives', formatCurrency(payrollData.otherIncentives || 0)],
+          ['Arrears', formatCurrency(payrollData.arrears || 0)],
           ['Net Salary', formatCurrency(payrollData.netSalary || 0)]
         ];
       }
@@ -168,6 +174,66 @@ export default function PayrollView() {
       
       // Add worksheet to workbook
       XLSX.utils.book_append_sheet(wb, ws, 'Payroll Summary');
+      
+      // Add incentives sheet if available
+      if (payrollData.incentiveDetails && payrollData.incentiveDetails.length > 0) {
+        // Create headers for incentives
+        const incentiveHeaders = [
+          ['Type', 'Date', 'Description', 'Amount']
+        ];
+        
+        // Map incentives to array format
+        const incentiveData = payrollData.incentiveDetails.map(incentive => {
+          return [
+            incentive.type || '-',
+            incentive.date ? format(new Date(incentive.date), 'dd/MM/yyyy') : '-',
+            incentive.description || '-',
+            incentive.amount || 0
+          ];
+        });
+        
+        // Add total row
+        incentiveData.push(['', '', 'Total', payrollData.otherIncentives || 0]);
+        
+        // Combine headers and data
+        const incentiveSheet = [...incentiveHeaders, ...incentiveData];
+        
+        // Create worksheet for incentives
+        const wsIncentives = XLSX.utils.aoa_to_sheet(incentiveSheet);
+        
+        // Add worksheet to workbook
+        XLSX.utils.book_append_sheet(wb, wsIncentives, 'Incentives');
+      }
+      
+      // Add arrears sheet if available
+      if (payrollData.arrearsDetails && payrollData.arrearsDetails.length > 0) {
+        // Create headers for arrears
+        const arrearsHeaders = [
+          ['Type', 'Date', 'Description', 'Amount']
+        ];
+        
+        // Map arrears to array format
+        const arrearsData = payrollData.arrearsDetails.map(arrear => {
+          return [
+            arrear.type || '-',
+            arrear.date ? format(new Date(arrear.date), 'dd/MM/yyyy') : '-',
+            arrear.description || '-',
+            arrear.amount || 0
+          ];
+        });
+        
+        // Add total row
+        arrearsData.push(['', '', 'Total', payrollData.arrears || 0]);
+        
+        // Combine headers and data
+        const arrearsSheet = [...arrearsHeaders, ...arrearsData];
+        
+        // Create worksheet for arrears
+        const wsArrears = XLSX.utils.aoa_to_sheet(arrearsSheet);
+        
+        // Add worksheet to workbook
+        XLSX.utils.book_append_sheet(wb, wsArrears, 'Arrears');
+      }
       
       // For hourly employees, add a second sheet with daily calculations
       if (payrollData.dailyCalculations && payrollData.dailyCalculations.length > 0) {
@@ -443,6 +509,18 @@ export default function PayrollView() {
                             <TableCell component="th">Overtime Pay</TableCell>
                             <TableCell>{formatCurrency(payrollData.overtimePay || 0)}</TableCell>
                           </TableRow>
+                          {payrollData.otherIncentives > 0 && (
+                            <TableRow>
+                              <TableCell component="th">Other Incentives</TableCell>
+                              <TableCell sx={{ color: 'success.main' }}>{formatCurrency(payrollData.otherIncentives || 0)}</TableCell>
+                            </TableRow>
+                          )}
+                          {payrollData.arrears > 0 && (
+                            <TableRow>
+                              <TableCell component="th">Arrears</TableCell>
+                              <TableCell sx={{ color: 'success.main' }}>{formatCurrency(payrollData.arrears || 0)}</TableCell>
+                            </TableRow>
+                          )}
                         </>
                       ) : (
                         // Monthly employee specific fields
@@ -455,6 +533,18 @@ export default function PayrollView() {
                             <TableCell component="th">Other Deductions</TableCell>
                             <TableCell>{formatCurrency(payrollData.otherDeductions || 0)}</TableCell>
                           </TableRow>
+                          {payrollData.otherIncentives > 0 && (
+                            <TableRow>
+                              <TableCell component="th">Other Incentives</TableCell>
+                              <TableCell sx={{ color: 'success.main' }}>{formatCurrency(payrollData.otherIncentives || 0)}</TableCell>
+                            </TableRow>
+                          )}
+                          {payrollData.arrears > 0 && (
+                            <TableRow>
+                              <TableCell component="th">Arrears</TableCell>
+                              <TableCell sx={{ color: 'success.main' }}>{formatCurrency(payrollData.arrears || 0)}</TableCell>
+                            </TableRow>
+                          )}
                         </>
                       )}
                       
@@ -466,6 +556,26 @@ export default function PayrollView() {
                   </Table>
                 </TableContainer>
               </Grid>
+
+              {/* Add Incentives Detail Section if incentives exist */}
+              {payrollData.incentiveDetails && payrollData.incentiveDetails.length > 0 && (
+                <Grid item xs={12} mt={2}>
+                  <IncentivesDetail 
+                    incentives={payrollData.incentiveDetails} 
+                    totalAmount={payrollData.otherIncentives || 0} 
+                  />
+                </Grid>
+              )}
+
+              {/* Add Arrears Detail Section if arrears exist */}
+              {payrollData.arrearsDetails && payrollData.arrearsDetails.length > 0 && (
+                <Grid item xs={12} mt={2}>
+                  <ArrearsDetail 
+                    arrears={payrollData.arrearsDetails} 
+                    totalAmount={payrollData.arrears || 0} 
+                  />
+                </Grid>
+              )}
 
               <Grid item xs={12}>
                 <Stack direction="row" spacing={2} mt={2}>

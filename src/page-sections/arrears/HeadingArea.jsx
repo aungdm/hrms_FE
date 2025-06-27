@@ -29,7 +29,7 @@ export default function HeadingArea() {
             }}
           />
         </IconWrapper>
-        <Paragraph fontSize={16} fontWeight={600}>Arrears & Deductions</Paragraph>
+        <Paragraph fontSize={16} fontWeight={600}>Arrears</Paragraph>
       </FlexBox>
       <Button 
         variant="contained"

@@ -487,11 +487,119 @@ const createPayslipPDF = (data) => {
     yPosition += 8;
   }
   
+  // Add other incentives section
+  if (salaryDetails.otherIncentives !== undefined) {
+    pdf.text(`Other Incentives: Rs. ${(salaryDetails.otherIncentives || 0).toLocaleString()}`, 20, yPosition);
+    yPosition += 8;
+  }
+  
+  // Add arrears section
+  if (salaryDetails.arrears !== undefined) {
+    pdf.text(`Arrears: Rs. ${(salaryDetails.arrears || 0).toLocaleString()}`, 20, yPosition);
+    yPosition += 8;
+  }
+  
   // Net salary with emphasis
   pdf.setFontSize(12);
   pdf.setTextColor(40, 40, 40);
   pdf.text(`Net Salary: Rs. ${(salaryDetails.netSalary || 0).toLocaleString()}`, 20, yPosition);
   yPosition += 20;
+  
+  // Incentives Details (if available)
+  const incentiveDetails = salaryDetails.incentiveDetails || [];
+  if (incentiveDetails.length > 0 && yPosition < 200) {
+    pdf.setFontSize(14);
+    pdf.setTextColor(60, 60, 60);
+    pdf.text('Incentives Breakdown', 20, yPosition);
+    yPosition += 10;
+    
+    pdf.setFontSize(8);
+    pdf.setTextColor(80, 80, 80);
+    
+    // Header for incentives
+    pdf.text('Type', 20, yPosition);
+    pdf.text('Date', 70, yPosition);
+    pdf.text('Description', 110, yPosition);
+    pdf.text('Amount', 170, yPosition);
+    yPosition += 8;
+    
+    // Draw a line
+    pdf.line(20, yPosition - 2, 200, yPosition - 2);
+    
+    // Show incentives (limit to fit on page)
+    const maxIncentives = Math.min(incentiveDetails.length, Math.floor((240 - yPosition) / 8));
+    
+    for (let i = 0; i < maxIncentives; i++) {
+      const incentive = incentiveDetails[i];
+      const date = incentive.date ? new Date(incentive.date).toLocaleDateString('en-GB') : 'N/A';
+      
+      pdf.text(incentive.type || 'N/A', 20, yPosition);
+      pdf.text(date, 70, yPosition);
+      
+      // Truncate description if too long
+      const desc = incentive.description || 'N/A';
+      const truncatedDesc = desc.length > 30 ? desc.substring(0, 27) + '...' : desc;
+      pdf.text(truncatedDesc, 110, yPosition);
+      
+      pdf.text(`Rs. ${(incentive.amount || 0).toLocaleString()}`, 170, yPosition);
+      yPosition += 8;
+    }
+    
+    if (incentiveDetails.length > maxIncentives) {
+      pdf.setFontSize(8);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text(`... and ${incentiveDetails.length - maxIncentives} more incentives`, 20, yPosition + 5);
+      yPosition += 10;
+    }
+  }
+  
+  // Arrears Details (if available)
+  const arrearsDetails = salaryDetails.arrearsDetails || [];
+  if (arrearsDetails.length > 0 && yPosition < 200) {
+    pdf.setFontSize(14);
+    pdf.setTextColor(60, 60, 60);
+    pdf.text('Arrears Breakdown', 20, yPosition);
+    yPosition += 10;
+    
+    pdf.setFontSize(8);
+    pdf.setTextColor(80, 80, 80);
+    
+    // Header for arrears
+    pdf.text('Type', 20, yPosition);
+    pdf.text('Date', 70, yPosition);
+    pdf.text('Description', 110, yPosition);
+    pdf.text('Amount', 170, yPosition);
+    yPosition += 8;
+    
+    // Draw a line
+    pdf.line(20, yPosition - 2, 200, yPosition - 2);
+    
+    // Show arrears (limit to fit on page)
+    const maxArrears = Math.min(arrearsDetails.length, Math.floor((240 - yPosition) / 8));
+    
+    for (let i = 0; i < maxArrears; i++) {
+      const arrear = arrearsDetails[i];
+      const date = arrear.date ? new Date(arrear.date).toLocaleDateString('en-GB') : 'N/A';
+      
+      pdf.text(arrear.type || 'N/A', 20, yPosition);
+      pdf.text(date, 70, yPosition);
+      
+      // Truncate description if too long
+      const desc = arrear.description || 'N/A';
+      const truncatedDesc = desc.length > 30 ? desc.substring(0, 27) + '...' : desc;
+      pdf.text(truncatedDesc, 110, yPosition);
+      
+      pdf.text(`Rs. ${(arrear.amount || 0).toLocaleString()}`, 170, yPosition);
+      yPosition += 8;
+    }
+    
+    if (arrearsDetails.length > maxArrears) {
+      pdf.setFontSize(8);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text(`... and ${arrearsDetails.length - maxArrears} more arrears`, 20, yPosition + 5);
+      yPosition += 10;
+    }
+  }
   
   // Daily Calculations (if available and space permits)
   const dailyCalcs = data.dailyCalculations || [];
@@ -613,6 +721,38 @@ export const getUnprocessedIncentives = async (employeeId, startDate, endDate) =
       success: false, 
       error: error.message,
       message: "Error fetching unprocessed incentives"
+    };
+  }
+};
+
+export const getUnprocessedArrears = async (employeeId, startDate, endDate) => {
+  try {
+    const response = await axios.get("/payroll/unprocessed-arrears", {
+      params: {
+        employeeId,
+        startDate,
+        endDate
+      }
+    });
+    
+    if (response?.data?.success) {
+      return {
+        data: response?.data?.data,
+        success: true,
+        message: response?.data?.message
+      };
+    } else {
+      return { 
+        success: false, 
+        message: response?.data?.message || "Failed to fetch unprocessed arrears" 
+      };
+    }
+  } catch (error) {
+    console.error("Error fetching unprocessed arrears:", error);
+    return { 
+      success: false, 
+      error: error.message,
+      message: "Error fetching unprocessed arrears"
     };
   }
 };

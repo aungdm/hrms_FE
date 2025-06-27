@@ -215,9 +215,9 @@ export default function CreateView() {
             <MoneyOffIcon sx={{ color: "error.main" }} />
           </IconWrapper>
           <Paragraph sx={{ fontWeight: 600 }} fontSize={16}>
-            {mode === "view" ? "View Deduction" : 
-             mode === "edit" ? "Edit Deduction" : 
-             "Create Deduction"}
+            {mode === "view" ? "View Arrears" : 
+             mode === "edit" ? "Edit Arrears" : 
+             "Create Arrears"}
           </Paragraph>
         </FlexBox>
       </Box>
