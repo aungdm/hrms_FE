@@ -153,6 +153,9 @@ const PayRollsCreateView = Loadable(
 const PayRollsViewPage = Loadable(
   lazy(() => import("@/pages/dashboard/payRolls/view"))
 );
+const PayRollsEditView = Loadable(
+  lazy(() => import("@/pages/dashboard/payRolls/edit"))
+);
 const PaySlipsListView = Loadable(
   lazy(() => import("@/pages/dashboard/paySlips/list"))
 );
@@ -517,6 +520,10 @@ export const DashboardRoutes = [
       {
         path: "pay-rolls-view/:id",
         element: <PayRollsViewPage />,
+      },
+      {
+        path: "pay-rolls-edit/:id",
+        element: <PayRollsEditView />,
       },
       {
         path: "pay-slips-list",

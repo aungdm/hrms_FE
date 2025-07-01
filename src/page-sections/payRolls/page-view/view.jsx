@@ -41,6 +41,7 @@ import ArrearsDetail from "../ArrearsDetail";
 import FineDeductionDetail from "../FineDeductionDetail";
 import AdvancedSalaryDetail from "../AdvancedSalaryDetail";
 import OtherDeductionDetail from "../OtherDeductionDetail";
+import EditIcon from "@mui/icons-material/Edit";
 
 // Format currency values
 const formatCurrency = (amount) => {
@@ -145,8 +146,11 @@ export default function PayrollView() {
           ['Gross Salary', formatCurrency(payrollData.grossSalary || 0)],
           ['Per Hour Rate', formatCurrency(payrollData.perHourRate || 0)],
           ['Payable Hours', payrollData.payableHours || 0],
+          ['Absent Days', payrollData.absentDays || 0],
+          ['Absent Deductions', formatCurrency(payrollData.absentDeductions || 0)],
           ['Late Fines', formatCurrency(payrollData.lateFines || 0)],
           ['Other Deductions', formatCurrency(payrollData.otherDeductions || 0)],
+          ['Missing Deduction', formatCurrency(payrollData.missingDeduction || 0)],
           ['Overtime Pay', formatCurrency(payrollData.overtimePay || 0)],
           ['Other Incentives', formatCurrency(payrollData.otherIncentives || 0)],
           ['Arrears', formatCurrency(payrollData.arrears || 0)],
@@ -155,6 +159,7 @@ export default function PayrollView() {
           ['Net Salary', formatCurrency(payrollData.netSalary || 0)],
           [''],
           ['Note: First three late days are not charged with fines.'],
+          ['Note: Absent days are charged at Rs. 10,000 per day for hourly employees.'],
           ['']
         ];
       } else {
@@ -163,8 +168,10 @@ export default function PayrollView() {
           ['Salary Details'],
           ['Monthly Gross Salary', formatCurrency(payrollData.grossSalary || 0)],
           ['Actual Gross Salary (Based on Hours)', formatCurrency(payrollData.actualGrossSalary || 0)],
+          ['Absent Days', payrollData.absentDays || 0],
           ['Absent Deductions', formatCurrency(payrollData.absentDeductions || 0)],
           ['Other Deductions', formatCurrency(payrollData.otherDeductions || 0)],
+          ['Missing Deduction', formatCurrency(payrollData.missingDeduction || 0)],
           ['Other Incentives', formatCurrency(payrollData.otherIncentives || 0)],
           ['Arrears', formatCurrency(payrollData.arrears || 0)],
           ['Fine Deductions', formatCurrency(payrollData.fineDeductions || 0)],
@@ -337,7 +344,7 @@ export default function PayrollView() {
         // Create headers for daily calculations
         const dailyHeaders = payrollData.payrollType === "Hourly" ? [
           ['Date', 'Status', 'Payable Hours', 'Daily Pay', 'Late (mins)', 'Late Fine', 
-           'Overtime (mins)', 'Overtime Pay', 'Total', 'Notes']
+           'Overtime (mins)', 'Overtime Pay', 'Absent Deduction', 'Total', 'Notes']
         ] : [
           ['Date', 'Status', 'Present', 'Deduction', 'Notes']
         ];
@@ -354,6 +361,7 @@ export default function PayrollView() {
               day.lateFine || 0,
               day.overtimeMinutes || 0,
               day.overtimePay || 0,
+              day.absentDeduction || 0,
               day.totalDailyPay || 0,
               day.notes || '-'
             ];
@@ -595,12 +603,24 @@ export default function PayrollView() {
                             <TableCell>{payrollData.payableHours || payrollData.totalHours || 'N/A'}</TableCell>
                           </TableRow>
                           <TableRow>
+                            <TableCell component="th">Absent Days</TableCell>
+                            <TableCell>{payrollData.absentDays || 0}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell component="th">Absent Deductions</TableCell>
+                            <TableCell>{formatCurrency(payrollData.absentDeductions || 0)}</TableCell>
+                          </TableRow>
+                          <TableRow>
                             <TableCell component="th">Late Fines</TableCell>
                             <TableCell>{formatCurrency(payrollData.lateFines || 0)}</TableCell>
                           </TableRow>
                           <TableRow>
                             <TableCell component="th">Other Deductions</TableCell>
                             <TableCell sx={{ color: 'error.main' }}>{formatCurrency((payrollData.otherDeductions || 0) + (payrollData.fineDeductions || 0))}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell component="th">Missing Deduction</TableCell>
+                            <TableCell sx={{ color: 'error.main' }}>{formatCurrency(payrollData.missingDeduction || 0)}</TableCell>
                           </TableRow>
                           <TableRow>
                             <TableCell component="th">Overtime Pay</TableCell>
@@ -635,12 +655,20 @@ export default function PayrollView() {
                         // Monthly employee specific fields
                         <>
                           <TableRow>
+                            <TableCell component="th">Absent Days</TableCell>
+                            <TableCell>{payrollData.absentDays || 0}</TableCell>
+                          </TableRow>
+                          <TableRow>
                             <TableCell component="th">Absent Deductions</TableCell>
                             <TableCell>{formatCurrency(payrollData.absentDeductions || 0)}</TableCell>
                           </TableRow>
                           <TableRow>
                             <TableCell component="th">Other Deductions</TableCell>
                             <TableCell sx={{ color: 'error.main' }}>{formatCurrency((payrollData.otherDeductions || 0) + (payrollData.fineDeductions || 0))}</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell component="th">Missing Deduction</TableCell>
+                            <TableCell sx={{ color: 'error.main' }}>{formatCurrency(payrollData.missingDeduction || 0)}</TableCell>
                           </TableRow>
                           {payrollData.otherIncentives > 0 && (
                             <TableRow>
@@ -679,8 +707,11 @@ export default function PayrollView() {
                 
                 {isHourly && (
                   <Box sx={{ mt: 1, pl: 1 }}>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" color="text.secondary" display="block">
                       Note: First three late arrivals are not charged with fines.
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      Note: Absent days are charged at ₹10,000 per day for hourly employees.
                     </Typography>
                   </Box>
                 )}
@@ -770,6 +801,17 @@ export default function PayrollView() {
                     View PDF in Dialog
                   </Button>
                   
+                  {payrollData.status === "Generated" && (
+                    <Button 
+                      variant="contained"
+                      color="primary" 
+                      startIcon={<EditIcon />}
+                      onClick={() => navigate(`/pay-rolls-edit/${id}`)}
+                    >
+                      Edit Payroll
+                    </Button>
+                  )}
+                  
                   <Button 
                     variant="contained" 
                     onClick={() => navigate('/pay-rolls-list')}
@@ -809,6 +851,7 @@ export default function PayrollView() {
                             <TableCell sx={{ minWidth: 100 }} align="right">Late Fine</TableCell>
                             <TableCell sx={{ minWidth: 100 }} align="center">Overtime (mins)</TableCell>
                             <TableCell sx={{ minWidth: 100 }} align="right">Overtime Pay</TableCell>
+                            <TableCell sx={{ minWidth: 100 }} align="right">Absent Deduction</TableCell>
                             <TableCell sx={{ minWidth: 100 }} align="right">Total</TableCell>
                             <TableCell sx={{ minWidth: 300 }}>Notes</TableCell>
                           </TableRow>
@@ -833,7 +876,8 @@ export default function PayrollView() {
                                     day.status === 'Present' ? 'success' :
                                     day.status === 'Absent' ? 'error' :
                                     day.status === 'Late' ? 'warning' :
-                                    day.status === 'Half Day' ? 'info' : 'default'
+                                    day.status === 'Half Day' ? 'info' :
+                                    day.status === 'Missing Workdays' ? 'error' : 'default'
                                   }
                                   variant="outlined"
                                 />
@@ -869,6 +913,13 @@ export default function PayrollView() {
                                 fontWeight: (day.overtimePay && day.overtimePay > 0) ? 500 : 400
                               }}>
                                 {formatCurrency(day.overtimePay || 0)}
+                              </TableCell>
+                              <TableCell align="right" sx={{ 
+                                color: (day.absentDeduction && day.absentDeduction > 0) ? 'error.main' : 'text.secondary',
+                                fontFamily: 'monospace',
+                                fontWeight: (day.absentDeduction && day.absentDeduction > 0) ? 500 : 400
+                              }}>
+                                {formatCurrency(day.absentDeduction || 0)}
                               </TableCell>
                               <TableCell align="right" sx={{ 
                                 fontFamily: 'monospace', 

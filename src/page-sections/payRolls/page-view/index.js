@@ -1,3 +1,4 @@
-export { default as CreateView } from "./create.jsx";
-export { default as ListView } from "./list.jsx";
-export { default as PayrollView } from "./view.jsx";
+export { default as CreateView } from "./create";
+export { default as ListView } from "./list";
+export { default as PayrollView } from "./view";
+export { default as EditView } from "./edit";

@@ -13,6 +13,10 @@ import { Paragraph } from "@/components/typography";
 import { TableMoreMenuItem, TableMoreMenu } from "@/components/table";
 import { Chip } from "@mui/material";
 import { format } from "date-fns";
+import { toast } from "react-toastify";
+import { IconButton, Menu, MenuItem } from "@mui/material";
+import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
+import EditIcon from "@mui/icons-material/Edit";
 
 // Status chip component for better visual representation
 const StatusChip = ({ status }) => {
@@ -54,13 +58,71 @@ const formatDateRange = (startDate, endDate) => {
 export default function TableRowView(props) {
   const { data, isSelected, handleSelectRow, handleDelete, handleApprove, handleMarkAsPaid, handleGeneratePdf, handleViewPdf } = props;
   const navigate = useNavigate();
-  const [openMenuEl, setOpenMenuEl] = useState(null);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
 
-  const handleOpenMenu = (event) => {
-    setOpenMenuEl(event.currentTarget);
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
   };
-  
-  const handleCloseOpenMenu = () => setOpenMenuEl(null);
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const navigateToView = () => {
+    navigate(`/pay-rolls-view/${data._id}`);
+    handleClose();
+  };
+
+  const navigateToEdit = () => {
+    // Only allow editing if status is "Generated"
+    if (data.status === "Generated") {
+      navigate(`/pay-rolls-edit/${data._id}`);
+    } else {
+      toast.warning("Only payrolls with 'Generated' status can be edited");
+    }
+    handleClose();
+  };
+
+  const handleDeleteClick = () => {
+    // Only allow deletion if status is "Generated"
+    if (data.status === "Generated") {
+      handleDelete(data._id, data.payrollType);
+    } else {
+      toast.warning("Only payrolls with 'Generated' status can be deleted");
+    }
+    handleClose();
+  };
+
+  const handleApproveClick = () => {
+    // Only allow approval if status is "Generated"
+    if (data.status === "Generated") {
+      handleApprove(data._id, data.payrollType);
+    } else {
+      toast.warning("Only payrolls with 'Generated' status can be approved");
+    }
+    handleClose();
+  };
+
+  const handleMarkAsPaidClick = () => {
+    // Only allow marking as paid if status is "Approved"
+    if (data.status === "Approved") {
+      handleMarkAsPaid(data._id, data.payrollType);
+    } else {
+      toast.warning("Only payrolls with 'Approved' status can be marked as paid");
+    }
+    handleClose();
+  };
+
+  const handleGeneratePdfClick = () => {
+    handleGeneratePdf(data._id, data.payrollType);
+    handleClose();
+  };
+
+  const handleViewPdfClick = () => {
+    handleViewPdf(data._id, data.payrollType);
+    handleClose();
+  };
 
   // Determine which actions to show based on payroll status
   const isDraft = data?.status === "Generated" || data?.status === "Draft";
@@ -93,70 +155,39 @@ export default function TableRowView(props) {
     {
       Icon: Visibility,
       title: "View",
-      onClick: () => {
-        handleCloseOpenMenu();
-        navigate(`/pay-rolls-view/${data._id}`);
-      },
+      onClick: navigateToView,
+    },
+    {
+      Icon: Edit,
+      title: "Edit",
+      onClick: navigateToEdit,
+    },
+    {
+      Icon: CheckCircle,
+      title: "Approve",
+      onClick: handleApproveClick,
+    },
+    {
+      Icon: AttachMoney,
+      title: "Mark as Paid",
+      onClick: handleMarkAsPaidClick,
     },
     {
       Icon: PictureAsPdf,
       title: "Generate Payslip",
-      onClick: () => {
-        handleCloseOpenMenu();
-        handleGeneratePdf(data._id, data?.payrollType || data?._type);
-      },
+      onClick: handleGeneratePdfClick,
     },
     {
-      Icon: Visibility,
+      Icon: PictureAsPdf,
       title: "View Payslip",
-      onClick: () => {
-        handleCloseOpenMenu();
-        handleViewPdf(data._id, data?.payrollType || data?._type);
-      },
+      onClick: handleViewPdfClick,
+    },
+    {
+      Icon: DeleteOutline,
+      title: "Delete",
+      onClick: handleDeleteClick,
     },
   ];
-
-  if (isDraft) {
-    iconList.push(
-      {
-        Icon: Edit,
-        title: "Edit",
-        onClick: () => {
-          handleCloseOpenMenu();
-          navigate(`/pay-rolls-update/${data._id}`);
-        },
-      },
-      {
-        Icon: CheckCircle,
-        title: "Approve",
-        onClick: () => {
-          handleCloseOpenMenu();
-          handleApprove(data._id, data?.payrollType || data?._type);
-        },
-      },
-      {
-        Icon: DeleteOutline,
-        title: "Delete",
-        onClick: () => {
-          handleCloseOpenMenu();
-          handleDelete(data._id, data?.payrollType || data?._type);
-        },
-      }
-    );
-  }
-
-  if (isApproved) {
-    iconList.push(
-      {
-        Icon: AttachMoney,
-        title: "Mark as Paid",
-        onClick: () => {
-          handleCloseOpenMenu();
-          handleMarkAsPaid(data._id, data?.payrollType || data?._type);
-        },
-      }
-    );
-  }
 
   return (
     <>
@@ -181,20 +212,21 @@ export default function TableRowView(props) {
         </TableCell>
 
         <TableCell>
-          <TableMoreMenu
-            open={openMenuEl}
-            handleOpen={handleOpenMenu}
-            handleClose={handleCloseOpenMenu}
-          >
+          <IconButton onClick={handleClick}>
+            <MoreHorizIcon />
+          </IconButton>
+          <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
             {iconList.map((item, index) => (
-              <TableMoreMenuItem
+              <MenuItem
                 key={index}
-                Icon={item.Icon}
-                title={item.title}
-                handleClick={item.onClick}
-              />
+                onClick={item.onClick}
+                disabled={item.disabled}
+              >
+                {item.Icon && <item.Icon fontSize="small" sx={{ mr: 1 }} />}
+                {item.title}
+              </MenuItem>
             ))}
-          </TableMoreMenu>
+          </Menu>
         </TableCell>
       </TableRow>
     </>
