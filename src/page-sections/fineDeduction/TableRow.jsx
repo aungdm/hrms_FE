@@ -13,8 +13,10 @@ import FlexBox from "@/components/flexbox/FlexBox";
 import { Paragraph } from "@/components/typography";
 import { TableMoreMenuItem, TableMoreMenu } from "@/components/table";
 import { utils } from "@/utils/functionUtils";
-import { Chip } from "@mui/material";
+import { Chip, IconButton, Tooltip } from "@mui/material";
 import { format } from "date-fns";
+import { updateProcessedStatus } from "./request";
+import { toast } from "react-toastify";
 
 export default function TableRowView(props) {
   const { 
@@ -23,16 +25,53 @@ export default function TableRowView(props) {
     handleSelectRow, 
     handleDelete, 
     handleStatusChange,
-    showCheckbox = true 
+    showCheckbox = true,
+    onRefresh
   } = props;
   
   const navigate = useNavigate();
   const [openMenuEl, setOpenMenuEl] = useState(null);
+  const [processing, setProcessing] = useState(false);
 
   const handleOpenMenu = (event) => {
     setOpenMenuEl(event.currentTarget);
   };
   const handleCloseOpenMenu = () => setOpenMenuEl(null);
+
+  const handleProcessedToggle = async (e) => {
+    e.stopPropagation();
+    if (processing) return;
+    
+    try {
+      setProcessing(true);
+      const newStatus = !data.processed;
+      console.log("Toggling processed status:", { 
+        id: data._id, 
+        currentStatus: data.processed, 
+        newStatus 
+      });
+      
+      const response = await updateProcessedStatus(data._id, newStatus);
+      console.log("API response:", response);
+      
+      if (response.success) {
+        toast.success(newStatus ? 
+          "Fine deduction marked as paid successfully" : 
+          "Fine deduction marked as unpaid successfully"
+        );
+        if (typeof onRefresh === 'function') {
+          onRefresh();
+        }
+      } else {
+        toast.error(response.message || "Failed to update payment status");
+      }
+    } catch (error) {
+      console.error("Error toggling processed status:", error);
+      toast.error("Error updating payment status");
+    } finally {
+      setProcessing(false);
+    }
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -115,10 +154,24 @@ export default function TableRowView(props) {
         </TableCell>
 
         <TableCell padding="normal">
-          {data?.processed ? 
-            <CheckCircle color="success" fontSize="small" /> : 
-            <Cancel color="error" fontSize="small" />
-          }
+          <Tooltip title={data?.processed ? "Mark as unpaid" : "Mark as paid"}>
+            <IconButton 
+              size="small" 
+              onClick={handleProcessedToggle}
+              disabled={processing}
+              color={data?.processed ? "success" : "error"}
+              sx={{ 
+                '&:hover': { 
+                  backgroundColor: data?.processed ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)' 
+                } 
+              }}
+            >
+              {data?.processed ? 
+                <CheckCircle fontSize="small" /> : 
+                <Cancel fontSize="small" />
+              }
+            </IconButton>
+          </Tooltip>
         </TableCell>
 
         <TableCell padding="normal">

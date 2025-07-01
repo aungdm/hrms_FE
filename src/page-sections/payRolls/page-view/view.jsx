@@ -22,6 +22,7 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
+  DialogActions,
 } from "@mui/material";
 import { Paragraph } from "@/components/typography";
 import IconWrapper from "@/components/icon-wrapper/IconWrapper.jsx";
@@ -42,6 +43,7 @@ import FineDeductionDetail from "../FineDeductionDetail";
 import AdvancedSalaryDetail from "../AdvancedSalaryDetail";
 import OtherDeductionDetail from "../OtherDeductionDetail";
 import EditIcon from "@mui/icons-material/Edit";
+import InfoIcon from "@mui/icons-material/Info";
 
 // Format currency values
 const formatCurrency = (amount) => {
@@ -536,185 +538,487 @@ export default function PayrollView() {
           <>
             <Grid container spacing={3}>
               <Grid item xs={12}>
-                <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-                  <Typography variant="h6">Employee Information</Typography>
-                  <StatusChip status={payrollData.status || "Generated"} />
-                </Stack>
-                
-                <TableContainer component={Paper} variant="outlined">
-                  <Table>
-                    <TableBody>
-                      <TableRow>
-                        <TableCell component="th" width="30%">Employee ID</TableCell>
-                        <TableCell>{payrollData.employeeId || '-'}</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell component="th">Employee Name</TableCell>
-                        <TableCell>{payrollData.employeeName || '-'}</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell component="th">Designation</TableCell>
-                        <TableCell>{payrollData.designation || '-'}</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell component="th">Payroll Type</TableCell>
-                        <TableCell>{isHourly ? 'Hourly' : 'Monthly'}</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell component="th">Payroll Period</TableCell>
-                        <TableCell>
+                <Card 
+                  variant="outlined" 
+                  sx={{ 
+                    p: 2, 
+                    mb: 2,
+                    borderRadius: 2,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                    background: 'linear-gradient(to right, #f9f9f9, #ffffff)'
+                  }}
+                >
+                  <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <Box 
+                        sx={{ 
+                          bgcolor: 'primary.main', 
+                          color: 'white', 
+                          p: 1, 
+                          borderRadius: 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        <Invoice fontSize="small" />
+                      </Box>
+                      <Typography variant="h6" fontWeight={600}>Employee Information</Typography>
+                    </Stack>
+                    <StatusChip status={payrollData.status || "Generated"} />
+                  </Stack>
+                  
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} md={4}>
+                      <Box sx={{ 
+                        p: 2, 
+                        borderRadius: 1, 
+                        bgcolor: 'background.paper',
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        height: '100%'
+                      }}>
+                        <Typography variant="caption" color="text.secondary">Employee ID</Typography>
+                        <Typography variant="body1" fontWeight={500}>{payrollData.employeeId || 'N/A'}</Typography>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                      <Box sx={{ 
+                        p: 2, 
+                        borderRadius: 1, 
+                        bgcolor: 'background.paper',
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        height: '100%'
+                      }}>
+                        <Typography variant="caption" color="text.secondary">Employee Name</Typography>
+                        <Typography variant="body1" fontWeight={500}>{payrollData.employeeName || 'N/A'}</Typography>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                      <Box sx={{ 
+                        p: 2, 
+                        borderRadius: 1, 
+                        bgcolor: 'background.paper',
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        height: '100%'
+                      }}>
+                        <Typography variant="caption" color="text.secondary">Designation</Typography>
+                        <Typography variant="body1" fontWeight={500}>{payrollData.designation || 'N/A'}</Typography>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Box sx={{ 
+                        p: 2, 
+                        borderRadius: 1, 
+                        bgcolor: 'background.paper',
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        height: '100%'
+                      }}>
+                        <Typography variant="caption" color="text.secondary">Payroll Type</Typography>
+                        <Box mt={0.5}>
+                          <Chip 
+                            label={isHourly ? 'Hourly' : 'Monthly'} 
+                            color={isHourly ? 'primary' : 'secondary'} 
+                            variant="outlined" 
+                            size="small" 
+                          />
+                        </Box>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Box sx={{ 
+                        p: 2, 
+                        borderRadius: 1, 
+                        bgcolor: 'background.paper',
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        height: '100%'
+                      }}>
+                        <Typography variant="caption" color="text.secondary">Payroll Period</Typography>
+                        <Typography variant="body1" fontWeight={500}>
                           {payrollData.startDate && payrollData.endDate ? 
                             `${format(new Date(payrollData.startDate), 'dd/MM/yyyy')} - ${format(new Date(payrollData.endDate), 'dd/MM/yyyy')}` : 
-                            '-'}
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                            'N/A'}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  </Grid>
+                </Card>
               </Grid>
 
               <Grid item xs={12}>
-                <Typography variant="h6" mb={2}>Salary Details</Typography>
-                
-                <TableContainer component={Paper} variant="outlined">
-                  <Table>
-                    <TableBody>
-                      <TableRow>
-                        <TableCell component="th" width="30%">Monthly Gross Salary</TableCell>
-                        <TableCell>{formatCurrency(payrollData.grossSalary || 0)}</TableCell>
-                      </TableRow>
+                <Card 
+                  variant="outlined" 
+                  sx={{ 
+                    p: 2, 
+                    mb: 2,
+                    borderRadius: 2,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                    background: 'linear-gradient(to right, #f9f9f9, #ffffff)'
+                  }}
+                >
+                  <Stack direction="row" alignItems="center" spacing={1} mb={2}>
+                    <Box 
+                      sx={{ 
+                        bgcolor: 'success.main', 
+                        color: 'white', 
+                        p: 1, 
+                        borderRadius: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      <Invoice fontSize="small" />
+                    </Box>
+                    <Typography variant="h6" fontWeight={600}>Salary Details</Typography>
+                  </Stack>
+                  
+                  <Grid container spacing={2}>
+                    {/* Main Salary Information */}
+                    <Grid item xs={12} md={6}>
+                      <Box sx={{ 
+                        p: 2, 
+                        borderRadius: 1, 
+                        bgcolor: 'primary.50',
+                        border: '1px solid',
+                        borderColor: 'primary.100',
+                        mb: 2
+                      }}>
+                        <Typography variant="caption" color="text.secondary">Monthly Gross Salary</Typography>
+                        <Typography variant="h5" fontWeight={600} color="primary.main">
+                          {formatCurrency(payrollData.grossSalary || 0)}
+                        </Typography>
+                      </Box>
                       
                       {payrollData.actualGrossSalary !== undefined && (
-                        <TableRow>
-                          <TableCell component="th">Actual Gross Salary (Based on Hours)</TableCell>
-                          <TableCell>{formatCurrency(payrollData.actualGrossSalary || 0)}</TableCell>
-                        </TableRow>
+                        <Box sx={{ 
+                          p: 2, 
+                          borderRadius: 1, 
+                          bgcolor: 'background.paper',
+                          border: '1px solid',
+                          borderColor: 'divider',
+                          mb: 2
+                        }}>
+                          <Typography variant="caption" color="text.secondary">Actual Gross Salary (Based on Hours)</Typography>
+                          <Typography variant="h6" fontWeight={500}>
+                            {formatCurrency(payrollData.actualGrossSalary || 0)}
+                          </Typography>
+                        </Box>
                       )}
                       
-                      {isHourly ? (
-                        // Hourly employee specific fields
-                        <>
-                          <TableRow>
-                            <TableCell component="th">Per Hour Rate</TableCell>
-                            <TableCell>{formatCurrency(payrollData.hourlyRate || payrollData.perHourRate || (payrollData.grossSalary && payrollData.payableHours ? (payrollData.grossSalary / payrollData.payableHours).toFixed(2) : 0))}</TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell component="th">Payable Hours</TableCell>
-                            <TableCell>{payrollData.payableHours || payrollData.totalHours || 'N/A'}</TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell component="th">Absent Days</TableCell>
-                            <TableCell>{payrollData.absentDays || 0}</TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell component="th">Absent Deductions</TableCell>
-                            <TableCell>{formatCurrency(payrollData.absentDeductions || 0)}</TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell component="th">Late Fines</TableCell>
-                            <TableCell>{formatCurrency(payrollData.lateFines || 0)}</TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell component="th">Other Deductions</TableCell>
-                            <TableCell sx={{ color: 'error.main' }}>{formatCurrency((payrollData.otherDeductions || 0) + (payrollData.fineDeductions || 0))}</TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell component="th">Missing Deduction</TableCell>
-                            <TableCell sx={{ color: 'error.main' }}>{formatCurrency(payrollData.missingDeduction || 0)}</TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell component="th">Overtime Pay</TableCell>
-                            <TableCell>{formatCurrency(payrollData.overtimePay || 0)}</TableCell>
-                          </TableRow>
-                          {payrollData.otherIncentives > 0 && (
-                            <TableRow>
-                              <TableCell component="th">Other Incentives</TableCell>
-                              <TableCell sx={{ color: 'success.main' }}>{formatCurrency(payrollData.otherIncentives || 0)}</TableCell>
-                            </TableRow>
-                          )}
-                          {payrollData.arrears > 0 && (
-                            <TableRow>
-                              <TableCell component="th">Arrears</TableCell>
-                              <TableCell sx={{ color: 'success.main' }}>{formatCurrency(payrollData.arrears || 0)}</TableCell>
-                            </TableRow>
-                          )}
-                          {payrollData.fineDeductions > 0 && (
-                            <TableRow>
-                              <TableCell component="th">Fine Deductions</TableCell>
-                              <TableCell sx={{ color: 'error.main' }}>{formatCurrency(payrollData.fineDeductions || 0)}</TableCell>
-                            </TableRow>
-                          )}
-                          {payrollData.advancedSalary > 0 && (
-                            <TableRow>
-                              <TableCell component="th">Advanced Salary</TableCell>
-                              <TableCell sx={{ color: 'error.main' }}>{formatCurrency(payrollData.advancedSalary || 0)}</TableCell>
-                            </TableRow>
-                          )}
-                        </>
-                      ) : (
-                        // Monthly employee specific fields
-                        <>
-                          <TableRow>
-                            <TableCell component="th">Absent Days</TableCell>
-                            <TableCell>{payrollData.absentDays || 0}</TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell component="th">Absent Deductions</TableCell>
-                            <TableCell>{formatCurrency(payrollData.absentDeductions || 0)}</TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell component="th">Other Deductions</TableCell>
-                            <TableCell sx={{ color: 'error.main' }}>{formatCurrency((payrollData.otherDeductions || 0) + (payrollData.fineDeductions || 0))}</TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell component="th">Missing Deduction</TableCell>
-                            <TableCell sx={{ color: 'error.main' }}>{formatCurrency(payrollData.missingDeduction || 0)}</TableCell>
-                          </TableRow>
-                          {payrollData.otherIncentives > 0 && (
-                            <TableRow>
-                              <TableCell component="th">Other Incentives</TableCell>
-                              <TableCell sx={{ color: 'success.main' }}>{formatCurrency(payrollData.otherIncentives || 0)}</TableCell>
-                            </TableRow>
-                          )}
-                          {payrollData.arrears > 0 && (
-                            <TableRow>
-                              <TableCell component="th">Arrears</TableCell>
-                              <TableCell sx={{ color: 'success.main' }}>{formatCurrency(payrollData.arrears || 0)}</TableCell>
-                            </TableRow>
-                          )}
-                          {payrollData.fineDeductions > 0 && (
-                            <TableRow>
-                              <TableCell component="th">Fine Deductions</TableCell>
-                              <TableCell sx={{ color: 'error.main' }}>{formatCurrency(payrollData.fineDeductions || 0)}</TableCell>
-                            </TableRow>
-                          )}
-                          {payrollData.advancedSalary > 0 && (
-                            <TableRow>
-                              <TableCell component="th">Advanced Salary</TableCell>
-                              <TableCell sx={{ color: 'error.main' }}>{formatCurrency(payrollData.advancedSalary || 0)}</TableCell>
-                            </TableRow>
-                          )}
-                        </>
-                      )}
-                      
-                      <TableRow>
-                        <TableCell component="th">Net Salary</TableCell>
-                        <TableCell><strong>{formatCurrency(payrollData.netSalary || 0)}</strong></TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-                
-                {isHourly && (
-                  <Box sx={{ mt: 1, pl: 1 }}>
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      Note: First three late arrivals are not charged with fines.
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      Note: Absent days are charged at ₹10,000 per day for hourly employees.
-                    </Typography>
-                  </Box>
-                )}
+                      <Box sx={{ 
+                        p: 2, 
+                        borderRadius: 1, 
+                        bgcolor: payrollData.netSalary >= 0 ? 'success.50' : 'error.50',
+                        border: '1px solid',
+                        borderColor: payrollData.netSalary >= 0 ? 'success.100' : 'error.100'
+                      }}>
+                        <Typography variant="caption" color="text.secondary">Net Salary</Typography>
+                        <Typography variant="h5" fontWeight={600} color={payrollData.netSalary >= 0 ? 'success.main' : 'error.main'}>
+                          {formatCurrency(payrollData.netSalary || 0)}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    
+                    {/* Detailed Salary Breakdown */}
+                    <Grid item xs={12} md={6}>
+                      <Box sx={{ 
+                        p: 2, 
+                        borderRadius: 1, 
+                        bgcolor: 'background.paper',
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        height: '100%',
+                        overflow: 'auto'
+                      }}>
+                        <Typography variant="subtitle2" fontWeight={600} mb={1}>Salary Breakdown</Typography>
+                        
+                        {isHourly ? (
+                          // Hourly employee specific fields
+                          <Grid container spacing={2}>
+                            <Grid item xs={6}>
+                              <Box sx={{ mb: 1.5 }}>
+                                <Typography variant="caption" color="text.secondary" display="block">Per Hour Rate</Typography>
+                                <Typography variant="body2" fontWeight={500}>
+                                  {formatCurrency(payrollData.hourlyRate || payrollData.perHourRate || (payrollData.grossSalary && payrollData.payableHours ? (payrollData.grossSalary / payrollData.payableHours).toFixed(2) : 0))}
+                                </Typography>
+                              </Box>
+                            </Grid>
+                            <Grid item xs={6}>
+                              <Box sx={{ mb: 1.5 }}>
+                                <Typography variant="caption" color="text.secondary" display="block">Payable Hours</Typography>
+                                <Typography variant="body2" fontWeight={500}>
+                                  {payrollData.payableHours || payrollData.totalHours || 'N/A'}
+                                </Typography>
+                              </Box>
+                            </Grid>
+                            <Grid item xs={6}>
+                              <Box sx={{ mb: 1.5 }}>
+                                <Typography variant="caption" color="text.secondary" display="block">Absent Days</Typography>
+                                <Typography variant="body2" fontWeight={500} color="error.main">
+                                  {payrollData.absentDays || 0}
+                                </Typography>
+                              </Box>
+                            </Grid>
+                            <Grid item xs={6}>
+                              <Box sx={{ mb: 1.5 }}>
+                                <Typography variant="caption" color="text.secondary" display="block">Absent Deductions</Typography>
+                                <Typography variant="body2" fontWeight={500} color="error.main">
+                                  {formatCurrency(payrollData.absentDeductions || 0)}
+                                </Typography>
+                              </Box>
+                            </Grid>
+                            <Grid item xs={6}>
+                              <Box sx={{ mb: 1.5 }}>
+                                <Typography variant="caption" color="text.secondary" display="block">Late Fines</Typography>
+                                <Typography variant="body2" fontWeight={500} color="error.main">
+                                  {formatCurrency(payrollData.lateFines || 0)}
+                                </Typography>
+                              </Box>
+                            </Grid>
+                            <Grid item xs={6}>
+                              <Box sx={{ mb: 1.5 }}>
+                                <Typography variant="caption" color="text.secondary" display="block">Other Deductions</Typography>
+                                <Typography variant="body2" fontWeight={500} color="error.main">
+                                  {formatCurrency((payrollData.otherDeductions || 0) + (payrollData.fineDeductions || 0))}
+                                </Typography>
+                              </Box>
+                            </Grid>
+                            <Grid item xs={6}>
+                              <Box sx={{ mb: 1.5 }}>
+                                <Typography variant="caption" color="text.secondary" display="block">Missing Deduction</Typography>
+                                <Typography variant="body2" fontWeight={500} color="error.main">
+                                  {formatCurrency(payrollData.missingDeduction || 0)}
+                                </Typography>
+                              </Box>
+                            </Grid>
+                            <Grid item xs={6}>
+                              <Box sx={{ mb: 1.5 }}>
+                                <Typography variant="caption" color="text.secondary" display="block">Overtime Pay</Typography>
+                                <Typography variant="body2" fontWeight={500} color="success.main">
+                                  {formatCurrency(payrollData.overtimePay || 0)}
+                                </Typography>
+                              </Box>
+                            </Grid>
+                            {payrollData.otherIncentives > 0 && (
+                              <Grid item xs={6}>
+                                <Box sx={{ mb: 1.5 }}>
+                                  <Typography variant="caption" color="text.secondary" display="block">Other Incentives</Typography>
+                                  <Typography variant="body2" fontWeight={500} color="success.main">
+                                    {formatCurrency(payrollData.otherIncentives || 0)}
+                                  </Typography>
+                                </Box>
+                              </Grid>
+                            )}
+                            {payrollData.arrears > 0 && (
+                              <Grid item xs={6}>
+                                <Box sx={{ mb: 1.5 }}>
+                                  <Typography variant="caption" color="text.secondary" display="block">Arrears</Typography>
+                                  <Typography variant="body2" fontWeight={500} color="success.main">
+                                    {formatCurrency(payrollData.arrears || 0)}
+                                  </Typography>
+                                </Box>
+                              </Grid>
+                            )}
+                            {payrollData.fineDeductions > 0 && (
+                              <Grid item xs={6}>
+                                <Box sx={{ mb: 1.5 }}>
+                                  <Typography variant="caption" color="text.secondary" display="block">Fine Deductions</Typography>
+                                  <Typography variant="body2" fontWeight={500} color="error.main">
+                                    {formatCurrency(payrollData.fineDeductions || 0)}
+                                  </Typography>
+                                </Box>
+                              </Grid>
+                            )}
+                            {payrollData.advancedSalary > 0 && (
+                              <Grid item xs={6}>
+                                <Box sx={{ mb: 1.5 }}>
+                                  <Typography variant="caption" color="text.secondary" display="block">Advanced Salary</Typography>
+                                  <Typography variant="body2" fontWeight={500} color="error.main">
+                                    {formatCurrency(payrollData.advancedSalary || 0)}
+                                  </Typography>
+                                </Box>
+                              </Grid>
+                            )}
+                          </Grid>
+                        ) : (
+                          // Monthly employee specific fields
+                          <Grid container spacing={2}>
+                            <Grid item xs={6}>
+                              <Box sx={{ mb: 1.5 }}>
+                                <Typography variant="caption" color="text.secondary" display="block">Absent Days</Typography>
+                                <Typography variant="body2" fontWeight={500} color="error.main">
+                                  {payrollData.absentDays || 0}
+                                </Typography>
+                              </Box>
+                            </Grid>
+                            <Grid item xs={6}>
+                              <Box sx={{ mb: 1.5 }}>
+                                <Typography variant="caption" color="text.secondary" display="block">Absent Deductions</Typography>
+                                <Typography variant="body2" fontWeight={500} color="error.main">
+                                  {formatCurrency(payrollData.absentDeductions || 0)}
+                                </Typography>
+                              </Box>
+                            </Grid>
+                            <Grid item xs={6}>
+                              <Box sx={{ mb: 1.5 }}>
+                                <Typography variant="caption" color="text.secondary" display="block">Other Deductions</Typography>
+                                <Typography variant="body2" fontWeight={500} color="error.main">
+                                  {formatCurrency((payrollData.otherDeductions || 0) + (payrollData.fineDeductions || 0))}
+                                </Typography>
+                              </Box>
+                            </Grid>
+                            <Grid item xs={6}>
+                              <Box sx={{ mb: 1.5 }}>
+                                <Typography variant="caption" color="text.secondary" display="block">Missing Deduction</Typography>
+                                <Typography variant="body2" fontWeight={500} color="error.main">
+                                  {formatCurrency(payrollData.missingDeduction || 0)}
+                                </Typography>
+                              </Box>
+                            </Grid>
+                            {payrollData.otherIncentives > 0 && (
+                              <Grid item xs={6}>
+                                <Box sx={{ mb: 1.5 }}>
+                                  <Typography variant="caption" color="text.secondary" display="block">Other Incentives</Typography>
+                                  <Typography variant="body2" fontWeight={500} color="success.main">
+                                    {formatCurrency(payrollData.otherIncentives || 0)}
+                                  </Typography>
+                                </Box>
+                              </Grid>
+                            )}
+                            {payrollData.arrears > 0 && (
+                              <Grid item xs={6}>
+                                <Box sx={{ mb: 1.5 }}>
+                                  <Typography variant="caption" color="text.secondary" display="block">Arrears</Typography>
+                                  <Typography variant="body2" fontWeight={500} color="success.main">
+                                    {formatCurrency(payrollData.arrears || 0)}
+                                  </Typography>
+                                </Box>
+                              </Grid>
+                            )}
+                            {payrollData.fineDeductions > 0 && (
+                              <Grid item xs={6}>
+                                <Box sx={{ mb: 1.5 }}>
+                                  <Typography variant="caption" color="text.secondary" display="block">Fine Deductions</Typography>
+                                  <Typography variant="body2" fontWeight={500} color="error.main">
+                                    {formatCurrency(payrollData.fineDeductions || 0)}
+                                  </Typography>
+                                </Box>
+                              </Grid>
+                            )}
+                            {payrollData.advancedSalary > 0 && (
+                              <Grid item xs={6}>
+                                <Box sx={{ mb: 1.5 }}>
+                                  <Typography variant="caption" color="text.secondary" display="block">Advanced Salary</Typography>
+                                  <Typography variant="body2" fontWeight={500} color="error.main">
+                                    {formatCurrency(payrollData.advancedSalary || 0)}
+                                  </Typography>
+                                </Box>
+                              </Grid>
+                            )}
+                          </Grid>
+                        )}
+                      </Box>
+                    </Grid>
+                  </Grid>
+                  
+                  {isHourly && (
+                    <Box sx={{ 
+                      mt: 2, 
+                      p: 2, 
+                      borderRadius: 1,
+                      bgcolor: 'info.50',
+                      border: '1px solid',
+                      borderColor: 'info.100',
+                    }}>
+                      <Stack direction="row" alignItems="center" spacing={1}>
+                        <InfoIcon color="info" fontSize="small" />
+                        <Box>
+                          <Typography variant="body2" color="text.secondary">
+                            First three late arrivals are not charged with fines.
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Absent days are charged at ₹10,000 per day for hourly employees.
+                          </Typography>
+                        </Box>
+                      </Stack>
+                    </Box>
+                  )}
+                </Card>
+              </Grid>
+
+              <Grid item xs={12}>
+                <Card 
+                  variant="outlined" 
+                  sx={{ 
+                    p: 2,
+                    mb: 2,
+                    borderRadius: 2,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                  }}
+                >
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} flexWrap="wrap">
+                    <Button 
+                      variant="outlined" 
+                      startIcon={<FileDownloadIcon />}
+                      onClick={downloadExcel}
+                      sx={{ px: 3 }}
+                    >
+                      Download Excel
+                    </Button>
+                    
+                    <Button 
+                      variant="outlined" 
+                      startIcon={<PictureAsPdfIcon />}
+                      onClick={downloadPdf}
+                      sx={{ px: 3 }}
+                    >
+                      Download PDF
+                    </Button>
+                    
+                    <Button
+                      variant="outlined"
+                      startIcon={<VisibilityIcon />}
+                      onClick={viewPdfInTab}
+                      sx={{ px: 3 }}
+                    >
+                      View PDF in Tab
+                    </Button>
+                    
+                    <Button
+                      variant="outlined"
+                      startIcon={<VisibilityIcon />}
+                      onClick={viewPdfInDialog}
+                      sx={{ px: 3 }}
+                    >
+                      View PDF in Dialog
+                    </Button>
+                    
+                    {payrollData.status === "Generated" && (
+                      <Button 
+                        variant="contained"
+                        color="primary" 
+                        startIcon={<EditIcon />}
+                        onClick={() => navigate(`/pay-rolls-edit/${id}`)}
+                        sx={{ px: 3 }}
+                      >
+                        Edit Payroll
+                      </Button>
+                    )}
+                    
+                    <Button 
+                      variant="contained" 
+                      onClick={() => navigate('/pay-rolls-list')}
+                      sx={{ px: 3 }}
+                    >
+                      Back to List
+                    </Button>
+                  </Stack>
+                </Card>
               </Grid>
 
               {/* Add Incentives Detail Section if incentives exist */}
@@ -766,60 +1070,6 @@ export default function PayrollView() {
                   />
                 </Grid>
               )}
-
-              <Grid item xs={12}>
-                <Stack direction="row" spacing={2} mt={2}>
-                  <Button 
-                    variant="outlined" 
-                    startIcon={<FileDownloadIcon />}
-                    onClick={downloadExcel}
-                  >
-                    Download Excel
-                  </Button>
-                  
-                  <Button 
-                    variant="outlined" 
-                    startIcon={<PictureAsPdfIcon />}
-                    onClick={downloadPdf}
-                  >
-                    Download PDF
-                  </Button>
-                  
-                  <Button
-                    variant="outlined"
-                    startIcon={<VisibilityIcon />}
-                    onClick={viewPdfInTab}
-                  >
-                    View PDF in Tab
-                  </Button>
-                  
-                  <Button
-                    variant="outlined"
-                    startIcon={<VisibilityIcon />}
-                    onClick={viewPdfInDialog}
-                  >
-                    View PDF in Dialog
-                  </Button>
-                  
-                  {payrollData.status === "Generated" && (
-                    <Button 
-                      variant="contained"
-                      color="primary" 
-                      startIcon={<EditIcon />}
-                      onClick={() => navigate(`/pay-rolls-edit/${id}`)}
-                    >
-                      Edit Payroll
-                    </Button>
-                  )}
-                  
-                  <Button 
-                    variant="contained" 
-                    onClick={() => navigate('/pay-rolls-list')}
-                  >
-                    Back to List
-                  </Button>
-                </Stack>
-              </Grid>
 
               {/* Daily Calculations Section for Hourly Employees */}
               {isHourly && payrollData.dailyCalculations && payrollData.dailyCalculations.length > 0 && (

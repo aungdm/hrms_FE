@@ -207,4 +207,32 @@ export const getAllEmployees = async () => {
   }
 };
 
+export const updateProcessedStatus = async (id, processed) => {
+  try {
+    console.log(`Updating processed status for ID: ${id} to ${processed}`);
+    
+    // Create a dedicated endpoint for updating processed status
+    const response = await axios.patch(`/fineDeduction/${id}/processed`, { processed });
+    
+    if (response.data.success) {
+      return { 
+        data: response.data.data, 
+        success: true,
+        message: response.data.message || `Fine deduction ${processed ? 'marked as paid' : 'marked as unpaid'} successfully`
+      };
+    } else {
+      return { 
+        success: false,
+        message: response.data.message || "Failed to update payment status"
+      };
+    }
+  } catch (error) {
+    console.error("Error updating processed status:", error.message);
+    return {
+      success: false,
+      message: error.response?.data?.message || "Error updating payment status"
+    };
+  }
+};
+
 export const deleteMultipleService = deleteMultipleDeductions;

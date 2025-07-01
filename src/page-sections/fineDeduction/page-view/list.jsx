@@ -188,6 +188,7 @@ export default function ListView() {
                         handleDelete={handleDelete}
                         handleStatusChange={handleStatusChange}
                         showCheckbox={true}
+                        onRefresh={fetchList}
                       />
                     ))}
 

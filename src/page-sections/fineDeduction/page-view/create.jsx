@@ -157,7 +157,7 @@ export default function CreateView() {
       const response = await get(id);
       
       if (response.success) {
-        const { employeeId, deductionType, amount, deductionDate, description, processed } = response.data;
+        const { employeeId, deductionType, amount, deductionDate, description, processed, status } = response.data;
         
         // Find the employee object from the employees array
         const employeeObj = employees.find(emp => emp._id === employeeId._id) || employeeId;
@@ -168,7 +168,8 @@ export default function CreateView() {
           amount: amount || "",
           deductionDate: deductionDate ? new Date(deductionDate) : null,
           description: description || "",
-          processed: processed || false
+          processed: processed || false,
+          status: status || "Pending"
         });
       } else {
         toast.error("Failed to load fine deduction details");

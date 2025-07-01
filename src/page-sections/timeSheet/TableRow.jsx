@@ -463,13 +463,13 @@ export default function TableRowView(props) {
         </TableCell>
 
         <TableCell padding="normal">
-          {renderStatusChip(data?.checkinStatus)}
+          {renderStatusChip(data?.checkinStatus === "Early" ? "On Time" : data?.checkinStatus)}
         </TableCell>
         <TableCell
           padding="normal"
           sx={{
             maxWidth: "200px",
-            fontSize: "11px",
+            fontSize: "11px", 
             fontWeight: "500",
             color: "black",
           }}
@@ -489,7 +489,7 @@ export default function TableRowView(props) {
         </TableCell>
 
         <TableCell padding="normal">
-          {renderStatusChip(data?.checkoutStatus)}
+          {renderStatusChip(data?.checkoutStatus === "Late" ? "On Time" : data?.checkoutStatus)}
         </TableCell>
         <TableCell
           padding="normal"

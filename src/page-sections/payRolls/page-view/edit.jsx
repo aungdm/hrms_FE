@@ -15,6 +15,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Chip,
 } from "@mui/material";
 import IconWrapper from "@/components/icon-wrapper/IconWrapper.jsx";
 import { useNavigate, useParams } from "react-router-dom";
@@ -23,6 +24,9 @@ import duotone from "@/icons/duotone";
 import { getPayrollById, updatePayroll } from "../request.js";
 import { useFormik } from "formik";
 import * as Yup from "yup";
+import { format } from "date-fns";
+import CloseIcon from "@mui/icons-material/Close";
+import SaveIcon from "@mui/icons-material/Save";
 
 export default function EditView() {
   const [payrollData, setPayrollData] = useState(null);
@@ -276,308 +280,596 @@ export default function EditView() {
           <Grid container spacing={3}>
             {/* Employee Information - Read Only */}
             <Grid item xs={12}>
-              <Typography variant="h6" mb={2}>Employee Information</Typography>
-              
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    label="Employee Name"
-                    value={payrollData.employeeName || ''}
-                    InputProps={{ readOnly: true }}
+              <Card 
+                variant="outlined" 
+                sx={{ 
+                  p: 2, 
+                  mb: 2,
+                  borderRadius: 2,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                  background: 'linear-gradient(to right, #f9f9f9, #ffffff)'
+                }}
+              >
+                <Stack direction="row" alignItems="center" spacing={1} mb={2}>
+                  <Box 
+                    sx={{ 
+                      bgcolor: 'primary.main', 
+                      color: 'white', 
+                      p: 1, 
+                      borderRadius: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <EditIcon fontSize="small" />
+                  </Box>
+                  <Typography variant="h6" fontWeight={600}>Employee Information</Typography>
+                  <Chip 
+                    label={payrollData.payrollType || 'Unknown'} 
+                    color="primary" 
+                    variant="outlined" 
+                    size="small" 
+                    sx={{ ml: 'auto' }}
                   />
+                </Stack>
+                
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={4}>
+                    <Box sx={{ 
+                      p: 2, 
+                      borderRadius: 1, 
+                      bgcolor: 'background.paper',
+                      border: '1px solid',
+                      borderColor: 'divider'
+                    }}>
+                      <Typography variant="caption" color="text.secondary">Employee ID</Typography>
+                      <Typography variant="body1" fontWeight={500}>{payrollData.employeeId || 'N/A'}</Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <Box sx={{ 
+                      p: 2, 
+                      borderRadius: 1, 
+                      bgcolor: 'background.paper',
+                      border: '1px solid',
+                      borderColor: 'divider'
+                    }}>
+                      <Typography variant="caption" color="text.secondary">Employee Name</Typography>
+                      <Typography variant="body1" fontWeight={500}>{payrollData.employeeName || 'N/A'}</Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <Box sx={{ 
+                      p: 2, 
+                      borderRadius: 1, 
+                      bgcolor: 'background.paper',
+                      border: '1px solid',
+                      borderColor: 'divider'
+                    }}>
+                      <Typography variant="caption" color="text.secondary">Designation</Typography>
+                      <Typography variant="body1" fontWeight={500}>{payrollData.designation || 'N/A'}</Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <Box sx={{ 
+                      p: 2, 
+                      borderRadius: 1, 
+                      bgcolor: 'background.paper',
+                      border: '1px solid',
+                      borderColor: 'divider'
+                    }}>
+                      <Typography variant="caption" color="text.secondary">Payroll Period</Typography>
+                      <Typography variant="body1" fontWeight={500}>
+                        {payrollData.startDate && payrollData.endDate 
+                          ? `${format(new Date(payrollData.startDate), 'dd/MM/yyyy')} - ${format(new Date(payrollData.endDate), 'dd/MM/yyyy')}` 
+                          : 'N/A'}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <Box sx={{ 
+                      p: 2, 
+                      borderRadius: 1, 
+                      bgcolor: 'background.paper',
+                      border: '1px solid',
+                      borderColor: 'divider'
+                    }}>
+                      <Typography variant="caption" color="text.secondary">Status</Typography>
+                      <Box mt={0.5}>
+                        <FormControl fullWidth size="small">
+                          <Select
+                            name="status"
+                            value={formik.values.status}
+                            onChange={formik.handleChange}
+                            sx={{ fontWeight: 500 }}
+                          >
+                            <MenuItem value="Generated">Generated</MenuItem>
+                            <MenuItem value="Approved">Approved</MenuItem>
+                            <MenuItem value="Paid">Paid</MenuItem>
+                            <MenuItem value="Rejected">Rejected</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </Box>
+                    </Box>
+                  </Grid>
                 </Grid>
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    label="Designation"
-                    value={payrollData.designation || ''}
-                    InputProps={{ readOnly: true }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    label="Payroll Type"
-                    value={payrollData.payrollType || ''}
-                    InputProps={{ readOnly: true }}
-                  />
-                </Grid>
-              </Grid>
+              </Card>
             </Grid>
 
             {/* Editable Fields */}
             <Grid item xs={12}>
-              <Typography variant="h6" mb={2}>Salary Details</Typography>
-              
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Gross Salary"
-                    name="grossSalary"
-                    type="number"
-                    value={formik.values.grossSalary}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    error={formik.touched.grossSalary && Boolean(formik.errors.grossSalary)}
-                    helperText={formik.touched.grossSalary && formik.errors.grossSalary}
-                  />
-                </Grid>
+              <Card 
+                variant="outlined" 
+                sx={{ 
+                  p: 2, 
+                  mb: 2,
+                  borderRadius: 2,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                  background: 'linear-gradient(to right, #f9f9f9, #ffffff)'
+                }}
+              >
+                <Stack direction="row" alignItems="center" spacing={1} mb={2}>
+                  <Box 
+                    sx={{ 
+                      bgcolor: 'success.main', 
+                      color: 'white', 
+                      p: 1, 
+                      borderRadius: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <EditIcon fontSize="small" />
+                  </Box>
+                  <Typography variant="h6" fontWeight={600}>Salary Details</Typography>
+                </Stack>
                 
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth>
-                    <InputLabel>Status</InputLabel>
-                    <Select
-                      name="status"
-                      value={formik.values.status}
-                      label="Status"
-                      onChange={formik.handleChange}
-                    >
-                      <MenuItem value="Generated">Generated</MenuItem>
-                      <MenuItem value="Approved">Approved</MenuItem>
-                      <MenuItem value="Paid">Paid</MenuItem>
-                      <MenuItem value="Rejected">Rejected</MenuItem>
-                    </Select>
-                  </FormControl>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={6}>
+                    <Box sx={{ 
+                      p: 2, 
+                      borderRadius: 1, 
+                      bgcolor: 'background.paper',
+                      border: '1px solid',
+                      borderColor: 'divider'
+                    }}>
+                      <Typography variant="caption" color="text.secondary">Gross Salary</Typography>
+                      <TextField
+                        fullWidth
+                        name="grossSalary"
+                        type="number"
+                        value={formik.values.grossSalary}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        error={formik.touched.grossSalary && Boolean(formik.errors.grossSalary)}
+                        helperText={formik.touched.grossSalary && formik.errors.grossSalary}
+                        size="small"
+                        sx={{ mt: 0.5 }}
+                        InputProps={{
+                          startAdornment: <Box component="span" sx={{ color: 'text.secondary', mr: 0.5 }}>Rs.</Box>,
+                        }}
+                      />
+                    </Box>
+                  </Grid>
+
+                  {/* Hourly Specific Fields */}
+                  {payrollData.payrollType === "Hourly" && (
+                    <>
+                      <Grid item xs={12} md={3}>
+                        <Box sx={{ 
+                          p: 2, 
+                          borderRadius: 1, 
+                          bgcolor: 'background.paper',
+                          border: '1px solid',
+                          borderColor: 'divider'
+                        }}>
+                          <Typography variant="caption" color="text.secondary">Late Fines</Typography>
+                          <TextField
+                            fullWidth
+                            name="lateFines"
+                            type="number"
+                            value={formik.values.lateFines}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                            error={formik.touched.lateFines && Boolean(formik.errors.lateFines)}
+                            helperText={formik.touched.lateFines && formik.errors.lateFines}
+                            size="small"
+                            sx={{ mt: 0.5 }}
+                            InputProps={{
+                              startAdornment: <Box component="span" sx={{ color: 'text.secondary', mr: 0.5 }}>Rs.</Box>,
+                            }}
+                          />
+                        </Box>
+                      </Grid>
+                      <Grid item xs={12} md={3}>
+                        <Box sx={{ 
+                          p: 2, 
+                          borderRadius: 1, 
+                          bgcolor: 'background.paper',
+                          border: '1px solid',
+                          borderColor: 'divider'
+                        }}>
+                          <Typography variant="caption" color="text.secondary">Other Deductions</Typography>
+                          <TextField
+                            fullWidth
+                            name="otherDeductions"
+                            type="number"
+                            value={formik.values.otherDeductions}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                            error={formik.touched.otherDeductions && Boolean(formik.errors.otherDeductions)}
+                            helperText={formik.touched.otherDeductions && formik.errors.otherDeductions}
+                            size="small"
+                            sx={{ mt: 0.5 }}
+                            InputProps={{
+                              startAdornment: <Box component="span" sx={{ color: 'text.secondary', mr: 0.5 }}>Rs.</Box>,
+                            }}
+                          />
+                        </Box>
+                      </Grid>
+                      <Grid item xs={12} md={3}>
+                        <Box sx={{ 
+                          p: 2, 
+                          borderRadius: 1, 
+                          bgcolor: 'background.paper',
+                          border: '1px solid',
+                          borderColor: 'divider'
+                        }}>
+                          <Typography variant="caption" color="text.secondary">Overtime Pay</Typography>
+                          <TextField
+                            fullWidth
+                            name="overtimePay"
+                            type="number"
+                            value={formik.values.overtimePay}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                            error={formik.touched.overtimePay && Boolean(formik.errors.overtimePay)}
+                            helperText={formik.touched.overtimePay && formik.errors.overtimePay}
+                            size="small"
+                            sx={{ mt: 0.5 }}
+                            InputProps={{
+                              startAdornment: <Box component="span" sx={{ color: 'text.secondary', mr: 0.5 }}>Rs.</Box>,
+                            }}
+                          />
+                        </Box>
+                      </Grid>
+                      <Grid item xs={12} md={3}>
+                        <Box sx={{ 
+                          p: 2, 
+                          borderRadius: 1, 
+                          bgcolor: 'background.paper',
+                          border: '1px solid',
+                          borderColor: 'divider'
+                        }}>
+                          <Typography variant="caption" color="text.secondary">Missing Deduction</Typography>
+                          <TextField
+                            fullWidth
+                            name="missingDeduction"
+                            type="number"
+                            value={formik.values.missingDeduction}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                            error={formik.touched.missingDeduction && Boolean(formik.errors.missingDeduction)}
+                            helperText={formik.touched.missingDeduction && formik.errors.missingDeduction ? 
+                              formik.errors.missingDeduction : 
+                              "Additional deductions not covered by other categories"}
+                            size="small"
+                            sx={{ mt: 0.5 }}
+                            InputProps={{
+                              startAdornment: <Box component="span" sx={{ color: 'text.secondary', mr: 0.5 }}>Rs.</Box>,
+                            }}
+                          />
+                        </Box>
+                      </Grid>
+                    </>
+                  )}
+
+                  {/* Monthly Specific Fields */}
+                  {payrollData.payrollType === "Monthly" && (
+                    <>
+                      <Grid item xs={12} md={3}>
+                        <Box sx={{ 
+                          p: 2, 
+                          borderRadius: 1, 
+                          bgcolor: 'background.paper',
+                          border: '1px solid',
+                          borderColor: 'divider'
+                        }}>
+                          <Typography variant="caption" color="text.secondary">Absent Deductions</Typography>
+                          <TextField
+                            fullWidth
+                            name="absentDeductions"
+                            type="number"
+                            value={formik.values.absentDeductions}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                            error={formik.touched.absentDeductions && Boolean(formik.errors.absentDeductions)}
+                            helperText={formik.touched.absentDeductions && formik.errors.absentDeductions}
+                            size="small"
+                            sx={{ mt: 0.5 }}
+                            InputProps={{
+                              startAdornment: <Box component="span" sx={{ color: 'text.secondary', mr: 0.5 }}>Rs.</Box>,
+                            }}
+                          />
+                        </Box>
+                      </Grid>
+                      <Grid item xs={12} md={3}>
+                        <Box sx={{ 
+                          p: 2, 
+                          borderRadius: 1, 
+                          bgcolor: 'background.paper',
+                          border: '1px solid',
+                          borderColor: 'divider'
+                        }}>
+                          <Typography variant="caption" color="text.secondary">Other Deductions</Typography>
+                          <TextField
+                            fullWidth
+                            name="otherDeductions"
+                            type="number"
+                            value={formik.values.otherDeductions}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                            error={formik.touched.otherDeductions && Boolean(formik.errors.otherDeductions)}
+                            helperText={formik.touched.otherDeductions && formik.errors.otherDeductions}
+                            size="small"
+                            sx={{ mt: 0.5 }}
+                            InputProps={{
+                              startAdornment: <Box component="span" sx={{ color: 'text.secondary', mr: 0.5 }}>Rs.</Box>,
+                            }}
+                          />
+                        </Box>
+                      </Grid>
+                      <Grid item xs={12} md={3}>
+                        <Box sx={{ 
+                          p: 2, 
+                          borderRadius: 1, 
+                          bgcolor: 'background.paper',
+                          border: '1px solid',
+                          borderColor: 'divider'
+                        }}>
+                          <Typography variant="caption" color="text.secondary">Missing Deduction</Typography>
+                          <TextField
+                            fullWidth
+                            name="missingDeduction"
+                            type="number"
+                            value={formik.values.missingDeduction}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                            error={formik.touched.missingDeduction && Boolean(formik.errors.missingDeduction)}
+                            helperText={formik.touched.missingDeduction && formik.errors.missingDeduction ? 
+                              formik.errors.missingDeduction : 
+                              "Additional deductions not covered by other categories"}
+                            size="small"
+                            sx={{ mt: 0.5 }}
+                            InputProps={{
+                              startAdornment: <Box component="span" sx={{ color: 'text.secondary', mr: 0.5 }}>Rs.</Box>,
+                            }}
+                          />
+                        </Box>
+                      </Grid>
+                    </>
+                  )}
                 </Grid>
-
-                {/* Hourly Specific Fields */}
-                {payrollData.payrollType === "Hourly" && (
-                  <>
-                    <Grid item xs={12} md={3}>
-                      <TextField
-                        fullWidth
-                        label="Late Fines"
-                        name="lateFines"
-                        type="number"
-                        value={formik.values.lateFines}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        error={formik.touched.lateFines && Boolean(formik.errors.lateFines)}
-                        helperText={formik.touched.lateFines && formik.errors.lateFines}
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={3}>
-                      <TextField
-                        fullWidth
-                        label="Other Deductions"
-                        name="otherDeductions"
-                        type="number"
-                        value={formik.values.otherDeductions}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        error={formik.touched.otherDeductions && Boolean(formik.errors.otherDeductions)}
-                        helperText={formik.touched.otherDeductions && formik.errors.otherDeductions}
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={3}>
-                      <TextField
-                        fullWidth
-                        label="Overtime Pay"
-                        name="overtimePay"
-                        type="number"
-                        value={formik.values.overtimePay}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        error={formik.touched.overtimePay && Boolean(formik.errors.overtimePay)}
-                        helperText={formik.touched.overtimePay && formik.errors.overtimePay}
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={3}>
-                      <TextField
-                        fullWidth
-                        label="Missing Deduction"
-                        name="missingDeduction"
-                        type="number"
-                        value={formik.values.missingDeduction}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        error={formik.touched.missingDeduction && Boolean(formik.errors.missingDeduction)}
-                        helperText={formik.touched.missingDeduction && formik.errors.missingDeduction ? 
-                          formik.errors.missingDeduction : 
-                          "Additional deductions not covered by other categories"}
-                      />
-                    </Grid>
-                  </>
-                )}
-
-                {/* Monthly Specific Fields */}
-                {payrollData.payrollType === "Monthly" && (
-                  <>
-                    <Grid item xs={12} md={4}>
-                      <TextField
-                        fullWidth
-                        label="Absent Deductions"
-                        name="absentDeductions"
-                        type="number"
-                        value={formik.values.absentDeductions}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        error={formik.touched.absentDeductions && Boolean(formik.errors.absentDeductions)}
-                        helperText={formik.touched.absentDeductions && formik.errors.absentDeductions}
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={4}>
-                      <TextField
-                        fullWidth
-                        label="Other Deductions"
-                        name="otherDeductions"
-                        type="number"
-                        value={formik.values.otherDeductions}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        error={formik.touched.otherDeductions && Boolean(formik.errors.otherDeductions)}
-                        helperText={formik.touched.otherDeductions && formik.errors.otherDeductions}
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={4}>
-                      <TextField
-                        fullWidth
-                        label="Missing Deduction"
-                        name="missingDeduction"
-                        type="number"
-                        value={formik.values.missingDeduction}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        error={formik.touched.missingDeduction && Boolean(formik.errors.missingDeduction)}
-                        helperText={formik.touched.missingDeduction && formik.errors.missingDeduction ? 
-                          formik.errors.missingDeduction : 
-                          "Additional deductions not covered by other categories"}
-                      />
-                    </Grid>
-                  </>
-                )}
 
                 {/* Read-only Fields */}
-                <Grid item xs={12}>
-                  <Typography variant="subtitle2" color="text.secondary" mt={2} mb={1}>
-                    Additional Information (Not Editable)
-                  </Typography>
+                <Typography variant="subtitle2" color="text.secondary" mt={3} mb={1} sx={{ fontWeight: 500 }}>
+                  Additional Information
+                </Typography>
+
+                <Grid container spacing={2}>
+                  {payrollData.payrollType === "Hourly" && (
+                    <>
+                      <Grid item xs={6} md={2}>
+                        <Box sx={{ 
+                          p: 2, 
+                          borderRadius: 1, 
+                          bgcolor: 'action.hover',
+                          border: '1px dashed',
+                          borderColor: 'divider',
+                          height: '100%'
+                        }}>
+                          <Typography variant="caption" color="text.secondary">Per Hour Rate</Typography>
+                          <Typography variant="body1" fontWeight={500} color="primary.main">
+                            Rs. {payrollData.perHourRate?.toFixed(2) || '0.00'}
+                          </Typography>
+                        </Box>
+                      </Grid>
+                      <Grid item xs={6} md={2}>
+                        <Box sx={{ 
+                          p: 2, 
+                          borderRadius: 1, 
+                          bgcolor: 'action.hover',
+                          border: '1px dashed',
+                          borderColor: 'divider',
+                          height: '100%'
+                        }}>
+                          <Typography variant="caption" color="text.secondary">Payable Hours</Typography>
+                          <Typography variant="body1" fontWeight={500} color="primary.main">
+                            {payrollData.payableHours?.toFixed(2) || '0.00'}
+                          </Typography>
+                        </Box>
+                      </Grid>
+                      <Grid item xs={6} md={2}>
+                        <Box sx={{ 
+                          p: 2, 
+                          borderRadius: 1, 
+                          bgcolor: 'action.hover',
+                          border: '1px dashed',
+                          borderColor: 'divider',
+                          height: '100%'
+                        }}>
+                          <Typography variant="caption" color="text.secondary">Absent Days</Typography>
+                          <Typography variant="body1" fontWeight={500} color="error.main">
+                            {payrollData.absentDays || '0'}
+                          </Typography>
+                        </Box>
+                      </Grid>
+                    </>
+                  )}
+
+                  {payrollData.payrollType === "Monthly" && (
+                    <>
+                      <Grid item xs={6} md={2}>
+                        <Box sx={{ 
+                          p: 2, 
+                          borderRadius: 1, 
+                          bgcolor: 'action.hover',
+                          border: '1px dashed',
+                          borderColor: 'divider',
+                          height: '100%'
+                        }}>
+                          <Typography variant="caption" color="text.secondary">Absent Days</Typography>
+                          <Typography variant="body1" fontWeight={500} color="error.main">
+                            {payrollData.absentDays || '0'}
+                          </Typography>
+                        </Box>
+                      </Grid>
+                    </>
+                  )}
+
+                  {/* Common Read-only Fields */}
+                  <Grid item xs={6} md={2}>
+                    <Box sx={{ 
+                      p: 2, 
+                      borderRadius: 1, 
+                      bgcolor: 'action.hover',
+                      border: '1px dashed',
+                      borderColor: 'divider',
+                      height: '100%'
+                    }}>
+                      <Typography variant="caption" color="text.secondary">Other Incentives</Typography>
+                      <Typography variant="body1" fontWeight={500} color="success.main">
+                        Rs. {payrollData.otherIncentives?.toFixed(2) || '0.00'}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={6} md={2}>
+                    <Box sx={{ 
+                      p: 2, 
+                      borderRadius: 1, 
+                      bgcolor: 'action.hover',
+                      border: '1px dashed',
+                      borderColor: 'divider',
+                      height: '100%'
+                    }}>
+                      <Typography variant="caption" color="text.secondary">Arrears</Typography>
+                      <Typography variant="body1" fontWeight={500} color="success.main">
+                        Rs. {payrollData.arrears?.toFixed(2) || '0.00'}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={6} md={2}>
+                    <Box sx={{ 
+                      p: 2, 
+                      borderRadius: 1, 
+                      bgcolor: 'action.hover',
+                      border: '1px dashed',
+                      borderColor: 'divider',
+                      height: '100%'
+                    }}>
+                      <Typography variant="caption" color="text.secondary">Fine Deductions</Typography>
+                      <Typography variant="body1" fontWeight={500} color="error.main">
+                        Rs. {payrollData.fineDeductions?.toFixed(2) || '0.00'}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={6} md={2}>
+                    <Box sx={{ 
+                      p: 2, 
+                      borderRadius: 1, 
+                      bgcolor: 'action.hover',
+                      border: '1px dashed',
+                      borderColor: 'divider',
+                      height: '100%'
+                    }}>
+                      <Typography variant="caption" color="text.secondary">Advanced Salary</Typography>
+                      <Typography variant="body1" fontWeight={500} color="error.main">
+                        Rs. {payrollData.advancedSalary?.toFixed(2) || '0.00'}
+                      </Typography>
+                    </Box>
+                  </Grid>
                 </Grid>
 
-                {payrollData.payrollType === "Hourly" && (
-                  <>
-                    <Grid item xs={12} md={4}>
-                      <TextField
-                        fullWidth
-                        label="Per Hour Rate"
-                        value={payrollData.perHourRate || 0}
-                        InputProps={{ readOnly: true }}
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={4}>
-                      <TextField
-                        fullWidth
-                        label="Payable Hours"
-                        value={payrollData.payableHours || 0}
-                        InputProps={{ readOnly: true }}
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={4}>
-                      <TextField
-                        fullWidth
-                        label="Absent Days"
-                        value={payrollData.absentDays || 0}
-                        InputProps={{ readOnly: true }}
-                      />
-                    </Grid>
-                  </>
-                )}
-
-                {payrollData.payrollType === "Monthly" && (
-                  <>
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        fullWidth
-                        label="Absent Days"
-                        value={payrollData.absentDays || 0}
-                        InputProps={{ readOnly: true }}
-                      />
-                    </Grid>
-                  </>
-                )}
-
-                {/* Common Read-only Fields */}
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    label="Other Incentives"
-                    value={payrollData.otherIncentives || 0}
-                    InputProps={{ readOnly: true }}
-                  />
+                <Grid container spacing={2} mt={1}>
+                  <Grid item xs={12} md={6}>
+                    <Box sx={{ 
+                      p: 2, 
+                      borderRadius: 1, 
+                      bgcolor: 'primary.50',
+                      border: '1px solid',
+                      borderColor: 'primary.100',
+                      display: 'flex',
+                      flexDirection: 'column'
+                    }}>
+                      <Typography variant="caption" color="text.secondary">Current Net Salary</Typography>
+                      <Typography variant="h5" fontWeight={600} color="primary.main">
+                        Rs. {payrollData.netSalary?.toLocaleString() || '0.00'}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <Box sx={{ 
+                      p: 2, 
+                      borderRadius: 1, 
+                      bgcolor: calculatedNetSalary >= 0 ? 'success.50' : 'error.50',
+                      border: '1px solid',
+                      borderColor: calculatedNetSalary >= 0 ? 'success.100' : 'error.100',
+                      display: 'flex',
+                      flexDirection: 'column'
+                    }}>
+                      <Typography variant="caption" color="text.secondary">Calculated Net Salary</Typography>
+                      <Typography 
+                        variant="h5" 
+                        fontWeight={600} 
+                        color={calculatedNetSalary >= 0 ? 'success.main' : 'error.main'}
+                      >
+                        Rs. {calculatedNetSalary?.toLocaleString() || '0.00'}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" mt={0.5}>
+                        Based on your changes
+                      </Typography>
+                    </Box>
+                  </Grid>
                 </Grid>
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    label="Arrears"
-                    value={payrollData.arrears || 0}
-                    InputProps={{ readOnly: true }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    label="Fine Deductions"
-                    value={payrollData.fineDeductions || 0}
-                    InputProps={{ readOnly: true }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    label="Advanced Salary"
-                    value={payrollData.advancedSalary || 0}
-                    InputProps={{ readOnly: true }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    label="Current Net Salary"
-                    value={payrollData.netSalary || 0}
-                    InputProps={{ readOnly: true }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    label="Calculated Net Salary"
-                    value={calculatedNetSalary}
-                    InputProps={{ 
-                      readOnly: true,
-                      sx: { 
-                        fontWeight: 'bold',
-                        color: calculatedNetSalary >= 0 ? 'success.main' : 'error.main',
-                        '& .MuiInputBase-input': {
-                          fontWeight: 'bold',
-                          color: calculatedNetSalary >= 0 ? 'success.main' : 'error.main',
-                        }
-                      }
-                    }}
-                    helperText="This is the calculated net salary based on your changes"
-                  />
-                </Grid>
-              </Grid>
+              </Card>
             </Grid>
 
             {/* Action Buttons */}
             <Grid item xs={12}>
-              <Stack direction="row" spacing={2} mt={2}>
-                <Button
-                  variant="outlined"
-                  onClick={() => navigate(`/pay-rolls-view/${id}`)}
+              <Card 
+                variant="outlined" 
+                sx={{ 
+                  p: 2,
+                  borderRadius: 2,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                }}
+              >
+                <Stack 
+                  direction={{ xs: 'column', sm: 'row' }} 
+                  spacing={2} 
+                  justifyContent="flex-end"
                 >
-                  Cancel
-                </Button>
-                <Button
-                  variant="contained"
-                  type="submit"
-                  disabled={processing || !formik.isValid}
-                >
-                  {processing ? "Updating..." : "Update Payroll"}
-                </Button>
-              </Stack>
+                  <Button
+                    variant="outlined"
+                    onClick={() => navigate(`/pay-rolls-view/${id}`)}
+                    startIcon={<CloseIcon />}
+                    sx={{ px: 3 }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="contained"
+                    type="submit"
+                    disabled={processing || !formik.isValid}
+                    startIcon={<SaveIcon />}
+                    sx={{ px: 3 }}
+                  >
+                    {processing ? "Updating..." : "Update Payroll"}
+                  </Button>
+                </Stack>
+              </Card>
             </Grid>
           </Grid>
         </form>

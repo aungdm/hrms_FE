@@ -53,6 +53,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import ClearIcon from "@mui/icons-material/Clear";
 import SyncIcon from "@mui/icons-material/Sync";
+import FilterAltIcon from "@mui/icons-material/FilterAlt";
 
 // Flexbox components
 import FlexBetween from "@/components/flexbox/FlexBetween";
@@ -82,14 +83,28 @@ export default function ListView() {
   // Filter states
   const [filterOpen, setFilterOpen] = useState(false);
   const [employees, setEmployees] = useState([]);
-  const [employeeFilter, setEmployeeFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [hasOvertimeFilter, setHasOvertimeFilter] = useState("");
-  const [dateRange, setDateRange] = useState({
+  
+  // Current applied filters (used for API calls)
+  const [appliedFilters, setAppliedFilters] = useState({
+    employeeId: "",
+    status: "",
+    hasOvertime: "",
+    overtimeStatus: "",
     startDate: moment().startOf("month").format("YYYY-MM-DD"),
     endDate: moment().endOf("month").format("YYYY-MM-DD"),
+    search: ""
   });
-  const [overtimeStatusFilter, setOvertimeStatusFilter] = useState("");
+  
+  // Temporary filter values (not applied until button click)
+  const [tempFilters, setTempFilters] = useState({
+    employeeId: "",
+    status: "",
+    hasOvertime: "",
+    overtimeStatus: "",
+    startDate: moment().startOf("month").format("YYYY-MM-DD"),
+    endDate: moment().endOf("month").format("YYYY-MM-DD"),
+    search: ""
+  });
   
   // Process month dialog state
   const [processDialogOpen, setProcessDialogOpen] = useState(false);
@@ -116,7 +131,10 @@ export default function ListView() {
   }, []);
 
   const handleSearch = (key, value) => {
-    console.log({ key }, { value });
+    setTempFilters(prev => ({
+      ...prev,
+      search: value
+    }));
     setSearchString(value);
   };
 
@@ -126,15 +144,18 @@ export default function ListView() {
 
   // Date range handlers
   const handleDateChange = (field) => (e) => {
-    setDateRange({
-      ...dateRange,
-      [field]: e.target.value,
-    });
+    setTempFilters(prev => ({
+      ...prev,
+      [field]: e.target.value
+    }));
   };
 
   // Employee filter handler
   const handleEmployeeFilterChange = (event, newValue) => {
-    setEmployeeFilter(newValue ? newValue._id : "");
+    setTempFilters(prev => ({
+      ...prev,
+      employeeId: newValue ? newValue._id : ""
+    }));
   };
   
   // Selected employee for processing handler
@@ -144,26 +165,45 @@ export default function ListView() {
 
   // Status filter handler
   const handleStatusFilterChange = (e) => {
-    setStatusFilter(e.target.value);
+    setTempFilters(prev => ({
+      ...prev,
+      status: e.target.value
+    }));
   };
 
   // Overtime filter handler
   const handleOvertimeFilterChange = (e) => {
-    setHasOvertimeFilter(e.target.value);
+    setTempFilters(prev => ({
+      ...prev,
+      hasOvertime: e.target.value
+    }));
+  };
+  
+  // Apply filters
+  const handleApplyFilters = () => {
+    // Update applied filters with temp filter values
+    setAppliedFilters({
+      ...tempFilters,
+      search: searchString
+    });
   };
 
   // Reset filters
   const handleResetFilters = () => {
-    setDateRange({
+    const defaultFilters = {
+      employeeId: "",
+      status: "",
+      hasOvertime: "",
+      overtimeStatus: "",
       startDate: moment().startOf("month").format("YYYY-MM-DD"),
       endDate: moment().endOf("month").format("YYYY-MM-DD"),
-    });
-    setEmployeeFilter("");
-    setStatusFilter("");
-    setHasOvertimeFilter("");
-    setOvertimeStatusFilter("");
+      search: ""
+    };
+    
+    // Reset both temp and applied filters
+    setTempFilters(defaultFilters);
+    setAppliedFilters(defaultFilters);
     setSearchString("");
-    fetchList(); // Fetch data with reset filters
   };
 
   // Refresh data
@@ -188,7 +228,7 @@ export default function ListView() {
     try {
       setProcessingMonth(true);
       
-      const startDate = moment(dateRange.startDate);
+      const startDate = moment(tempFilters.startDate);
       const month = startDate.month() + 1; // Moment months are 0-indexed
       const year = startDate.year();
       
@@ -237,13 +277,13 @@ export default function ListView() {
       const response = await getRecords(
         rowsPerPage,
         page,
-        dateRange.startDate,
-        dateRange.endDate,
-        employeeFilter || undefined,
-        statusFilter || undefined,
-        hasOvertimeFilter || undefined,
-        overtimeStatusFilter || undefined,
-        debouncedSearchString || undefined
+        appliedFilters.startDate,
+        appliedFilters.endDate,
+        appliedFilters.employeeId || undefined,
+        appliedFilters.status || undefined,
+        appliedFilters.hasOvertime || undefined,
+        appliedFilters.overtimeStatus || undefined,
+        appliedFilters.search || undefined
       );
       console.log(response, "fetchList");
       if (response?.success) {
@@ -259,18 +299,20 @@ export default function ListView() {
   }, [
     rowsPerPage,
     page,
-    debouncedSearchString,
-    dateRange.startDate,
-    dateRange.endDate,
-    employeeFilter,
-    statusFilter,
-    hasOvertimeFilter,
-    overtimeStatusFilter,
+    appliedFilters // Now only depends on appliedFilters, not individual filter states
   ]);
 
   // Add the Process Month button to the filter area
   const renderFilterActions = () => (
     <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
+      <Button
+        variant="contained"
+        color="primary"
+        startIcon={<FilterAltIcon />}
+        onClick={handleApplyFilters}
+      >
+        Apply Filters
+      </Button>
       <Button
         variant="contained"
         color="primary"
@@ -319,13 +361,14 @@ export default function ListView() {
               label="Month"
               type="month"
               fullWidth
-              value={`${moment(dateRange.startDate).format('YYYY-MM')}`}
+              value={`${moment(tempFilters.startDate).format('YYYY-MM')}`}
               onChange={(e) => {
                 const date = moment(e.target.value);
-                setDateRange({
+                setTempFilters(prev => ({
+                  ...prev,
                   startDate: date.startOf('month').format('YYYY-MM-DD'),
                   endDate: date.endOf('month').format('YYYY-MM-DD')
-                });
+                }));
               }}
               InputLabelProps={{
                 shrink: true,
@@ -380,9 +423,18 @@ export default function ListView() {
     </Dialog>
   );
 
+  // Initialize data on component mount and when applied filters change
   useEffect(() => {
     fetchList();
   }, [fetchList]);
+
+  // Update search in tempFilters when debounced search changes
+  useEffect(() => {
+    setTempFilters(prev => ({
+      ...prev,
+      search: debouncedSearchString
+    }));
+  }, [debouncedSearchString]);
 
   const handleDelete = async (id) => {
     try {
@@ -423,14 +475,14 @@ export default function ListView() {
                 value={searchString}
                 onChange={handleSearch}
                 onFilterClick={toggleFilter}
-                dateRange={dateRange}
+                dateRange={tempFilters}
                 onDateChange={handleDateChange}
                 employees={employees}
-                employeeFilter={employeeFilter}
+                employeeFilter={tempFilters.employeeId}
                 onEmployeeFilterChange={handleEmployeeFilterChange}
-                statusFilter={statusFilter}
+                statusFilter={tempFilters.status}
                 onStatusFilterChange={handleStatusFilterChange}
-                hasOvertimeFilter={hasOvertimeFilter}
+                hasOvertimeFilter={tempFilters.hasOvertime}
                 onOvertimeFilterChange={handleOvertimeFilterChange}
                 filterOpen={filterOpen}
               />

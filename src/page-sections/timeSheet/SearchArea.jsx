@@ -56,8 +56,8 @@ export default function SearchArea(props) {
   
   return (
     <Box mt={3} mb={3}>
-      <FlexBetween mb={2}>
-        <TextField
+      <Box display="flex" justifyContent="flex-end" mb={2}>
+        {/* <TextField
           value={value}
           onChange={(e) => onChange("search", e.target.value)}
           placeholder="Search..."
@@ -68,7 +68,7 @@ export default function SearchArea(props) {
             maxWidth: 400,
             width: "100%",
           }}
-        />
+        /> */}
         
         <Button 
           variant="outlined" 
@@ -77,7 +77,7 @@ export default function SearchArea(props) {
         >
           Filters
         </Button>
-      </FlexBetween>
+      </Box>
       
       <Collapse in={filterOpen}>
         <Grid container spacing={2} mb={2}>
