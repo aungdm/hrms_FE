@@ -38,19 +38,18 @@ export default function SearchArea(props) {
 
   const handleFilterChange = (field, value) => {
     if (onFilterChange) {
-      onFilterChange({ ...filters, [field]: value });
+      onFilterChange(field, value);
     }
   };
 
   const handleResetFilters = () => {
     if (onFilterChange) {
-      onFilterChange({
-        startDate: null,
-        endDate: null,
-        status: "",
-        employeeId: null,
-        processed: ""
-      });
+      // Reset all filters
+      onFilterChange("startDate", null);
+      onFilterChange("endDate", null);
+      onFilterChange("status", "");
+      onFilterChange("employeeId", null);
+      onFilterChange("processed", "");
     }
   };
 

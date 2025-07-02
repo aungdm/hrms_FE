@@ -13,19 +13,26 @@ export const getRecords = async (
   processed
 ) => {
   try {
+    // Create params object
+    const params = {
+      search,
+      sortOrder,
+      page: page + 1,
+      perPage,
+      sortField,
+      startDate,
+      endDate,
+      status,
+      employeeId,
+    };
+    
+    // Only add processed parameter if it's explicitly set to "true" or "false"
+    if (processed === "true" || processed === "false") {
+      params.processed = processed;
+    }
+    
     const response = await axios.get("/arrears", {
-      params: {
-        search,
-        sortOrder,
-        page: page + 1,
-        perPage,
-        sortField,
-        startDate,
-        endDate,
-        status,
-        employeeId,
-        processed
-      },
+      params
     });
     
     console.log("API response:", response);

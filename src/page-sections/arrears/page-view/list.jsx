@@ -51,6 +51,8 @@ export default function ListView() {
       const startDate = filters.startDate ? format(filters.startDate, "yyyy-MM-dd") : "";
       const endDate = filters.endDate ? format(filters.endDate, "yyyy-MM-dd") : "";
       const status = filters.status || "";
+      
+      // Only pass processed parameter if it's explicitly set to "true" or "false"
       const processed = filters.processed || "";
       
       const result = await getRecords(

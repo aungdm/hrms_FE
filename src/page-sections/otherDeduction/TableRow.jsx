@@ -168,7 +168,7 @@ export default function TableRowView({ data, isSelected, handleSelectRow, refetc
         </Typography>
       </TableCell> */}
 
-      <TableCell>
+      <TableCell align="left">
         <Typography variant="body2">
           {formatCurrency(data?.amount) || "N/A"}
         </Typography>
@@ -211,9 +211,9 @@ export default function TableRowView({ data, isSelected, handleSelectRow, refetc
       </TableCell>
 
         {/* <TableCell>
-          <Typography variant="body2" noWrap sx={{ maxWidth: 150 }}>
-            {data?.description || "-"}
-          </Typography>
+        <Typography variant="body2" noWrap sx={{ maxWidth: 150 }}>
+          {data?.description || "-"}
+        </Typography>
         </TableCell> */}
 
       <TableCell align="right">

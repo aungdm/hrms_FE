@@ -18,12 +18,13 @@ const headCells = [
   //   disablePadding: false,
   //   label: "Deduction Type",
   // },
-    {
-      id: "amount",
-      numeric: true,
-      disablePadding: false,
-      label: "Amount",
-    },
+  {
+    id: "amount",
+    numeric: true,
+    disablePadding: false,
+    label: "Amount",
+      align: "left",
+  },
   {
     id: "deductionDate",
     numeric: false,
