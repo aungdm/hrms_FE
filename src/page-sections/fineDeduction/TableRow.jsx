@@ -97,7 +97,7 @@ export default function TableRowView(props) {
   return (
     <>
       <TableRow hover selected={isSelected}>
-        {showCheckbox && (
+        {/* {showCheckbox && (
           <TableCell padding="checkbox">
             <Checkbox
               size="small"
@@ -106,7 +106,7 @@ export default function TableRowView(props) {
               onClick={(event) => handleSelectRow(event, data._id)}
             />
           </TableCell>
-        )}
+        )} */}
 
         <TableCell padding="normal">
           <FlexBox alignItems="center" gap={1}>
@@ -134,24 +134,23 @@ export default function TableRowView(props) {
         </TableCell>
 
         <TableCell padding="normal">
-          {data?.deductionType || "-"}
+          {formatDate(data?.deductionDate)}
         </TableCell>
-
+        
         <TableCell padding="normal">
           {data?.amount ? `$${data.amount.toFixed(2)}` : "-"}
         </TableCell>
+  
 
-        <TableCell padding="normal">
-          {formatDate(data?.deductionDate)}
-        </TableCell>
 
-        <TableCell padding="normal">
+
+        {/* <TableCell padding="normal">
           <Chip 
             label={data?.status || "Pending"} 
             color={getStatusColor(data?.status)}
             size="small"
           />
-        </TableCell>
+        </TableCell> */}
 
         <TableCell padding="normal">
           <Tooltip title={data?.processed ? "Mark as unpaid" : "Mark as paid"}>

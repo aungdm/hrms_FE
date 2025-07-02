@@ -143,12 +143,15 @@ export default function TableRowView(props) {
 
   // Get available punch types based on missing entries
   const getAvailablePunchTypes = () => {
-    const availableTypes = [{ value: "firstEntry", label: "First Entry" }, { value: "lastExit", label: "Last Exit" }];
-    
+    const availableTypes = [
+      { value: "firstEntry", label: "First Entry" },
+      { value: "lastExit", label: "Last Exit" },
+    ];
+
     // if (!data?.firstEntry) {
     //   availableTypes.push({ value: "firstEntry", label: "First Entry" });
     // }
-    
+
     // if (!data?.lastExit) {
     //   availableTypes.push({ value: "lastExit", label: "Last Exit" });
     // }
@@ -206,9 +209,9 @@ export default function TableRowView(props) {
 
   // Handle punch request form input changes
   const handlePunchRequestInputChange = (field, value) => {
-    setPunchRequestData(prev => ({
+    setPunchRequestData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
@@ -219,16 +222,16 @@ export default function TableRowView(props) {
         attendanceId: attendanceId,
         punchType: punchType,
         perPage: 1,
-        page: 1
+        page: 1,
       });
-      
+
       if (response.success) {
         return response.data && response.data.length > 0;
       }
-      
+
       return false;
     } catch (error) {
-      console.error('Error checking existing punch request:', error);
+      console.error("Error checking existing punch request:", error);
       return false;
     }
   };
@@ -244,17 +247,22 @@ export default function TableRowView(props) {
       setLoading(true);
 
       // Check if punch request already exists
-      const existingRequest = await checkExistingPunchRequest(data._id, punchRequestData.punchType);
-      
+      const existingRequest = await checkExistingPunchRequest(
+        data._id,
+        punchRequestData.punchType
+      );
+
       if (existingRequest) {
-        toast.error(`A punch request for ${punchRequestData.punchType} already exists for this attendance record`);
+        toast.error(
+          `A punch request for ${punchRequestData.punchType} already exists for this attendance record`
+        );
         setLoading(false);
         return;
       }
 
       // Format the time with the attendance date
       const attendanceDate = new Date(data.date);
-      const [hours, minutes] = punchRequestData.time.split(':');
+      const [hours, minutes] = punchRequestData.time.split(":");
       const punchDateTime = new Date(attendanceDate);
       punchDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
 
@@ -287,15 +295,15 @@ export default function TableRowView(props) {
   const handleRecalculateAttendance = async () => {
     try {
       setRecalculateLoading(true);
-      
+
       const response = await recalculateAttendance(data._id);
-      
+
       setRecalculateResult({
         success: response.success,
         message: response.message,
-        data: response.data
+        data: response.data,
       });
-      
+
       if (response.success) {
         toast.success("Attendance recalculated successfully");
         // Refresh the page to show updated data
@@ -309,7 +317,7 @@ export default function TableRowView(props) {
       console.error("Error recalculating attendance:", error);
       setRecalculateResult({
         success: false,
-        message: "An error occurred while recalculating attendance"
+        message: "An error occurred while recalculating attendance",
       });
       toast.error("An error occurred while recalculating attendance");
     } finally {
@@ -463,13 +471,15 @@ export default function TableRowView(props) {
         </TableCell>
 
         <TableCell padding="normal">
-          {renderStatusChip(data?.checkinStatus === "Early" ? "On Time" : data?.checkinStatus)}
+          {renderStatusChip(
+            data?.checkinStatus === "Early" ? "On Time" : data?.checkinStatus
+          )}
         </TableCell>
         <TableCell
           padding="normal"
           sx={{
             maxWidth: "200px",
-            fontSize: "11px", 
+            fontSize: "11px",
             fontWeight: "500",
             color: "black",
           }}
@@ -489,7 +499,14 @@ export default function TableRowView(props) {
         </TableCell>
 
         <TableCell padding="normal">
-          {renderStatusChip(data?.checkoutStatus === "Late" ? "On Time" : data?.checkoutStatus)}
+          {renderStatusChip(
+            data?.checkoutStatus === "Late"
+              ? "On Time"
+              : data?.checkinStatus != "Absent" &&
+                  data?.checkoutStatus == "Absent"
+                ? "Missing"
+                : data?.checkoutStatus
+          )}
         </TableCell>
         <TableCell
           padding="normal"
@@ -588,28 +605,32 @@ export default function TableRowView(props) {
         </DialogTitle>
         <DialogContent>
           <DialogContentText sx={{ mb: 2 }}>
-            Create a punch request for <strong>{data?.employeeId?.name}</strong> on{" "}
-            <strong>{formatISOtDateTime(data?.date)}</strong>
+            Create a punch request for <strong>{data?.employeeId?.name}</strong>{" "}
+            on <strong>{formatISOtDateTime(data?.date)}</strong>
           </DialogContentText>
-          
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}>
             <TextField
               label="Time"
               type="time"
               value={punchRequestData.time}
-              onChange={(e) => handlePunchRequestInputChange('time', e.target.value)}
+              onChange={(e) =>
+                handlePunchRequestInputChange("time", e.target.value)
+              }
               fullWidth
               required
               InputLabelProps={{
                 shrink: true,
               }}
             />
-            
+
             <FormControl fullWidth required>
               <InputLabel>Punch Type</InputLabel>
               <Select
                 value={punchRequestData.punchType}
-                onChange={(e) => handlePunchRequestInputChange('punchType', e.target.value)}
+                onChange={(e) =>
+                  handlePunchRequestInputChange("punchType", e.target.value)
+                }
                 label="Punch Type"
               >
                 {getAvailablePunchTypes().map((type) => (
@@ -629,7 +650,9 @@ export default function TableRowView(props) {
             onClick={handleCreatePunchRequest}
             color="primary"
             variant="contained"
-            disabled={loading || !punchRequestData.time || !punchRequestData.punchType}
+            disabled={
+              loading || !punchRequestData.time || !punchRequestData.punchType
+            }
           >
             {loading ? "Creating..." : "Create Punch Request"}
           </Button>
@@ -650,63 +673,90 @@ export default function TableRowView(props) {
         <DialogContent>
           {!recalculateResult.success && !recalculateLoading && (
             <DialogContentText>
-              Are you sure you want to recalculate attendance for <strong>{data?.employeeId?.name}</strong> on{" "}
+              Are you sure you want to recalculate attendance for{" "}
+              <strong>{data?.employeeId?.name}</strong> on{" "}
               <strong>{formatISOtDateTime(data?.date)}</strong>?
-              <br /><br />
-              This will update the attendance record based on the current work schedule and attendance logs.
-              Any manual changes may be overwritten.
+              <br />
+              <br />
+              This will update the attendance record based on the current work
+              schedule and attendance logs. Any manual changes may be
+              overwritten.
             </DialogContentText>
           )}
-          
+
           {recalculateLoading && (
-            <Box sx={{ textAlign: 'center', py: 3 }}>
+            <Box sx={{ textAlign: "center", py: 3 }}>
               <Typography variant="body1" sx={{ mb: 2 }}>
                 Recalculating attendance...
               </Typography>
             </Box>
           )}
-          
+
           {recalculateResult.success && (
             <Box sx={{ py: 2 }}>
-              <Typography variant="body1" color="success.main" sx={{ mb: 2, fontWeight: 'bold' }}>
+              <Typography
+                variant="body1"
+                color="success.main"
+                sx={{ mb: 2, fontWeight: "bold" }}
+              >
                 {recalculateResult.message}
               </Typography>
-              
-              <Box sx={{ bgcolor: '#f5f5f5', p: 2, borderRadius: 1 }}>
-                <Typography variant="subtitle2">Updated Attendance Details:</Typography>
+
+              <Box sx={{ bgcolor: "#f5f5f5", p: 2, borderRadius: 1 }}>
+                <Typography variant="subtitle2">
+                  Updated Attendance Details:
+                </Typography>
                 <Stack spacing={1} mt={1}>
                   <Box display="flex" justifyContent="space-between">
-                    <Typography variant="body2" color="text.secondary">Status:</Typography>
-                    <Typography variant="body2" fontWeight="medium">{recalculateResult.data?.status || '--'}</Typography>
-                  </Box>
-                  <Box display="flex" justifyContent="space-between">
-                    <Typography variant="body2" color="text.secondary">Check-in:</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Status:
+                    </Typography>
                     <Typography variant="body2" fontWeight="medium">
-                      {recalculateResult.data?.firstEntry ? formatTime(recalculateResult.data?.firstEntry) : '--'}
+                      {recalculateResult.data?.status || "--"}
                     </Typography>
                   </Box>
                   <Box display="flex" justifyContent="space-between">
-                    <Typography variant="body2" color="text.secondary">Check-out:</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Check-in:
+                    </Typography>
                     <Typography variant="body2" fontWeight="medium">
-                      {recalculateResult.data?.lastExit ? formatTime(recalculateResult.data?.lastExit) : '--'}
+                      {recalculateResult.data?.firstEntry
+                        ? formatTime(recalculateResult.data?.firstEntry)
+                        : "--"}
                     </Typography>
                   </Box>
                   <Box display="flex" justifyContent="space-between">
-                    <Typography variant="body2" color="text.secondary">Work Duration:</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Check-out:
+                    </Typography>
                     <Typography variant="body2" fontWeight="medium">
-                      {formatMinutesToHoursMinutes(recalculateResult.data?.workDuration)}
+                      {recalculateResult.data?.lastExit
+                        ? formatTime(recalculateResult.data?.lastExit)
+                        : "--"}
+                    </Typography>
+                  </Box>
+                  <Box display="flex" justifyContent="space-between">
+                    <Typography variant="body2" color="text.secondary">
+                      Work Duration:
+                    </Typography>
+                    <Typography variant="body2" fontWeight="medium">
+                      {formatMinutesToHoursMinutes(
+                        recalculateResult.data?.workDuration
+                      )}
                     </Typography>
                   </Box>
                 </Stack>
               </Box>
             </Box>
           )}
-          
-          {!recalculateResult.success && recalculateResult.message && !recalculateLoading && (
-            <Typography variant="body1" color="error" sx={{ mt: 2 }}>
-              {recalculateResult.message}
-            </Typography>
-          )}
+
+          {!recalculateResult.success &&
+            recalculateResult.message &&
+            !recalculateLoading && (
+              <Typography variant="body1" color="error" sx={{ mt: 2 }}>
+                {recalculateResult.message}
+              </Typography>
+            )}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseRecalculateDialog} color="primary">

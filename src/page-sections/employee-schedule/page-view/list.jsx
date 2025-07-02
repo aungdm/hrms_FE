@@ -445,7 +445,7 @@ export default function ListView() {
             {generatingSchedules ? <CircularProgress size={20} color="inherit" /> : 'Generate All Schedules'}
           </ActionButton>
 
-          {selectedEmployees.length > 0 && ( // Only show button if employees are selected
+          {/* {selectedEmployees.length > 0 && ( // Only show button if employees are selected
             <ActionButton
               variant="outlined"
               color="secondary"
@@ -455,7 +455,7 @@ export default function ListView() {
             >
               Revert to Default
             </ActionButton>
-          )}
+          )} */}
         </Box>
       </HeaderSection>
 
