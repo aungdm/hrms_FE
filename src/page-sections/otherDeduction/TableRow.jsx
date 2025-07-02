@@ -13,6 +13,7 @@ import MenuItem from "@mui/material/MenuItem";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import Typography from "@mui/material/Typography";
+import Tooltip from "@mui/material/Tooltip";
 
 // Icons
 import MoreVertIcon from "@mui/icons-material/MoreVert";
@@ -23,7 +24,8 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 
 // API functions
-import { deleteDeduction, updateDeductionStatus } from "./request";
+import { deleteDeduction, updateDeductionStatus, updateProcessedStatus } from "./request";
+import { toast } from "react-toastify";
 
 export default function TableRowView({ data, isSelected, handleSelectRow, refetchList, handleDelete, isAdmin }) {
   const navigate = useNavigate();
@@ -31,6 +33,7 @@ export default function TableRowView({ data, isSelected, handleSelectRow, refetc
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [statusToChange, setStatusToChange] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [processing, setProcessing] = useState(false);
 
   // Handle menu open/close
   const handleOpenMenu = (event) => {
@@ -71,6 +74,42 @@ export default function TableRowView({ data, isSelected, handleSelectRow, refetc
     }
   };
 
+  // Handle processed status toggle
+  const handleProcessedToggle = async (e) => {
+    e.stopPropagation();
+    if (processing) return;
+    
+    try {
+      setProcessing(true);
+      const newStatus = !data.processed;
+      console.log("Toggling processed status:", { 
+        id: data._id, 
+        currentStatus: data.processed, 
+        newStatus 
+      });
+      
+      const response = await updateProcessedStatus(data._id, newStatus);
+      console.log("API response:", response);
+      
+      if (response.success) {
+        toast.success(newStatus ? 
+          "Deduction marked as paid successfully" : 
+          "Deduction marked as unpaid successfully"
+        );
+        if (typeof refetchList === 'function') {
+          refetchList();
+        }
+      } else {
+        toast.error(response.message || "Failed to update payment status");
+      }
+    } catch (error) {
+      console.error("Error toggling processed status:", error);
+      toast.error("Error updating payment status");
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   // Handle delete
   const handleDeleteAction = async () => {
     try {
@@ -105,14 +144,14 @@ export default function TableRowView({ data, isSelected, handleSelectRow, refetc
 
   return (
     <TableRow hover selected={isSelected}>
-      <TableCell padding="checkbox">
+      {/* <TableCell padding="checkbox">
         <Checkbox
           size="small"
           color="primary"
           checked={isSelected}
           onClick={(event) => handleSelectRow(event, data._id)}
         />
-      </TableCell>
+      </TableCell> */}
 
       <TableCell>
         <Typography variant="body2" color="text.primary">
@@ -123,11 +162,11 @@ export default function TableRowView({ data, isSelected, handleSelectRow, refetc
         </Typography>
       </TableCell>
 
-      <TableCell>
+      {/* <TableCell>
         <Typography variant="body2">
           {data?.deductionType || "N/A"}
         </Typography>
-      </TableCell>
+      </TableCell> */}
 
       <TableCell>
         <Typography variant="body2">
@@ -141,20 +180,41 @@ export default function TableRowView({ data, isSelected, handleSelectRow, refetc
         </Typography>
       </TableCell>
 
-      <TableCell>
+      {/* <TableCell>
         <Chip 
           label={data?.status || "Pending"}
           color={getStatusColor(data?.status)}
           size="small" 
           variant="outlined" 
         />
-      </TableCell>
+      </TableCell> */}
 
       <TableCell>
-        <Typography variant="body2" noWrap sx={{ maxWidth: 150 }}>
-          {data?.description || "-"}
-        </Typography>
+        <Tooltip title={data?.processed ? "Mark as unpaid" : "Mark as paid"}>
+          <IconButton 
+            size="small" 
+            onClick={handleProcessedToggle}
+            disabled={processing}
+            color={data?.processed ? "success" : "error"}
+            sx={{ 
+              '&:hover': { 
+                backgroundColor: data?.processed ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)' 
+              } 
+            }}
+          >
+            {data?.processed ? 
+              <CheckCircleIcon fontSize="small" /> : 
+              <CancelIcon fontSize="small" />
+            }
+          </IconButton>
+        </Tooltip>
       </TableCell>
+
+        {/* <TableCell>
+          <Typography variant="body2" noWrap sx={{ maxWidth: 150 }}>
+            {data?.description || "-"}
+          </Typography>
+        </TableCell> */}
 
       <TableCell align="right">
         <IconButton onClick={handleOpenMenu}>
@@ -176,14 +236,14 @@ export default function TableRowView({ data, isSelected, handleSelectRow, refetc
             horizontal: "right",
           }}
         >
-          <MenuItem onClick={() => navigate(`/dashboard/otherDeduction/edit/${data._id}`)}>
+          <MenuItem onClick={() => navigate(`/other-deduction-update/${data._id}`)}>
             <ListItemIcon>
               <EditIcon fontSize="small" />
             </ListItemIcon>
             <ListItemText>Edit</ListItemText>
           </MenuItem>
 
-          <MenuItem onClick={() => navigate(`/dashboard/otherDeduction/view/${data._id}`)}>
+          <MenuItem onClick={() => navigate(`/other-deduction-view/${data._id}`)}>
             <ListItemIcon>
               <VisibilityIcon fontSize="small" />
             </ListItemIcon>

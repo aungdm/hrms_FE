@@ -32,12 +32,12 @@ const headCells = [
     disablePadding: false,
     label: "Arrears Date",
   },
-  {
-      id: "status",
-    numeric: false,
-    disablePadding: false,
-    label: "Status",
-  },
+  // {
+  //     id: "status",
+  //   numeric: false,
+  //   disablePadding: false,
+  //   label: "Status",
+  // },
   {
     id: "processed",
     numeric: false,

@@ -548,7 +548,7 @@ export default function PayrollView() {
                     background: 'linear-gradient(to right, #f9f9f9, #ffffff)'
                   }}
                 >
-                  <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+                <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
                     <Stack direction="row" alignItems="center" spacing={1}>
                       <Box 
                         sx={{ 
@@ -565,9 +565,9 @@ export default function PayrollView() {
                       </Box>
                       <Typography variant="h6" fontWeight={600}>Employee Information</Typography>
                     </Stack>
-                    <StatusChip status={payrollData.status || "Generated"} />
-                  </Stack>
-                  
+                  <StatusChip status={payrollData.status || "Generated"} />
+                </Stack>
+                
                   <Grid container spacing={2}>
                     <Grid item xs={12} md={4}>
                       <Box sx={{ 
@@ -736,9 +736,9 @@ export default function PayrollView() {
                         overflow: 'auto'
                       }}>
                         <Typography variant="subtitle2" fontWeight={600} mb={1}>Salary Breakdown</Typography>
-                        
-                        {isHourly ? (
-                          // Hourly employee specific fields
+                      
+                      {isHourly ? (
+                        // Hourly employee specific fields
                           <Grid container spacing={2}>
                             <Grid item xs={6}>
                               <Box sx={{ mb: 1.5 }}>
@@ -804,7 +804,7 @@ export default function PayrollView() {
                                 </Typography>
                               </Box>
                             </Grid>
-                            {payrollData.otherIncentives > 0 && (
+                          {payrollData.otherIncentives > 0 && (
                               <Grid item xs={6}>
                                 <Box sx={{ mb: 1.5 }}>
                                   <Typography variant="caption" color="text.secondary" display="block">Other Incentives</Typography>
@@ -813,8 +813,8 @@ export default function PayrollView() {
                                   </Typography>
                                 </Box>
                               </Grid>
-                            )}
-                            {payrollData.arrears > 0 && (
+                          )}
+                          {payrollData.arrears > 0 && (
                               <Grid item xs={6}>
                                 <Box sx={{ mb: 1.5 }}>
                                   <Typography variant="caption" color="text.secondary" display="block">Arrears</Typography>
@@ -823,8 +823,8 @@ export default function PayrollView() {
                                   </Typography>
                                 </Box>
                               </Grid>
-                            )}
-                            {payrollData.fineDeductions > 0 && (
+                          )}
+                          {payrollData.fineDeductions > 0 && (
                               <Grid item xs={6}>
                                 <Box sx={{ mb: 1.5 }}>
                                   <Typography variant="caption" color="text.secondary" display="block">Fine Deductions</Typography>
@@ -833,8 +833,8 @@ export default function PayrollView() {
                                   </Typography>
                                 </Box>
                               </Grid>
-                            )}
-                            {payrollData.advancedSalary > 0 && (
+                          )}
+                          {payrollData.advancedSalary > 0 && (
                               <Grid item xs={6}>
                                 <Box sx={{ mb: 1.5 }}>
                                   <Typography variant="caption" color="text.secondary" display="block">Advanced Salary</Typography>
@@ -845,8 +845,8 @@ export default function PayrollView() {
                               </Grid>
                             )}
                           </Grid>
-                        ) : (
-                          // Monthly employee specific fields
+                      ) : (
+                        // Monthly employee specific fields
                           <Grid container spacing={2}>
                             <Grid item xs={6}>
                               <Box sx={{ mb: 1.5 }}>
@@ -880,7 +880,7 @@ export default function PayrollView() {
                                 </Typography>
                               </Box>
                             </Grid>
-                            {payrollData.otherIncentives > 0 && (
+                          {payrollData.otherIncentives > 0 && (
                               <Grid item xs={6}>
                                 <Box sx={{ mb: 1.5 }}>
                                   <Typography variant="caption" color="text.secondary" display="block">Other Incentives</Typography>
@@ -889,8 +889,8 @@ export default function PayrollView() {
                                   </Typography>
                                 </Box>
                               </Grid>
-                            )}
-                            {payrollData.arrears > 0 && (
+                          )}
+                          {payrollData.arrears > 0 && (
                               <Grid item xs={6}>
                                 <Box sx={{ mb: 1.5 }}>
                                   <Typography variant="caption" color="text.secondary" display="block">Arrears</Typography>
@@ -899,8 +899,8 @@ export default function PayrollView() {
                                   </Typography>
                                 </Box>
                               </Grid>
-                            )}
-                            {payrollData.fineDeductions > 0 && (
+                          )}
+                          {payrollData.fineDeductions > 0 && (
                               <Grid item xs={6}>
                                 <Box sx={{ mb: 1.5 }}>
                                   <Typography variant="caption" color="text.secondary" display="block">Fine Deductions</Typography>
@@ -909,8 +909,8 @@ export default function PayrollView() {
                                   </Typography>
                                 </Box>
                               </Grid>
-                            )}
-                            {payrollData.advancedSalary > 0 && (
+                          )}
+                          {payrollData.advancedSalary > 0 && (
                               <Grid item xs={6}>
                                 <Box sx={{ mb: 1.5 }}>
                                   <Typography variant="caption" color="text.secondary" display="block">Advanced Salary</Typography>
@@ -925,8 +925,8 @@ export default function PayrollView() {
                       </Box>
                     </Grid>
                   </Grid>
-                  
-                  {isHourly && (
+                
+                {isHourly && (
                     <Box sx={{ 
                       mt: 2, 
                       p: 2, 
@@ -943,11 +943,11 @@ export default function PayrollView() {
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
                             Absent days are charged at ₹10,000 per day for hourly employees.
-                          </Typography>
+                    </Typography>
                         </Box>
                       </Stack>
-                    </Box>
-                  )}
+                  </Box>
+                )}
                 </Card>
               </Grid>
 

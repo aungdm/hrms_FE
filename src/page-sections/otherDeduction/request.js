@@ -188,6 +188,36 @@ export const deleteMultipleDeductions = async (ids) => {
   }
 };
 
+// Update processed status
+export const updateProcessedStatus = async (id, processed) => {
+  try {
+    if (!id) return { success: false, message: "Deduction ID is required" };
+    
+    console.log(`Updating processed status for ID: ${id} to ${processed}`);
+    
+    const response = await axios.patch(`/otherDeduction/${id}/processed`, { processed });
+    
+    if (response?.data?.success) {
+      return {
+        data: response?.data?.data,
+        success: true,
+        message: response?.data?.message || `Deduction ${processed ? 'marked as paid' : 'marked as unpaid'} successfully`
+      };
+    } else {
+      return { 
+        success: false,
+        message: response?.data?.message || "Failed to update payment status"
+      };
+    }
+  } catch (error) {
+    console.error("Error updating processed status:", error);
+    return { 
+      success: false,
+      message: error?.response?.data?.message || "Error updating payment status"
+    };
+  }
+};
+
 // Backward compatibility exports (alias the new functions with old names)
 export const create = createDeduction;
 export const get = getDeduction;

@@ -12,36 +12,42 @@ const headCells = [
     disablePadding: true,
     label: "Employee",
   },
-  {
-    id: "deductionType",
-    numeric: false,
-    disablePadding: false,
-    label: "Deduction Type",
-  },
-  {
-    id: "amount",
-    numeric: true,
-    disablePadding: false,
-    label: "Amount",
-  },
+  // {
+  //   id: "deductionType",
+  //   numeric: false,
+  //   disablePadding: false,
+  //   label: "Deduction Type",
+  // },
+    {
+      id: "amount",
+      numeric: true,
+      disablePadding: false,
+      label: "Amount",
+    },
   {
     id: "deductionDate",
     numeric: false,
     disablePadding: false,
     label: "Date",
   },
+  // {
+  //   id: "status",
+  //   numeric: false,
+  //   disablePadding: false,
+  //   label: "Status",
+  // },
   {
-    id: "status",
+    id: "paid",
     numeric: false,
     disablePadding: false,
-    label: "Status",
+    label: "Paid",
   },
-  {
-    id: "description",
-    numeric: false,
-    disablePadding: false,
-    label: "Description",
-  },
+  // {
+  //   id: "description",
+  //   numeric: false,
+  //   disablePadding: false,
+  //   label: "Description",
+  // },
   {
     id: "actions",
     numeric: false,
@@ -72,14 +78,14 @@ export default function TableHeadView(props) {
       }}
     >
       <TableRow>
-        <TableCell padding="checkbox">
+        {/* <TableCell padding="checkbox">
           <Checkbox
             color="primary"
             indeterminate={numSelected > 0 && numSelected < rowCount}
             checked={rowCount > 0 && numSelected === rowCount}
             onChange={onSelectAllRows}
           />
-        </TableCell>
+        </TableCell> */}
 
         {headCells.map((headCell) => (
           <TableCell

@@ -68,13 +68,13 @@ export default function TableRowView(props) {
         {data?.incentiveDate ? format(new Date(data.incentiveDate), "MMM dd, yyyy") : "N/A"}
       </TableCell>
       
-      <TableCell>
+      {/* <TableCell>
         <Chip 
           label={data?.status || "Pending"} 
           size="small" 
           color={getStatusColor(data?.status)}
         />
-      </TableCell>
+      </TableCell> */}
       
       <TableCell>
         <Chip 

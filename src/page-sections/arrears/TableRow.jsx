@@ -89,14 +89,14 @@ export default function TableRowView(props) {
 
         <TableCell>{formatDate(data?.deductionDate)}</TableCell>
 
-        <TableCell>
+        {/* <TableCell>
           <Chip 
             label={data?.status || "Pending"} 
             size="small" 
             color={getStatusColor(data?.status)}
             variant="outlined"
           />
-        </TableCell>
+        </TableCell> */}
 
         <TableCell>
           <Chip 

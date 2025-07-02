@@ -11,6 +11,8 @@ import {
   FormControl,
   InputLabel,
   FormHelperText,
+  Stack,
+  Switch,
 } from "@mui/material";
 import ShoppingCart from "@/icons/ShoppingCart.jsx";
 import { Paragraph } from "@/components/typography";
@@ -57,7 +59,8 @@ export default function CreateView() {
     amount: "",
     deductionDate: "",
     description: "",
-    status: "Pending"
+    status: "Pending",
+    processed: false
   };
 
   // Form Validation Schema
@@ -96,7 +99,8 @@ export default function CreateView() {
             amount: parseFloat(values.amount),
             deductionDate: values.deductionDate,
             description: values.description,
-            status: values.status
+            status: values.status,
+            processed: values.processed || false
           });
         } else if (mode === "edit") {
           responseData = await update(id, {
@@ -105,7 +109,8 @@ export default function CreateView() {
             amount: parseFloat(values.amount),
             deductionDate: values.deductionDate,
             description: values.description,
-            status: values.status
+            status: values.status,
+            processed: values.processed || false
           });
         }
         
@@ -147,22 +152,42 @@ export default function CreateView() {
   const fetchRecord = async (id) => {
     try {
       const response = await get(id);
-      console.log(response?.data);
+      console.log("Fetched deduction data:", response?.data);
       
-      if (response.success) {
+      if (response.success && response.data) {
         const data = response.data;
+        
+        // Handle employeeId which could be an object or string
+        let employeeIdValue = "";
+        if (data.employeeId) {
+          employeeIdValue = typeof data.employeeId === 'object' && data.employeeId._id 
+            ? data.employeeId._id 
+            : data.employeeId;
+        }
+        
+        // Set form values
         setValues({
-          employeeId: data.employeeId?._id || data.employeeId || "",
+          employeeId: employeeIdValue,
           deductionType: data.deductionType || "",
           amount: data.amount || "",
           deductionDate: data.deductionDate ? format(new Date(data.deductionDate), "yyyy-MM-dd") : "",
           description: data.description || "",
-          status: data.status || "Pending"
+          status: data.status || "Pending",
+          processed: data.processed || false
         });
+        
+        // Fetch the employee details if not already loaded
+        if (employeeIdValue && !employees.some(emp => emp._id === employeeIdValue)) {
+          fetchEmployees();
+        }
+      } else {
+        toast.error(response.message || "Failed to load deduction details");
+        navigate("/other-deduction-list");
       }
     } catch (error) {
-      console.error(error);
-      toast.error("Error fetching deduction details");
+      console.error("Error fetching deduction details:", error);
+      toast.error("Error loading deduction details");
+      navigate("/other-deduction-list");
     }
   };
 
@@ -317,6 +342,23 @@ export default function CreateView() {
                 error={Boolean(touched.description && errors.description)}
               />
             </Grid>
+
+            {/* Processed Status */}
+            <Grid item xs={12}>
+              <FormControl component="fieldset">
+                <Typography component="legend">Payment Status</Typography>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Typography>Unpaid</Typography>
+                  <Switch
+                    checked={values.processed || false}
+                    onChange={(e) => setFieldValue("processed", e.target.checked)}
+                    disabled={mode === "view"}
+                    color="success"
+                  />
+                  <Typography>Paid</Typography>
+                </Stack>
+              </FormControl>
+            </Grid>
           </Grid>
 
           {/* Submit Button */}
@@ -331,7 +373,7 @@ export default function CreateView() {
               </Button>
               <Button 
                 variant="outlined" 
-                onClick={() => navigate("/dashboard/otherDeduction")}
+                onClick={() => navigate("/other-deduction-list")}
               >
                 Cancel
               </Button>
