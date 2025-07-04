@@ -14,6 +14,7 @@ import GroupSenior from "@/icons/GroupSenior";
 import ShoppingCart from "@/icons/ShoppingCart.jsx";
 import Add from "@/icons/Add"; // STYLED COMPONENT
 import duotone from "@/icons/duotone";
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 
 export default function HeadingArea() {
   const TodoList = duotone.TodoList;
@@ -37,6 +38,14 @@ export default function HeadingArea() {
       >
         Create
       </Button> */}
+      <Button
+        variant="outlined"
+        color="error"
+        startIcon={<ErrorOutlineIcon />}
+        onClick={() => navigate("/attendance-logs-errors")}
+      >
+        View Processing Errors
+      </Button>
     </FlexBetween>
   );
 }

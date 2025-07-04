@@ -85,6 +85,10 @@ const AttendanceLogsCreateView = Loadable(
   lazy(() => import("@/pages/dashboard/attendanceLogs/create"))
 );
 
+const AttendanceLogsErrorsView = Loadable(
+  lazy(() => import("@/pages/dashboard/attendanceLogs/errors"))
+);
+
 const SalaryRevisionView = Loadable(
   lazy(() => import("@/pages/dashboard/salaryRevision/list"))
 );
@@ -417,6 +421,10 @@ export const DashboardRoutes = [
       {
         path: "attendance-logs-view/:id",
         element: <AttendanceLogsCreateView />,
+      },
+      {
+        path: "attendance-logs-errors",
+        element: <AttendanceLogsErrorsView />,
       },
       {
         path: "fine-deduction-list",

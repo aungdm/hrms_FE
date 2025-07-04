@@ -42,6 +42,66 @@ export const getRecords = async (
   }
 };
 
+// Get attendance logs with processing errors
+export const getProcessingErrors = async (
+  perPage,
+  page,
+  startDate = null,
+  endDate = null,
+  userId = null,
+  deviceId = null,
+  search = null
+) => {
+  try {
+    // Create params object with only defined values
+    const params = {
+      page: page + 1,
+      perPage: perPage
+    };
+    
+    // Only add parameters that have values
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+    if (userId) params.userId = userId;
+    if (deviceId) params.deviceId = deviceId;
+    if (search) params.search = search;
+    
+    const response = await axios.get("attendanceLogs/processing-errors", { params });
+    
+    if (response?.data?.success) {
+      return {
+        data: response?.data?.data?.data,
+        success: true,
+        meta: response?.data?.data?.meta
+      };
+    } else {
+      return { success: false };
+    }
+  } catch (error) {
+    console.error("Error fetching processing errors:", error.message);
+    throw error;
+  }
+};
+
+// Reset processing errors for selected logs
+export const resetProcessingErrors = async (logIds) => {
+  try {
+    const response = await axios.post("attendanceLogs/reset-errors", { logIds });
+    
+    if (response?.data?.success) {
+      return {
+        data: response?.data?.data,
+        success: true
+      };
+    } else {
+      return { success: false };
+    }
+  } catch (error) {
+    console.error("Error resetting processing errors:", error.message);
+    throw error;
+  }
+};
+
 // Get information about configured attendance machines
 export const getMachinesInfo = async () => {
   try {
