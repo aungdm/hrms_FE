@@ -1,8 +1,10 @@
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useEffect, useState, useRef } from 'react';
 import { useLocation } from 'react-router-dom'; // MUI
 
 import Box from '@mui/material/Box';
 import Collapse from '@mui/material/Collapse'; // REACT TRANSLATION
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
 
 import { useTranslation } from 'react-i18next'; // CUSTOM STYLED COMPONENTS
 
@@ -23,6 +25,8 @@ export default function SidebarAccordion(props) {
   } = useLocation();
   const [hasActive, setHasActive] = useState(0);
   const [collapsed, setCollapsed] = useState(false);
+  const [contextMenu, setContextMenu] = useState(null);
+  const buttonRef = useRef(null);
 
   const handleClick = () => setCollapsed(state => !state);
 
@@ -38,8 +42,40 @@ export default function SidebarAccordion(props) {
       setHasActive(0);
     };
   }, [find]);
+
+  // Handle right-click context menu
+  const handleContextMenu = (event) => {
+    event.preventDefault();
+    setContextMenu(
+      contextMenu === null
+        ? { mouseX: event.clientX, mouseY: event.clientY }
+        : null,
+    );
+  };
+
+  const handleCloseContextMenu = () => {
+    setContextMenu(null);
+  };
+
+  // Open in new tab functionality
+  const handleOpenInNewTab = () => {
+    // Find the first child with a path and open it in a new tab
+    if (item.children && item.children.length > 0) {
+      const firstItemWithPath = item.children.find(child => child.path);
+      if (firstItemWithPath) {
+        window.open(firstItemWithPath.path, '_blank');
+      }
+    }
+    handleCloseContextMenu();
+  };
+
   return <Fragment>
-      <AccordionButton onClick={handleClick} active={sidebarCompact && hasActive}>
+      <AccordionButton 
+        onClick={handleClick} 
+        active={sidebarCompact && hasActive}
+        onContextMenu={handleContextMenu}
+        ref={buttonRef}
+      >
         <Box pl="7px" display="flex" alignItems="center">
           {
           /* ICON SHOW IF EXIST */
@@ -62,5 +98,19 @@ export default function SidebarAccordion(props) {
       {!sidebarCompact ? <Collapse in={collapsed} unmountOnExit>
           <AccordionExpandPanel className="expand">{children}</AccordionExpandPanel>
         </Collapse> : null}
+        
+      {/* Context Menu */}
+      <Menu
+        open={contextMenu !== null}
+        onClose={handleCloseContextMenu}
+        anchorReference="anchorPosition"
+        anchorPosition={
+          contextMenu !== null
+            ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
+            : undefined
+        }
+      >
+        <MenuItem onClick={handleOpenInNewTab}>Open in new tab</MenuItem>
+      </Menu>
     </Fragment>;
 }

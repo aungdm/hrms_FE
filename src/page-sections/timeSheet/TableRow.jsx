@@ -37,7 +37,7 @@ import { getPunches, createPunch } from "@/page-sections/punch/request";
 import { recalculateAttendance } from "@/page-sections/timeSheet/request";
 
 export default function TableRowView(props) {
-  const { data, isSelected, handleSelectRow, handleDelete } = props;
+  const { data, isSelected, handleSelectRow, handleDelete, onDataRefresh } = props;
   // console.log(data, "table row data");
   const navigate = useNavigate();
   const [openMenuEl, setOpenMenuEl] = useState(null);
@@ -306,9 +306,12 @@ export default function TableRowView(props) {
 
       if (response.success) {
         toast.success("Attendance recalculated successfully");
-        // Refresh the page to show updated data
+        // Call the refresh callback instead of reloading the page
         setTimeout(() => {
-          window.location.reload();
+          if (onDataRefresh && typeof onDataRefresh === 'function') {
+            onDataRefresh();
+          }
+          setRecalculateDialogOpen(false); // Close the dialog after successful recalculation
         }, 1500);
       } else {
         toast.error(response.message || "Failed to recalculate attendance");

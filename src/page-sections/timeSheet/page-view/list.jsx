@@ -511,8 +511,9 @@ export default function ListView() {
                         key={item._id}
                         data={item}
                         isSelected={isSelected(item._id)}
-                        handleSelectRow={handleSelectRow}
+                        handleSelectRow={(e) => handleSelectRow(e, item._id)}
                         handleDelete={handleDelete}
+                        onDataRefresh={fetchList}
                       />
                     ))}
 

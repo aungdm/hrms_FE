@@ -1,10 +1,12 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom"; // CUSTOM DEFINED HOOK
 import useAuth from "@/hooks/useAuth"; // LAYOUT BASED HOOK
 import useLayout from "@/layouts/layout-1/context/useLayout"; // CUSTOM COMPONENTS
 import SidebarAccordion from "./SidebarAccordion";
 import duotone from "@/icons/duotone";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 import {
   ItemText,
   ListLabel,
@@ -16,6 +18,32 @@ import {
 
 export default function MultiLevelMenu({ sidebarCompact }) {
   const { t } = useTranslation();
+  const [contextMenu, setContextMenu] = useState(null);
+  const [selectedPath, setSelectedPath] = useState(null);
+
+  // Handle right-click context menu
+  const handleContextMenu = (event, path) => {
+    event.preventDefault();
+    setSelectedPath(path);
+    setContextMenu(
+      contextMenu === null
+        ? { mouseX: event.clientX, mouseY: event.clientY }
+        : null,
+    );
+  };
+
+  const handleCloseContextMenu = () => {
+    setContextMenu(null);
+    setSelectedPath(null);
+  };
+
+  // Open in new tab functionality
+  const handleOpenInNewTab = () => {
+    if (selectedPath) {
+      window.open(selectedPath, '_blank');
+    }
+    handleCloseContextMenu();
+  };
 
   const navigations = [
     {
@@ -206,6 +234,7 @@ export default function MultiLevelMenu({ sidebarCompact }) {
           disabled={item.disabled}
           active={activeRoute(item.path)}
           onClick={() => handleNavigation(item.path)}
+          onContextMenu={(e) => handleContextMenu(e, item.path)}
         >
           {item?.icon ? (
             <item.icon sx={ICON_STYLE(activeRoute(item.path))} />
@@ -228,5 +257,24 @@ export default function MultiLevelMenu({ sidebarCompact }) {
       else return false;
     });
   }, [user?.role]);
-  return <>{renderLevels(filterNavigation)}</>;
+  
+  return (
+    <>
+      {renderLevels(filterNavigation)}
+      
+      {/* Context Menu */}
+      <Menu
+        open={contextMenu !== null}
+        onClose={handleCloseContextMenu}
+        anchorReference="anchorPosition"
+        anchorPosition={
+          contextMenu !== null
+            ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
+            : undefined
+        }
+      >
+        <MenuItem onClick={handleOpenInNewTab}>Open in new tab</MenuItem>
+      </Menu>
+    </>
+  );
 }
