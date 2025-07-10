@@ -784,7 +784,7 @@ export default function PayrollView() {
                               <Box sx={{ mb: 1.5 }}>
                                 <Typography variant="caption" color="text.secondary" display="block">Other Deductions</Typography>
                                 <Typography variant="body2" fontWeight={500} color="error.main">
-                                  {formatCurrency((payrollData.otherDeductions || 0) + (payrollData.fineDeductions || 0))}
+                                  {formatCurrency((payrollData.otherDeductions || 0))}
                                 </Typography>
                               </Box>
                             </Grid>
@@ -1066,7 +1066,7 @@ export default function PayrollView() {
                 <Grid item xs={12} mt={2}>
                   <OtherDeductionDetail 
                     otherDeductionDetails={payrollData.otherDeductionDetails} 
-                    totalAmount={(payrollData.otherDeductions || 0) + (payrollData.fineDeductions || 0)} 
+                    totalAmount={(payrollData.otherDeductions || 0)} 
                   />
                 </Grid>
               )}
