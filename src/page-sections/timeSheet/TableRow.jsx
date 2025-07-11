@@ -542,11 +542,11 @@ export default function TableRowView(props) {
             color: "text.secondary",
           }}
         >
-          {data?.overTimeMinutes
+          {data?.overTimeStatus === "Approved" && data?.overTimeMinutes
             ? formatMinutesToHoursMinutes(data?.overTimeMinutes)
             : "0"}
         </TableCell>
-        <TableCell
+        {/* <TableCell
           padding="normal"
           sx={{
             maxWidth: "200px",
@@ -556,7 +556,7 @@ export default function TableRowView(props) {
           }}
         >
           {data?.overTimeStatus || "--"}
-        </TableCell>
+        </TableCell> */}
       </TableRow>
 
       {/* Confirmation Dialog for Leave Request */}

@@ -75,12 +75,12 @@ const headCells = [
     disablePadding: false,
     label: "Overtime",
   },
-  {
-    id: "approved_overtime",
-    numeric: true,
-    disablePadding: false,
-    label: "Approved Overtime",
-  },
+  // {
+  //   id: "approved_overtime",
+  //   numeric: true,
+  //   disablePadding: false,
+  //   label: "Approved Overtime",
+  // },
   // {
   //   id: "break_hours",
   //   numeric: true,
